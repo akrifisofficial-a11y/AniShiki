@@ -7,9 +7,6 @@ const SHIKIMORI_CLIENT_ID = '_-egpzOWpfqMb0o1oFjmanysWgY5aHVd49cFk4aGD6Y';
 const SHIKIMORI_REDIRECT_URI = 'https://akrifisofficial-a11y.github.io/AniShiki/callback.html';
 const SHIKIMORI_AUTH_URL = 'https://shikimori.io/oauth/authorize';
 
-// ===== ДОМЕН ПЛЕЕРА (для ручной сборки) =====
-const PLAYER_DOMAIN = 'https://kodikplayer.com';
-
 // ===== DOM-элементы =====
 const listSection = document.getElementById('anime-list');
 const playerSection = document.getElementById('player-section');
@@ -79,7 +76,7 @@ async function fetchAnimeList(query = '') {
       order: 'desc',
       limit: 30,
       with_material_data: 'true',
-      with_player_link: 'true', // просим ссылку на плеер
+      with_player_link: 'true', // ПРОСИМ ССЫЛКУ НА ПЛЕЕР
       types: 'anime-serial,anime'
     };
 
@@ -91,7 +88,7 @@ async function fetchAnimeList(query = '') {
     }
 
     const url = `${KODIK_API_URL}${endpoint}?${new URLSearchParams(params)}`;
-    console.log('Запрос:', url);
+    console.log('Запрос каталога:', url);
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -139,7 +136,7 @@ function renderAnimeList(animes) {
   });
 }
 
-// ===== ЗАГРУЗКА ДАННЫХ ОДНОГО АНИМЕ =====
+// ===== ЗАГРУЗКА ДАННЫХ ОДНОГО АНИМЕ (используем player_link) =====
 async function loadAnimeById(animeId) {
   if (currentAnimeId === animeId && document.getElementById('anime-detail')) {
     return;
@@ -155,9 +152,10 @@ async function loadAnimeById(animeId) {
       token: KODIK_API_KEY,
       id: animeId,
       with_material_data: 'true',
-      with_player_link: 'true',
+      with_player_link: 'true', // ПРОСИМ ССЫЛКУ
     });
     const url = `${KODIK_API_URL}/search?${params}`;
+    console.log('Запрос деталей:', url);
     const resp = await fetch(url);
     if (!resp.ok) throw new Error(`Ошибка HTTP ${resp.status}`);
     const data = await resp.json();
@@ -165,31 +163,38 @@ async function loadAnimeById(animeId) {
     const anime = data.results[0];
     currentAnimeData = anime;
 
-    // --- ФОРМИРУЕМ ССЫЛКУ НА ПЛЕЕР ---
+    // ========== ГЛАВНАЯ ЛОГИКА ПЛЕЕРА ==========
     let playerSrc = null;
 
-    // 1. Если есть player_link – используем его
+    // 1. ИСПОЛЬЗУЕМ player_link от Kodik (приоритет)
     if (anime.player_link) {
       playerSrc = anime.player_link.startsWith('//') ? `https:${anime.player_link}` : anime.player_link;
-      console.log('✅ Ссылка от Kodik (player_link):', playerSrc);
+      console.log('🎬 Используем player_link от Kodik:', playerSrc);
     } else {
-      // 2. Пытаемся собрать вручную из id и hash
+      // 2. Если player_link нет — пробуем собрать из hash (если есть)
       const hash = anime.hash || anime.player_hash || anime.material_data?.hash || null;
       if (hash) {
-        playerSrc = `${PLAYER_DOMAIN}/serial/${animeId}/${hash}/720p`;
-        console.log('🛠️ Собрано вручную (id + hash):', playerSrc);
+        playerSrc = `https://kodikplayer.com/serial/${animeId}/${hash}/720p`;
+        console.log('🛠️ Собрано из hash (player_link отсутствует):', playerSrc);
       } else {
-        // 3. Резерв – через старый домен с сезоном и серией
+        // 3. Последний резерв — старый метод через сезон/серию
         const season = anime.last_season || 1;
         const episode = anime.last_episode || 1;
-        playerSrc = `https://w.kdkonl.com/seria/${animeId}/${season}/${episode}`;
-        console.warn('⚠️ Резервный URL (без hash):', playerSrc);
+        playerSrc = `https://kodik.tv/seria/${animeId}/${season}/${episode}`;
+        console.warn('⚠️ Резервный URL (без player_link и hash):', playerSrc);
       }
     }
 
+    // Если всё ещё null — ставим заглушку
+    if (!playerSrc) {
+      playerSrc = 'about:blank';
+      console.error('❌ Не удалось получить ссылку для плеера');
+    }
+
+    // Вставляем в iframe
     playerIframe.src = playerSrc;
 
-    // --- Остальные данные (постер, описание и т.д.) ---
+    // --- Остальные данные ---
     const title = anime.title || 'Без названия';
     const poster = anime.material_data?.poster_url || anime.poster_url || 'https://via.placeholder.com/300x450?text=No+Image';
     const description = anime.description || anime.material_data?.description || 'Описание отсутствует.';
@@ -204,7 +209,7 @@ async function loadAnimeById(animeId) {
       shikimoriLinkHtml = `<a href="https://shikimori.one/animes/${shikimoriId}" target="_blank" class="shikimori-link">🔗 Страница на Shikimori</a>`;
     }
 
-    // --- Кнопка добавления в список ---
+    // --- Кнопка добавления ---
     let addBtnHtml = '';
     if (accessToken) {
       addBtnHtml = `<button id="add-to-list-btn" class="back-btn" style="margin-top:10px;">📥 Добавить в мой список</button>`;
