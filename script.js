@@ -10,10 +10,12 @@ const loaderEl = document.getElementById('loader');
 const searchInput = document.getElementById('search-input');
 const searchBtn = document.getElementById('search-btn');
 const backBtn = document.getElementById('back-btn');
-const playerIframe = document.getElementById('player-iframe');
+const playerContainer = document.getElementById('player-container');
+const kodikPlayerDiv = document.getElementById('kodik-player');
 const animeInfoEl = document.getElementById('anime-info');
 
 let currentAnimeId = null;
+let kodikScriptLoaded = false; // флаг, что скрипт уже загружен
 
 function showSection(section) {
   document.querySelectorAll('main section').forEach(s => s.classList.remove('active'));
@@ -88,7 +90,7 @@ function renderAnimeList(animes) {
   });
 }
 
-// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА (с эпизодами) =====
+// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА =====
 async function loadAnimeById(animeId) {
   if (currentAnimeId === animeId && document.getElementById('anime-detail')) {
     return;
@@ -96,16 +98,17 @@ async function loadAnimeById(animeId) {
   currentAnimeId = animeId;
   showSection(playerSection);
   animeInfoEl.innerHTML = '<div class="loader">Загрузка...</div>';
-  playerIframe.src = '';
+
+  // Очищаем старый плеер
+  kodikPlayerDiv.innerHTML = '';
 
   try {
     const params = new URLSearchParams({
       token: KODIK_API_KEY,
       id: animeId,
       with_material_data: 'true',
-      with_player_link: 'true',
-      with_seasons: 'true',   // запрашиваем сезоны
-      with_episodes: 'true'   // запрашиваем эпизоды
+      with_seasons: 'true',
+      with_episodes: 'true'
     });
     const url = `${KODIK_API_URL}/search?${params}`;
     console.log('Запрос деталей:', url);
@@ -115,58 +118,54 @@ async function loadAnimeById(animeId) {
     if (!data.results || data.results.length === 0) throw new Error('Тайтл не найден');
     const anime = data.results[0];
 
-    // ===== ПОЛУЧАЕМ ССЫЛКУ НА ПЛЕЕР =====
-    let playerSrc = null;
+    // ===== ОПРЕДЕЛЯЕМ СЕЗОН И ЭПИЗОД =====
+    let season = 1;
+    let episode = 1;
 
-    // 1. Пробуем player_link из корня (обычно ведёт на первую серию или страницу выбора)
-    if (anime.player_link) {
-      playerSrc = anime.player_link.startsWith('//') ? `https:${anime.player_link}` : anime.player_link;
-      console.log('🎬 Используем player_link (корневой):', playerSrc);
-    } else {
-      // 2. Если нет, ищем первый сезон и первый эпизод
-      const episodesData = anime.episodes;
-      if (episodesData && typeof episodesData === 'object') {
-        // Находим минимальный номер сезона
-        const seasonKeys = Object.keys(episodesData).map(Number).sort((a,b) => a - b);
-        if (seasonKeys.length > 0) {
-          const firstSeason = seasonKeys[0];
-          const episodes = episodesData[firstSeason];
-          if (Array.isArray(episodes) && episodes.length > 0) {
-            const firstEpisode = episodes[0];
-            if (firstEpisode.player_link) {
-              playerSrc = firstEpisode.player_link.startsWith('//') ? `https:${firstEpisode.player_link}` : firstEpisode.player_link;
-              console.log(`🎬 Используем player_link из эпизода ${firstEpisode.episode} (сезон ${firstSeason}):`, playerSrc);
-            }
-          }
+    // Если есть данные по эпизодам, берём первый сезон и первый эпизод
+    if (anime.episodes && typeof anime.episodes === 'object') {
+      const seasonKeys = Object.keys(anime.episodes).map(Number).sort((a,b) => a - b);
+      if (seasonKeys.length > 0) {
+        season = seasonKeys[0];
+        const episodes = anime.episodes[season];
+        if (Array.isArray(episodes) && episodes.length > 0) {
+          episode = episodes[0].episode || 1;
         }
       }
     }
 
-    // 3. Если всё ещё нет, пробуем собрать из hash
-    if (!playerSrc) {
-      const hash = anime.hash || anime.player_hash || anime.material_data?.hash || null;
-      if (hash) {
-        playerSrc = `https://kodikplayer.com/serial/${animeId}/${hash}/720p`;
-        console.log('🛠️ Собрано из hash:', playerSrc);
-      } else {
-        console.error('❌ Не удалось найти ссылку для плеера');
-        playerSrc = 'about:blank';
-      }
+    // ===== ВСТРАИВАЕМ ПЛЕЕР ЧЕРЕЗ kodik-add.com =====
+    const script = document.createElement('script');
+    script.src = '//kodik-add.com/add-players.min.js';
+    script.async = true;
+
+    // Глобальный объект для параметров плеера
+    window.kodikAddPlayers = {
+      notBlockedForMe: true,
+      types: "foreign-movie,russian-movie,foreign-cartoon,russian-cartoon,soviet-cartoon,multi-part-film,foreign-serial,russian-serial,cartoon-serial,russian-cartoon-serial,documentary-serial,russian-documentary-serial",
+      season: season,
+      episode: episode,
+      min_age_confirmation: true,
+      lgbt_preview_icon: true,
+      lgbt_confirmation: true
+    };
+
+    // Удаляем старый скрипт, если он уже есть (чтобы избежать дублирования)
+    const oldScript = document.querySelector('script[src*="kodik-add.com/add-players.min.js"]');
+    if (oldScript) {
+      oldScript.remove();
+      // Также удаляем возможные глобальные переменные, которые могли остаться
+      window.kodikAddPlayers = null;
     }
 
-    // Добавляем autoplay
-    if (playerSrc && playerSrc !== 'about:blank') {
-      try {
-        const urlObj = new URL(playerSrc);
-        if (!urlObj.searchParams.has('autoplay')) {
-          urlObj.searchParams.set('autoplay', '1');
-        }
-        playerSrc = urlObj.toString();
-      } catch (e) {
-        console.warn('Не удалось добавить autoplay');
-      }
-    }
-    playerIframe.src = playerSrc || 'about:blank';
+    // Добавляем новый скрипт
+    document.body.appendChild(script);
+
+    // Обработчик, когда скрипт загрузится
+    script.onload = function() {
+      console.log('✅ Плеер Kodik загружен');
+      // Скрипт автоматически находит контейнер #kodik-player и вставляет плеер
+    };
 
     // ===== ОСТАЛЬНЫЕ ДАННЫЕ =====
     const title = anime.title || 'Без названия';
@@ -214,7 +213,11 @@ function handleHashChange() {
 
 // ===== НАЗАД =====
 function goBack() {
-  playerIframe.src = '';
+  // Очищаем плеер
+  kodikPlayerDiv.innerHTML = '';
+  const oldScript = document.querySelector('script[src*="kodik-add.com/add-players.min.js"]');
+  if (oldScript) oldScript.remove();
+  window.kodikAddPlayers = null;
   window.location.hash = '';
 }
 
@@ -240,4 +243,4 @@ if (window.location.hash) {
 } else {
   showSection(listSection);
   fetchAnimeList();
-      }
+    }
