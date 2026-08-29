@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <!-- Лунный фон (звёзды, луна) -->
+  <!-- Лунный фон -->
   <div class="stars"></div>
   <div class="moon"></div>
 
@@ -18,11 +18,16 @@
   <header>
     <div class="logo">🌙 Quarwatch</div>
     <div class="subtitle">смотреть аниме онлайн</div>
+    <!-- Панель авторизации Shikimori -->
+    <div style="margin-top:10px;">
+      <button id="login-btn" class="back-btn">Войти через Shikimori</button>
+      <span id="user-info" style="margin-left:10px;color:#9aa3c0;"></span>
+    </div>
   </header>
 
   <!-- Основной контент -->
   <main id="app">
-    <!-- Список аниме -->
+    <!-- Список аниме (каталог) -->
     <section id="anime-list" class="active">
       <div class="search-bar">
         <input type="text" id="search-input" placeholder="Поиск аниме..." />
@@ -32,9 +37,12 @@
       <div id="loader" class="loader">Загрузка...</div>
     </section>
 
-    <!-- Плеер -->
+    <!-- Страница аниме + плеер -->
     <section id="player-section">
-      <button id="back-btn" class="back-btn">← Назад</button>
+      <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+        <button id="back-btn" class="back-btn">← Назад</button>
+        <button id="share-btn" class="back-btn">🔗 Копировать ссылку</button>
+      </div>
       <div id="player-container">
         <iframe id="player-iframe" src="" allowfullscreen></iframe>
       </div>
@@ -44,4 +52,4 @@
 
   <script src="script.js"></script>
 </body>
-</html>
+          </html>
