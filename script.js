@@ -64,7 +64,7 @@ function updateUserUI() {
     }
 }
 
-// ===== ЗАГРУЗКА КАТАЛОГА (используем /list) =====
+// ===== ЗАГРУЗКА КАТАЛОГА =====
 async function fetchAnimeList(query = '') {
     catalogEl.innerHTML = '';
     loaderEl.style.display = 'block';
@@ -136,9 +136,9 @@ function renderAnimeList(animes) {
     });
 }
 
-// ===== ЗАГРУЗКА ДЕТАЛЕЙ КОНКРЕТНОГО АНИМЕ (используем /search с id) =====
+// ===== ЗАГРУЗКА ДЕТАЛЕЙ КОНКРЕТНОГО АНИМЕ =====
 async function loadAnimeById(animeId) {
-    // Сбрасываем состояние, чтобы всегда перезагружать страницу
+    // Сбрасываем состояние
     currentAnimeId = animeId;
     currentAnimeData = null;
 
@@ -153,7 +153,6 @@ async function loadAnimeById(animeId) {
             with_material_data: 'true',
             with_player_link: 'true',
         });
-        // Используем /search для получения данных по id (это работает надёжнее)
         const url = `${KODIK_API_URL}/search?${params}`;
         console.log('Запрос деталей:', url);
         const resp = await fetch(url);
@@ -167,24 +166,37 @@ async function loadAnimeById(animeId) {
         let playerSrc = null;
 
         if (anime.player_link) {
+            // Если ссылка начинается с // – добавляем https:
             playerSrc = anime.player_link.startsWith('//') ? `https:${anime.player_link}` : anime.player_link;
-            console.log('🎬 player_link от Kodik:', playerSrc);
+            console.log('🎬 Исходный player_link от Kodik:', playerSrc);
+
+            // Добавляем параметры для автоматического подтверждения возраста и автозапуска
+            const urlObj = new URL(playerSrc);
+            // Если параметров нет – добавляем
+            if (!urlObj.searchParams.has('min_age_confirmation')) {
+                urlObj.searchParams.set('min_age_confirmation', 'true');
+            }
+            if (!urlObj.searchParams.has('lgbt_preview_icon')) {
+                urlObj.searchParams.set('lgbt_preview_icon', 'true');
+            }
+            if (!urlObj.searchParams.has('lgbt_confirmation')) {
+                urlObj.searchParams.set('lgbt_confirmation', 'true');
+            }
+            if (!urlObj.searchParams.has('autoplay')) {
+                urlObj.searchParams.set('autoplay', '1');
+            }
+            playerSrc = urlObj.toString();
+            console.log('✅ Итоговая ссылка плеера:', playerSrc);
         } else {
-            // Резерв – если player_link вдруг отсутствует
+            // Резерв – собираем из hash
             const hash = anime.hash || anime.player_hash || anime.material_data?.hash || null;
             if (hash) {
-                playerSrc = `https://kodikplayer.com/serial/${animeId}/${hash}/720p`;
+                playerSrc = `https://kodikplayer.com/serial/${animeId}/${hash}/720p?autoplay=1`;
                 console.log('🛠️ собрано из hash:', playerSrc);
             } else {
                 playerSrc = 'about:blank';
                 console.error('❌ Не удалось получить ссылку для плеера');
             }
-        }
-
-        // Добавляем autoplay
-        if (playerSrc && playerSrc !== 'about:blank') {
-            const hasParams = playerSrc.includes('?');
-            playerSrc += (hasParams ? '&' : '?') + 'autoplay=1';
         }
 
         playerIframe.src = playerSrc || 'about:blank';
@@ -313,7 +325,6 @@ function handleHashChange() {
             return;
         }
     }
-    // Возврат на главную
     showSection(listSection);
 }
 
