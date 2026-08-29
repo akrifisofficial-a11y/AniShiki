@@ -18,7 +18,6 @@
   <header>
     <div class="logo">🌙 Quarwatch</div>
     <div class="subtitle">смотреть аниме онлайн</div>
-    <!-- Панель авторизации Shikimori -->
     <div style="margin-top:10px;">
       <button id="login-btn" class="back-btn">Войти через Shikimori</button>
       <span id="user-info" style="margin-left:10px;color:#9aa3c0;"></span>
@@ -27,7 +26,7 @@
 
   <!-- Основной контент -->
   <main id="app">
-    <!-- Список аниме (каталог) -->
+    <!-- Список аниме -->
     <section id="anime-list" class="active">
       <div class="search-bar">
         <input type="text" id="search-input" placeholder="Поиск аниме..." />
@@ -44,7 +43,11 @@
         <button id="share-btn" class="back-btn">🔗 Копировать ссылку</button>
       </div>
       <div id="player-container">
-        <iframe id="player-iframe" src="" allowfullscreen></iframe>
+        <iframe id="player-iframe" 
+                src="" 
+                allowfullscreen 
+                allow="autoplay; encrypted-media">
+        </iframe>
       </div>
       <div id="anime-info" class="anime-info"></div>
     </section>
@@ -52,4 +55,4 @@
 
   <script src="script.js"></script>
 </body>
-          </html>
+        </html>
