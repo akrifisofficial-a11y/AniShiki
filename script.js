@@ -109,7 +109,7 @@ async function fetchAnimeList(query = '') {
             order: 'desc',
             limit: 30,
             with_material_data: 'true',
-            with_player_link: 'true', // всё равно запрашиваем
+            with_player_link: 'true',
             types: ''
         };
 
@@ -183,7 +183,7 @@ function renderAnimeList(animes) {
     });
 }
 
-// ===== ЗАГРУЗКА ДЕТАЛЕЙ КОНКРЕТНОГО ТАЙТЛА =====
+// ===== ЗАГРУЗКА ДЕТАЛЕЙ (БЕЗ kodik.tv) =====
 async function loadAnimeById(animeId) {
     currentAnimeId = animeId;
     currentAnimeData = null;
@@ -208,40 +208,34 @@ async function loadAnimeById(animeId) {
         const anime = data.results[0];
         currentAnimeData = anime;
 
-        // ========== НОВАЯ ЛОГИКА ПЛЕЕРА ==========
+        // ========== ПЛЕЕР ==========
         let playerSrc = null;
-
-        // 1. ПРИОРИТЕТ – ссылка через hash
         const hash = anime.hash || anime.player_hash || anime.material_data?.hash || null;
         if (hash) {
             playerSrc = `https://kodikplayer.com/serial/${animeId}/${hash}/720p`;
             console.log('🎬 Используем hash-ссылку:', playerSrc);
+        } else if (anime.player_link) {
+            playerSrc = anime.player_link.startsWith('//') ? `https:${anime.player_link}` : anime.player_link;
+            console.log('🎬 Используем player_link:', playerSrc);
         } else {
-            // 2. Если hash нет – пробуем player_link
-            if (anime.player_link) {
-                playerSrc = anime.player_link.startsWith('//') ? `https:${anime.player_link}` : anime.player_link;
-                console.log('🎬 Используем player_link:', playerSrc);
-            } else {
-                // 3. Резерв – старый метод через сезон/серию (почти никогда не понадобится)
-                const season = anime.last_season || 1;
-                const episode = anime.last_episode || 1;
-                playerSrc = `https://kodik.tv/seria/${animeId}/${season}/${episode}`;
-                console.warn('⚠️ Резервный URL (сезон/серия):', playerSrc);
-            }
+            console.error('❌ Нет ни hash, ни player_link');
+            playerSrc = 'about:blank';
         }
 
-        // Добавляем autoplay, если его нет
         if (playerSrc && playerSrc !== 'about:blank') {
-            const urlObj = new URL(playerSrc);
-            if (!urlObj.searchParams.has('autoplay')) {
-                urlObj.searchParams.set('autoplay', '1');
+            try {
+                const urlObj = new URL(playerSrc);
+                if (!urlObj.searchParams.has('autoplay')) {
+                    urlObj.searchParams.set('autoplay', '1');
+                }
+                playerSrc = urlObj.toString();
+            } catch (e) {
+                console.warn('Не удалось добавить autoplay');
             }
-            playerSrc = urlObj.toString();
         }
-
         playerIframe.src = playerSrc || 'about:blank';
 
-        // ========== ОСТАЛЬНЫЕ ДАННЫЕ ==========
+        // ========== ДАННЫЕ ==========
         const title = anime.title || 'Без названия';
         const poster = anime.material_data?.poster_url || anime.poster_url || 'https://via.placeholder.com/300x450?text=No+Image';
         const description = anime.description || anime.material_data?.description || 'Описание отсутствует.';
@@ -282,7 +276,6 @@ async function loadAnimeById(animeId) {
         `;
 
         document.title = `${title} — Quarwatch`;
-
         document.getElementById('add-to-list-btn')?.addEventListener('click', addToShikimoriList);
     } catch (err) {
         console.error(err);
@@ -366,7 +359,6 @@ function handleHashChange() {
     showSection(listSection);
 }
 
-// ===== КНОПКА "НАЗАД" =====
 function goBack() {
     playerIframe.src = '';
     window.location.hash = '';
@@ -423,10 +415,8 @@ async function initUser() {
 // ===== СТАРТ =====
 (async function() {
     await initUser();
-
     const defaultLink = document.querySelector('.nav-menu a[data-type="anime"]');
     if (defaultLink) defaultLink.classList.add('active');
-
     if (window.location.hash) {
         handleHashChange();
     } else {
