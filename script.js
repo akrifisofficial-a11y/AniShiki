@@ -8,7 +8,7 @@ const SHIKIMORI_REDIRECT_URI = 'https://ваш-сайт.github.io/ваш-реп�
 const SHIKIMORI_AUTH_URL = 'https://shikimori.one/oauth/authorize';
 
 // ===== СОСТОЯНИЕ =====
-let currentType = 'anime'; // anime, movie, series, updates
+let currentType = 'anime';
 let currentAnimeId = null;
 let currentAnimeData = null;
 let accessToken = localStorage.getItem('shikimori_token') || null;
@@ -45,21 +45,17 @@ function toggleMenu() {
 
 function setActiveType(type) {
     currentType = type;
-    // Обновляем активный пункт меню
     menuLinks.forEach(link => {
         link.classList.remove('active');
         if (link.dataset.type === type) {
             link.classList.add('active');
         }
     });
-    // Закрываем меню
     hamburger.classList.remove('active');
     navMenu.classList.remove('open');
-    // Перезагружаем список
     fetchAnimeList();
 }
 
-// Обработчики меню
 hamburger.addEventListener('click', toggleMenu);
 menuLinks.forEach(link => {
     link.addEventListener('click', (e) => {
@@ -100,7 +96,7 @@ function updateUserUI() {
     }
 }
 
-// ===== ЗАГРУЗКА КАТАЛОГА (с учётом типа) =====
+// ===== ЗАГРУЗКА КАТАЛОГА =====
 async function fetchAnimeList(query = '') {
     catalogEl.innerHTML = '';
     loaderEl.style.display = 'block';
@@ -113,30 +109,29 @@ async function fetchAnimeList(query = '') {
             order: 'desc',
             limit: 30,
             with_material_data: 'true',
-            with_player_link: 'true',
+            with_player_link: 'true', // всё равно запрашиваем
+            types: ''
         };
 
-        // Определяем типы в зависимости от currentType
         let types = [];
         if (currentType === 'anime') {
             types = ['anime-serial', 'anime'];
         } else if (currentType === 'movie') {
             types = ['movie'];
         } else if (currentType === 'series') {
-            types = ['anime-serial']; // можно также добавить 'tv-series' если есть
+            types = ['anime-serial'];
         } else if (currentType === 'updates') {
-            // Новинки – все типы, только сортировка по дате
-            types = ['anime', 'anime-serial', 'movie', 'cartoon']; // можно расширить
+            types = ['anime', 'anime-serial', 'movie', 'cartoon'];
         }
         if (types.length) {
             params.types = types.join(',');
+        } else {
+            delete params.types;
         }
 
-        // Если поисковой запрос
         if (query.trim()) {
             endpoint = '/search';
             params.title = query.trim();
-            // Поиск лучше вести без фильтра по типам, но оставим
         }
 
         const url = `${KODIK_API_URL}${endpoint}?${new URLSearchParams(params)}`;
@@ -213,39 +208,35 @@ async function loadAnimeById(animeId) {
         const anime = data.results[0];
         currentAnimeData = anime;
 
-        // ========== ФОРМИРУЕМ ССЫЛКУ ДЛЯ ПЛЕЕРА ==========
+        // ========== НОВАЯ ЛОГИКА ПЛЕЕРА ==========
         let playerSrc = null;
 
-        if (anime.player_link) {
-            // Если ссылка начинается с // – добавляем https:
-            playerSrc = anime.player_link.startsWith('//') ? `https:${anime.player_link}` : anime.player_link;
-            console.log('🎬 Исходный player_link от Kodik:', playerSrc);
+        // 1. ПРИОРИТЕТ – ссылка через hash
+        const hash = anime.hash || anime.player_hash || anime.material_data?.hash || null;
+        if (hash) {
+            playerSrc = `https://kodikplayer.com/serial/${animeId}/${hash}/720p`;
+            console.log('🎬 Используем hash-ссылку:', playerSrc);
+        } else {
+            // 2. Если hash нет – пробуем player_link
+            if (anime.player_link) {
+                playerSrc = anime.player_link.startsWith('//') ? `https:${anime.player_link}` : anime.player_link;
+                console.log('🎬 Используем player_link:', playerSrc);
+            } else {
+                // 3. Резерв – старый метод через сезон/серию (почти никогда не понадобится)
+                const season = anime.last_season || 1;
+                const episode = anime.last_episode || 1;
+                playerSrc = `https://kodik.tv/seria/${animeId}/${season}/${episode}`;
+                console.warn('⚠️ Резервный URL (сезон/серия):', playerSrc);
+            }
+        }
 
-            // Добавляем все необходимые параметры, которых может не хватать
+        // Добавляем autoplay, если его нет
+        if (playerSrc && playerSrc !== 'about:blank') {
             const urlObj = new URL(playerSrc);
-            const requiredParams = {
-                min_age_confirmation: 'true',
-                lgbt_preview_icon: 'true',
-                lgbt_confirmation: 'true',
-                autoplay: '1'
-            };
-            for (const [key, value] of Object.entries(requiredParams)) {
-                if (!urlObj.searchParams.has(key)) {
-                    urlObj.searchParams.set(key, value);
-                }
+            if (!urlObj.searchParams.has('autoplay')) {
+                urlObj.searchParams.set('autoplay', '1');
             }
             playerSrc = urlObj.toString();
-            console.log('✅ Итоговая ссылка плеера:', playerSrc);
-        } else {
-            // Резерв – собираем из hash
-            const hash = anime.hash || anime.player_hash || anime.material_data?.hash || null;
-            if (hash) {
-                playerSrc = `https://kodikplayer.com/serial/${animeId}/${hash}/720p?autoplay=1`;
-                console.log('🛠️ собрано из hash:', playerSrc);
-            } else {
-                playerSrc = 'about:blank';
-                console.error('❌ Не удалось получить ссылку для плеера');
-            }
         }
 
         playerIframe.src = playerSrc || 'about:blank';
@@ -312,7 +303,7 @@ async function addToShikimoriList() {
 
     const shikimoriId = currentAnimeData.shikimori_id || currentAnimeData.material_data?.shikimori_id;
     if (!shikimoriId) {
-        alert('Не удалось найти ID на Shikimori для этого тайтла.');
+        alert('Не удалось найти ID на Shikimori.');
         return;
     }
 
@@ -433,7 +424,6 @@ async function initUser() {
 (async function() {
     await initUser();
 
-    // Устанавливаем активный пункт меню по умолчанию
     const defaultLink = document.querySelector('.nav-menu a[data-type="anime"]');
     if (defaultLink) defaultLink.classList.add('active');
 
