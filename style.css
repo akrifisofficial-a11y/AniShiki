@@ -1,10 +1,4 @@
-/* ===== ГЛОБАЛЬНЫЕ ===== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+* { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: 'Orbitron', sans-serif;
   background: #0a0e1a;
@@ -12,22 +6,15 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
 }
-
-/* ===== ЗВЁЗДЫ ===== */
 .stars {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   pointer-events: none;
   z-index: 0;
   background: radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),
               radial-gradient(2px 2px at 40px 70px, #fff, rgba(0,0,0,0)),
-              radial-gradient(2px 2px at 50px 160px, #ddd, rgba(0,0,0,0)),
-              radial-gradient(2px 2px at 90px 40px, #fff, rgba(0,0,0,0)),
-              radial-gradient(2px 2px at 130px 80px, #fff, rgba(0,0,0,0)),
-              radial-gradient(2px 2px at 160px 30px, #ddd, rgba(0,0,0,0));
+              radial-gradient(2px 2px at 50px 160px, #ddd, rgba(0,0,0,0));
   background-size: 200px 200px;
   animation: twinkle 4s ease-in-out infinite alternate;
 }
@@ -35,8 +22,6 @@ body {
   0% { opacity: 0.3; }
   100% { opacity: 1; }
 }
-
-/* ===== ЛУНА ===== */
 .moon {
   position: fixed;
   top: 30px;
@@ -50,8 +35,6 @@ body {
   opacity: 0.6;
   pointer-events: none;
 }
-
-/* ===== ШАПКА ===== */
 header {
   position: relative;
   z-index: 1;
@@ -74,8 +57,6 @@ header {
   color: #9aa3c0;
   margin-top: 5px;
 }
-
-/* ===== ОСНОВНОЙ КОНТЕЙНЕР ===== */
 main {
   position: relative;
   z-index: 1;
@@ -83,15 +64,12 @@ main {
   margin: 0 auto;
   padding: 20px;
 }
-
 section {
   display: none;
 }
 section.active {
   display: block;
 }
-
-/* ===== ПОИСК ===== */
 .search-bar {
   display: flex;
   gap: 10px;
@@ -109,7 +87,6 @@ section.active {
   font-size: 1rem;
   backdrop-filter: blur(5px);
   outline: none;
-  transition: 0.3s;
 }
 .search-bar input:focus {
   border-color: #b8a0d0;
@@ -129,8 +106,6 @@ section.active {
   transform: scale(1.05);
   box-shadow: 0 0 20px #7a6a9a;
 }
-
-/* ===== КАТАЛОГ (СЕТКА КАРТОЧЕК) ===== */
 .catalog-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -173,37 +148,15 @@ section.active {
   font-size: 0.8rem;
   color: #9aa3c0;
 }
-
-/* ===== ПЛЕЕР ===== */
-#player-section {
-  padding: 20px 0;
-}
-.back-btn {
-  background: rgba(40, 50, 80, 0.7);
-  border: 1px solid #5a6a8a;
-  color: #e0e5ff;
-  padding: 10px 24px;
-  border-radius: 30px;
-  font-family: inherit;
-  font-size: 0.9rem;
-  cursor: pointer;
-  backdrop-filter: blur(5px);
-  transition: 0.3s;
-  margin-bottom: 20px;
-}
-.back-btn:hover {
-  background: #4a5a7a;
-  box-shadow: 0 0 20px rgba(100, 120, 180, 0.2);
-}
-
 #player-container {
   position: relative;
   width: 100%;
-  padding-bottom: 56.25%; /* 16:9 */
+  padding-bottom: 56.25%;
   background: #000;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 0 40px rgba(100, 80, 160, 0.3);
+  margin-top: 20px;
 }
 #player-container iframe {
   position: absolute;
@@ -213,7 +166,6 @@ section.active {
   height: 100%;
   border: 0;
 }
-
 .anime-info {
   margin-top: 20px;
   padding: 20px;
@@ -230,8 +182,6 @@ section.active {
   color: #b0b8d0;
   line-height: 1.6;
 }
-
-/* ===== СТРАНИЦА АНИМЕ (постер + детали) ===== */
 .anime-detail {
   display: flex;
   gap: 30px;
@@ -269,25 +219,23 @@ section.active {
   line-height: 1.7;
   color: #c8d0e8;
 }
-
-/* ===== ССЫЛКА НА SHIKIMORI ===== */
-.shikimori-link {
-  display: inline-block;
-  margin-top: 10px;
-  color: #b8a0d0;
-  text-decoration: none;
+.back-btn {
+  background: rgba(40, 50, 80, 0.7);
   border: 1px solid #5a6a8a;
-  padding: 8px 16px;
-  border-radius: 20px;
-  transition: 0.3s;
+  color: #e0e5ff;
+  padding: 10px 24px;
+  border-radius: 30px;
+  font-family: inherit;
   font-size: 0.9rem;
+  cursor: pointer;
+  backdrop-filter: blur(5px);
+  transition: 0.3s;
+  margin-top: 10px;
 }
-.shikimori-link:hover {
-  background: rgba(40, 50, 80, 0.5);
-  box-shadow: 0 0 20px rgba(100, 80, 160, 0.2);
+.back-btn:hover {
+  background: #4a5a7a;
+  box-shadow: 0 0 20px rgba(100, 120, 180, 0.2);
 }
-
-/* ===== LOADER ===== */
 .loader {
   text-align: center;
   padding: 40px;
@@ -295,8 +243,6 @@ section.active {
   font-size: 1.1rem;
   letter-spacing: 2px;
 }
-
-/* ===== АДАПТИВ ===== */
 @media (max-width: 700px) {
   .logo { font-size: 2.2rem; }
   .moon { width: 50px; height: 50px; right: 20px; top: 20px; }
@@ -306,115 +252,4 @@ section.active {
 }
 @media (max-width: 500px) {
   .search-bar input { width: 70%; }
-  }
-/* ===== ШАПКА ===== */
-header {
-  position: relative;
-  z-index: 1;
-  padding: 20px 20px 10px;
-  background: linear-gradient(180deg, rgba(10,14,26,0.9) 0%, transparent 100%);
-}
-.header-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.logo {
-  font-size: 2.2rem;
-  font-weight: 900;
-  letter-spacing: 4px;
-  background: linear-gradient(135deg, #d4b48c, #f0e6d0);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 30px rgba(212,180,140,0.3);
-  flex: 1;
-}
-.subtitle {
-  font-size: 0.8rem;
-  letter-spacing: 4px;
-  color: #9aa3c0;
-}
-.auth-buttons {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* ===== ГАМБУРГЕР ===== */
-.hamburger {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  cursor: pointer;
-  padding: 5px;
-  background: rgba(255,255,255,0.05);
-  border-radius: 8px;
-  border: 1px solid #3a4060;
-}
-.hamburger span {
-  display: block;
-  width: 28px;
-  height: 3px;
-  background: #e0e5ff;
-  border-radius: 3px;
-  transition: 0.3s;
-}
-.hamburger.active span:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 6px);
-}
-.hamburger.active span:nth-child(2) {
-  opacity: 0;
-}
-.hamburger.active span:nth-child(3) {
-  transform: rotate(-45deg) translate(5px, -6px);
-}
-
-/* ===== МЕНЮ ===== */
-.nav-menu {
-  display: none;
-  background: rgba(20, 26, 50, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  margin-top: 10px;
-  padding: 15px 20px;
-  border: 1px solid rgba(255,255,255,0.05);
-}
-.nav-menu.open {
-  display: block;
-}
-.nav-menu ul {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px 30px;
-  justify-content: center;
-}
-.nav-menu ul li a {
-  color: #e0e5ff;
-  text-decoration: none;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1rem;
-  padding: 6px 12px;
-  border-radius: 20px;
-  transition: 0.3s;
-  cursor: pointer;
-}
-.nav-menu ul li a:hover,
-.nav-menu ul li a.active {
-  background: rgba(184, 160, 208, 0.2);
-  box-shadow: 0 0 15px rgba(184, 160, 208, 0.1);
-}
-.nav-menu ul li a.active {
-  border: 1px solid #b8a0d0;
-}
-
-/* ===== АДАПТИВ ===== */
-@media (max-width: 700px) {
-  .logo { font-size: 1.6rem; }
-  .subtitle { font-size: 0.7rem; }
-  .auth-buttons .back-btn { padding: 6px 12px; font-size: 0.7rem; }
-  .nav-menu ul { flex-direction: column; align-items: center; gap: 10px; }
-  .hamburger span { width: 24px; height: 2px; }
 }
