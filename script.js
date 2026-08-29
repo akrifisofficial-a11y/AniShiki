@@ -64,7 +64,7 @@ function updateUserUI() {
     }
 }
 
-// ===== ЗАГРУЗКА СПИСКА АНИМЕ (каталог / поиск) =====
+// ===== ЗАГРУЗКА КАТАЛОГА (используем /list) =====
 async function fetchAnimeList(query = '') {
     catalogEl.innerHTML = '';
     loaderEl.style.display = 'block';
@@ -136,13 +136,12 @@ function renderAnimeList(animes) {
     });
 }
 
-// ===== ЗАГРУЗКА ДАННЫХ ОДНОГО АНИМЕ =====
+// ===== ЗАГРУЗКА ДЕТАЛЕЙ КОНКРЕТНОГО АНИМЕ (используем /search с id) =====
 async function loadAnimeById(animeId) {
-    if (currentAnimeId === animeId && document.getElementById('anime-detail')) {
-        return;
-    }
-
+    // Сбрасываем состояние, чтобы всегда перезагружать страницу
     currentAnimeId = animeId;
+    currentAnimeData = null;
+
     showSection(playerSection);
     animeInfoEl.innerHTML = '<div class="loader">Загрузка данных...</div>';
     playerIframe.src = '';
@@ -154,7 +153,8 @@ async function loadAnimeById(animeId) {
             with_material_data: 'true',
             with_player_link: 'true',
         });
-        const url = `${KODIK_API_URL}/list?${params}`;
+        // Используем /search для получения данных по id (это работает надёжнее)
+        const url = `${KODIK_API_URL}/search?${params}`;
         console.log('Запрос деталей:', url);
         const resp = await fetch(url);
         if (!resp.ok) throw new Error(`Ошибка HTTP ${resp.status}`);
@@ -167,11 +167,10 @@ async function loadAnimeById(animeId) {
         let playerSrc = null;
 
         if (anime.player_link) {
-            // Добавляем https: если ссылка начинается с //
             playerSrc = anime.player_link.startsWith('//') ? `https:${anime.player_link}` : anime.player_link;
             console.log('🎬 player_link от Kodik:', playerSrc);
         } else {
-            // Резервный вариант, если player_link нет
+            // Резерв – если player_link вдруг отсутствует
             const hash = anime.hash || anime.player_hash || anime.material_data?.hash || null;
             if (hash) {
                 playerSrc = `https://kodikplayer.com/serial/${animeId}/${hash}/720p`;
@@ -182,7 +181,7 @@ async function loadAnimeById(animeId) {
             }
         }
 
-        // Добавляем autoplay, если плеер это поддерживает
+        // Добавляем autoplay
         if (playerSrc && playerSrc !== 'about:blank') {
             const hasParams = playerSrc.includes('?');
             playerSrc += (hasParams ? '&' : '?') + 'autoplay=1';
@@ -205,7 +204,7 @@ async function loadAnimeById(animeId) {
             shikimoriLinkHtml = `<a href="https://shikimori.one/animes/${shikimoriId}" target="_blank" class="shikimori-link">🔗 Страница на Shikimori</a>`;
         }
 
-        // --- Кнопка добавления в список (только для авторизованных) ---
+        // --- Кнопка добавления в список ---
         let addBtnHtml = '';
         if (accessToken) {
             addBtnHtml = `<button id="add-to-list-btn" class="back-btn" style="margin-top:10px;">📥 Добавить в мой список</button>`;
@@ -314,6 +313,7 @@ function handleHashChange() {
             return;
         }
     }
+    // Возврат на главную
     showSection(listSection);
 }
 
@@ -323,7 +323,7 @@ function goBack() {
     window.location.hash = '';
 }
 
-// ===== ОБРАБОТЧИКИ СОБЫТИЙ =====
+// ===== ОБРАБОТЧИКИ =====
 window.addEventListener('hashchange', handleHashChange);
 
 searchBtn.addEventListener('click', () => {
