@@ -3,68 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quarwatch – смотри аниме</title>
+  <title>Quarwatch – аниме онлайн</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <!-- Лунный фон -->
   <div class="stars"></div>
   <div class="moon"></div>
 
-  <!-- Шапка -->
   <header>
-    <div class="header-container">
-      <!-- Гамбургер -->
-      <div class="hamburger" id="hamburger">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-      <div class="logo">🌙 Quarwatch</div>
-      <div class="subtitle">смотреть онлайн</div>
-      <div class="auth-buttons">
-        <button id="login-btn" class="back-btn">Войти через Shikimori</button>
-        <span id="user-info" style="margin-left:10px;color:#9aa3c0;"></span>
-      </div>
-    </div>
-    <!-- Меню -->
-    <nav id="nav-menu" class="nav-menu">
-      <ul>
-        <li><a href="#" data-type="anime">Аниме</a></li>
-        <li><a href="#" data-type="movie">Фильмы</a></li>
-        <li><a href="#" data-type="series">Сериалы</a></li>
-        <li><a href="#" data-type="updates">Новинки</a></li>
-      </ul>
-    </nav>
+    <div class="logo">🌙 Quarwatch</div>
+    <div class="subtitle">аниме онлайн</div>
   </header>
 
-  <!-- Основной контент -->
-  <main id="app">
-    <!-- Список -->
+  <main>
+    <!-- Каталог -->
     <section id="anime-list" class="active">
       <div class="search-bar">
-        <input type="text" id="search-input" placeholder="Поиск..." />
+        <input type="text" id="search-input" placeholder="Поиск аниме..." />
         <button id="search-btn">🔍</button>
       </div>
       <div id="catalog" class="catalog-grid"></div>
       <div id="loader" class="loader">Загрузка...</div>
     </section>
 
-    <!-- Страница аниме + плеер -->
+    <!-- Плеер -->
     <section id="player-section">
-      <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-        <button id="back-btn" class="back-btn">← Назад</button>
-        <button id="share-btn" class="back-btn">🔗 Копировать ссылку</button>
-      </div>
+      <button id="back-btn" class="back-btn">← Назад</button>
       <div id="player-container">
-        <iframe id="player-iframe" 
-                src="" 
-                allowfullscreen 
-                allow="autoplay; encrypted-media; fullscreen">
-        </iframe>
+        <iframe id="player-iframe" src="" allowfullscreen allow="autoplay; encrypted-media; fullscreen"></iframe>
       </div>
       <div id="anime-info" class="anime-info"></div>
     </section>
