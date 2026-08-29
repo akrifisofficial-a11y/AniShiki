@@ -13,7 +13,7 @@ body {
   overflow-x: hidden;
 }
 
-/* ===== ЗВЁЗДЫ (анимация) ===== */
+/* ===== ЗВЁЗДЫ ===== */
 .stars {
   position: fixed;
   top: 0;
@@ -84,7 +84,6 @@ main {
   padding: 20px;
 }
 
-/* ===== СЕКЦИИ (переключение) ===== */
 section {
   display: none;
 }
@@ -131,7 +130,7 @@ section.active {
   box-shadow: 0 0 20px #7a6a9a;
 }
 
-/* ===== КАТАЛОГ (сетка карточек) ===== */
+/* ===== КАТАЛОГ (СЕТКА КАРТОЧЕК) ===== */
 .catalog-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -232,25 +231,6 @@ section.active {
   line-height: 1.6;
 }
 
-/* ===== LOADER ===== */
-.loader {
-  text-align: center;
-  padding: 40px;
-  color: #7a8aaa;
-  font-size: 1.1rem;
-  letter-spacing: 2px;
-}
-
-/* ===== АДАПТИВ ===== */
-@media (max-width: 700px) {
-  .logo { font-size: 2.2rem; }
-  .moon { width: 50px; height: 50px; right: 20px; top: 20px; }
-  .catalog-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-  .anime-card img { height: 200px; }
-}
-@media (max-width: 500px) {
-  .search-bar input { width: 70%; }
-}
 /* ===== СТРАНИЦА АНИМЕ (постер + детали) ===== */
 .anime-detail {
   display: flex;
@@ -289,10 +269,41 @@ section.active {
   line-height: 1.7;
   color: #c8d0e8;
 }
-@media (max-width: 700px) {
-  .anime-detail .poster {
-    flex-basis: 100%;
-    max-width: 300px;
-    margin: 0 auto;
-  }
+
+/* ===== ССЫЛКА НА SHIKIMORI ===== */
+.shikimori-link {
+  display: inline-block;
+  margin-top: 10px;
+  color: #b8a0d0;
+  text-decoration: none;
+  border: 1px solid #5a6a8a;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: 0.3s;
+  font-size: 0.9rem;
 }
+.shikimori-link:hover {
+  background: rgba(40, 50, 80, 0.5);
+  box-shadow: 0 0 20px rgba(100, 80, 160, 0.2);
+}
+
+/* ===== LOADER ===== */
+.loader {
+  text-align: center;
+  padding: 40px;
+  color: #7a8aaa;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+}
+
+/* ===== АДАПТИВ ===== */
+@media (max-width: 700px) {
+  .logo { font-size: 2.2rem; }
+  .moon { width: 50px; height: 50px; right: 20px; top: 20px; }
+  .catalog-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .anime-card img { height: 200px; }
+  .anime-detail .poster { flex-basis: 100%; max-width: 300px; margin: 0 auto; }
+}
+@media (max-width: 500px) {
+  .search-bar input { width: 70%; }
+  }
