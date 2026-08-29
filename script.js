@@ -33,7 +33,7 @@ async function fetchAnimeList(query = '') {
       order: 'desc',
       limit: 30,
       with_material_data: 'true',
-      with_player_link: 'true', // просим ссылку
+      with_player_link: 'true',
       types: 'anime-serial,anime,movie'
     };
 
@@ -43,7 +43,7 @@ async function fetchAnimeList(query = '') {
     }
 
     const url = `${KODIK_API_URL}${endpoint}?${new URLSearchParams(params)}`;
-    console.log('Запрос:', url);
+    console.log('Запрос каталога:', url);
 
     const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -88,7 +88,7 @@ function renderAnimeList(animes) {
   });
 }
 
-// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА =====
+// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА (с эпизодами) =====
 async function loadAnimeById(animeId) {
   if (currentAnimeId === animeId && document.getElementById('anime-detail')) {
     return;
@@ -104,29 +104,52 @@ async function loadAnimeById(animeId) {
       id: animeId,
       with_material_data: 'true',
       with_player_link: 'true',
+      with_seasons: 'true',   // запрашиваем сезоны
+      with_episodes: 'true'   // запрашиваем эпизоды
     });
     const url = `${KODIK_API_URL}/search?${params}`;
+    console.log('Запрос деталей:', url);
     const resp = await fetch(url);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
     if (!data.results || data.results.length === 0) throw new Error('Тайтл не найден');
     const anime = data.results[0];
 
-    // ===== ПЛЕЕР: ПРИОРИТЕТ player_link =====
+    // ===== ПОЛУЧАЕМ ССЫЛКУ НА ПЛЕЕР =====
     let playerSrc = null;
 
+    // 1. Пробуем player_link из корня (обычно ведёт на первую серию или страницу выбора)
     if (anime.player_link) {
-      // Нормализуем ссылку (добавляем https:// если начинается с //)
       playerSrc = anime.player_link.startsWith('//') ? `https:${anime.player_link}` : anime.player_link;
-      console.log('🎬 Используем player_link от Kodik:', playerSrc);
+      console.log('🎬 Используем player_link (корневой):', playerSrc);
     } else {
-      // Если player_link нет, пробуем собрать из hash
+      // 2. Если нет, ищем первый сезон и первый эпизод
+      const episodesData = anime.episodes;
+      if (episodesData && typeof episodesData === 'object') {
+        // Находим минимальный номер сезона
+        const seasonKeys = Object.keys(episodesData).map(Number).sort((a,b) => a - b);
+        if (seasonKeys.length > 0) {
+          const firstSeason = seasonKeys[0];
+          const episodes = episodesData[firstSeason];
+          if (Array.isArray(episodes) && episodes.length > 0) {
+            const firstEpisode = episodes[0];
+            if (firstEpisode.player_link) {
+              playerSrc = firstEpisode.player_link.startsWith('//') ? `https:${firstEpisode.player_link}` : firstEpisode.player_link;
+              console.log(`🎬 Используем player_link из эпизода ${firstEpisode.episode} (сезон ${firstSeason}):`, playerSrc);
+            }
+          }
+        }
+      }
+    }
+
+    // 3. Если всё ещё нет, пробуем собрать из hash
+    if (!playerSrc) {
       const hash = anime.hash || anime.player_hash || anime.material_data?.hash || null;
       if (hash) {
         playerSrc = `https://kodikplayer.com/serial/${animeId}/${hash}/720p`;
-        console.log('🛠️ Собрано из hash (player_link отсутствует):', playerSrc);
+        console.log('🛠️ Собрано из hash:', playerSrc);
       } else {
-        console.error('❌ Нет ни player_link, ни hash');
+        console.error('❌ Не удалось найти ссылку для плеера');
         playerSrc = 'about:blank';
       }
     }
@@ -145,7 +168,7 @@ async function loadAnimeById(animeId) {
     }
     playerIframe.src = playerSrc || 'about:blank';
 
-    // ===== ДАННЫЕ =====
+    // ===== ОСТАЛЬНЫЕ ДАННЫЕ =====
     const title = anime.title || 'Без названия';
     const poster = anime.material_data?.poster_url || anime.poster_url || 'https://via.placeholder.com/300x450?text=No+Image';
     const description = anime.description || anime.material_data?.description || 'Описание отсутствует.';
@@ -217,4 +240,4 @@ if (window.location.hash) {
 } else {
   showSection(listSection);
   fetchAnimeList();
-    }
+      }
