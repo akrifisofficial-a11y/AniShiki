@@ -20,7 +20,7 @@ function showSection(section) {
   section.classList.add('active');
 }
 
-// ===== ЗАГРУЗКА КАТАЛОГА (аниме + фильмы) =====
+// ===== ЗАГРУЗКА КАТАЛОГА =====
 async function fetchAnimeList(query = '') {
   catalogEl.innerHTML = '';
   loaderEl.style.display = 'block';
@@ -33,8 +33,8 @@ async function fetchAnimeList(query = '') {
       order: 'desc',
       limit: 30,
       with_material_data: 'true',
-      with_player_link: 'true',
-      types: 'anime-serial,anime,movie' // <-- теперь фильмы тоже
+      with_player_link: 'true', // просим ссылку
+      types: 'anime-serial,anime,movie'
     };
 
     if (query.trim()) {
@@ -88,7 +88,7 @@ function renderAnimeList(animes) {
   });
 }
 
-// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА (аниме или фильм) =====
+// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА =====
 async function loadAnimeById(animeId) {
   if (currentAnimeId === animeId && document.getElementById('anime-detail')) {
     return;
@@ -112,26 +112,36 @@ async function loadAnimeById(animeId) {
     if (!data.results || data.results.length === 0) throw new Error('Тайтл не найден');
     const anime = data.results[0];
 
-    // ===== ПЛЕЕР =====
+    // ===== ПЛЕЕР: ПРИОРИТЕТ player_link =====
     let playerSrc = null;
-    const hash = anime.hash || anime.player_hash || anime.material_data?.hash || null;
-    if (hash) {
-      playerSrc = `https://kodikplayer.com/serial/${animeId}/${hash}/720p`;
-      console.log('🎬 hash-ссылка:', playerSrc);
-    } else if (anime.player_link) {
+
+    if (anime.player_link) {
+      // Нормализуем ссылку (добавляем https:// если начинается с //)
       playerSrc = anime.player_link.startsWith('//') ? `https:${anime.player_link}` : anime.player_link;
-      console.log('🎬 player_link:', playerSrc);
+      console.log('🎬 Используем player_link от Kodik:', playerSrc);
     } else {
-      console.error('Нет ссылки для плеера');
-      playerSrc = 'about:blank';
+      // Если player_link нет, пробуем собрать из hash
+      const hash = anime.hash || anime.player_hash || anime.material_data?.hash || null;
+      if (hash) {
+        playerSrc = `https://kodikplayer.com/serial/${animeId}/${hash}/720p`;
+        console.log('🛠️ Собрано из hash (player_link отсутствует):', playerSrc);
+      } else {
+        console.error('❌ Нет ни player_link, ни hash');
+        playerSrc = 'about:blank';
+      }
     }
 
+    // Добавляем autoplay
     if (playerSrc && playerSrc !== 'about:blank') {
       try {
         const urlObj = new URL(playerSrc);
-        if (!urlObj.searchParams.has('autoplay')) urlObj.searchParams.set('autoplay', '1');
+        if (!urlObj.searchParams.has('autoplay')) {
+          urlObj.searchParams.set('autoplay', '1');
+        }
         playerSrc = urlObj.toString();
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Не удалось добавить autoplay');
+      }
     }
     playerIframe.src = playerSrc || 'about:blank';
 
@@ -207,4 +217,4 @@ if (window.location.hash) {
 } else {
   showSection(listSection);
   fetchAnimeList();
-      }
+    }
