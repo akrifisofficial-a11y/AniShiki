@@ -1,6 +1,6 @@
 // ===== КОНФИГУРАЦИЯ =====
-const KODIK_API_KEY = 'd99ff2ab48b0d9c42ace4901bee833ff'; // замените на свой
-const KODIK_API_URL = 'kodik-api.com';
+const KODIK_API_KEY = 'd99ff2ab48b0d9c42ace4901bee833ff';
+const KODIK_API_URL = 'https://kodik-api.com';
 
 // ===== DOM-элементы =====
 const listSection = document.getElementById('anime-list');
@@ -19,25 +19,44 @@ function showSection(section) {
   section.classList.add('active');
 }
 
-// ===== ЗАГРУЗКА СПИСКА АНИМЕ =====
+// ===== ЗАГРУЗКА СПИСКА АНИМЕ (каталог или поиск) =====
 async function fetchAnimeList(query = '') {
   catalogEl.innerHTML = '';
   loaderEl.style.display = 'block';
 
   try {
-    const params = new URLSearchParams({
+    let endpoint, params = {
       token: KODIK_API_KEY,
       sort: 'updated_at',
       order: 'desc',
       limit: 30,
       with_material_data: 'true',
-      ...(query && { title: query }),
-    });
-    const url = `${KODIK_API_URL}/search?${params}`;
+    };
+
+    if (query.trim()) {
+      // Поиск по названию
+      endpoint = '/search';
+      params.title = query.trim();
+    } else {
+      // Каталог – используем /list
+      endpoint = '/list';
+      // Фильтруем только аниме (если есть поле type)
+      params.type = 'anime'; // можно убрать, если не работает
+    }
+
+    const url = `${KODIK_API_URL}${endpoint}?${new URLSearchParams(params)}`;
+    console.log('Запрос:', url);
+
     const response = await fetch(url);
-    if (!response.ok) throw new Error(`Ошибка HTTP ${response.status}`);
+    console.log('Статус:', response.status);
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error('Ответ сервера:', text);
+      throw new Error(`Ошибка HTTP ${response.status}: ${text}`);
+    }
+
     const data = await response.json();
-    
     if (!data.results || data.results.length === 0) {
       catalogEl.innerHTML = '<p style="text-align:center;color:#7a8aaa;">Ничего не найдено</p>';
       return;
@@ -51,7 +70,7 @@ async function fetchAnimeList(query = '') {
   }
 }
 
-// ===== ОТРИСОВКА КАРТОЧЕК (клик → меняем хеш) =====
+// ===== ОТРИСОВКА КАРТОЧЕК =====
 function renderAnimeList(animes) {
   catalogEl.innerHTML = '';
   animes.forEach(anime => {
@@ -70,7 +89,6 @@ function renderAnimeList(animes) {
         <div class="year">${year}</div>
       </div>
     `;
-    // Вместо прямого вызова openPlayer – меняем хеш
     card.addEventListener('click', () => {
       window.location.hash = `anime/${id}`;
     });
@@ -78,32 +96,33 @@ function renderAnimeList(animes) {
   });
 }
 
-// ===== ЗАГРУЗКА ОДНОГО АНИМЕ ПО ID (для страницы) =====
+// ===== ЗАГРУЗКА ДАННЫХ ОДНОГО АНИМЕ ПО ID =====
 async function loadAnimeById(animeId) {
-  // Показываем плеер-секцию с индикацией загрузки
   showSection(playerSection);
   animeInfoEl.innerHTML = '<div class="loader">Загрузка данных...</div>';
-  playerIframe.src = ''; // очищаем плеер
+  playerIframe.src = '';
 
   try {
     const params = new URLSearchParams({
       token: KODIK_API_KEY,
       id: animeId,
+      with_material_data: 'true',
     });
-    const url = `${KODIK_API_URL}/anime?${params}`;
+    const url = `${KODIK_API_URL}/search?${params}`;
+    console.log('Запрос деталей:', url);
+
     const resp = await fetch(url);
     if (!resp.ok) throw new Error(`Ошибка HTTP ${resp.status}`);
     const data = await resp.json();
     if (!data.results || data.results.length === 0) throw new Error('Аниме не найдено');
     const anime = data.results[0];
 
-    // Строим плеер (последний сезон, первая серия)
+    // Плеер – последняя серия последнего сезона
     const season = anime.last_season || 1;
     const episode = anime.last_episode || 1;
     const playerSrc = `https://kodik.tv/seria/${animeId}/${season}/${episode}`;
     playerIframe.src = playerSrc;
 
-    // Извлекаем данные
     const title = anime.title || 'Без названия';
     const poster = anime.material_data?.poster_url || anime.poster_url || 'https://via.placeholder.com/300x450?text=No+Image';
     const description = anime.description || anime.material_data?.description || 'Описание отсутствует.';
@@ -111,7 +130,6 @@ async function loadAnimeById(animeId) {
     const rating = anime.rating?.imdb || anime.material_data?.rating || '—';
     const genres = anime.genres ? anime.genres.join(', ') : (anime.material_data?.genres?.join(', ') || '—');
 
-    // Отображаем детальную информацию с постером
     animeInfoEl.innerHTML = `
       <div class="anime-detail">
         <div class="poster">
@@ -131,20 +149,16 @@ async function loadAnimeById(animeId) {
         </div>
       </div>
     `;
-
-    // Обновляем заголовок страницы
     document.title = `${title} — Quarwatch`;
-
   } catch (err) {
     console.error(err);
     animeInfoEl.innerHTML = `<p style="color:#ff7a7a;">Ошибка загрузки аниме: ${err.message}</p>`;
-    // Если ошибка, можно вернуться к списку? Но оставим пользователя на странице с ошибкой.
   }
 }
 
-// ===== ОБРАБОТКА ИЗМЕНЕНИЯ ХЕША (маршрутизация) =====
+// ===== МАРШРУТИЗАЦИЯ ПО ХЕШУ =====
 function handleHashChange() {
-  const hash = window.location.hash.slice(1); // убираем '#'
+  const hash = window.location.hash.slice(1);
   if (hash.startsWith('anime/')) {
     const id = hash.split('/')[1];
     if (id) {
@@ -152,18 +166,14 @@ function handleHashChange() {
       return;
     }
   }
-  // Если хеш пустой или не соответствует, показываем список
   showSection(listSection);
-  // Если мы на главной, можно обновить список (но не обязательно)
-  // Для экономии запросов оставим как есть, но если хотим обновить – раскомментируйте:
+  // Если на главной, можно обновить список (опционально)
   // fetchAnimeList();
 }
 
 // ===== КНОПКА "НАЗАД" =====
 function goBack() {
-  // Останавливаем плеер
   playerIframe.src = '';
-  // Возвращаемся в историю или просто убираем хеш
   if (window.history.length > 1) {
     window.history.back();
   } else {
@@ -176,10 +186,9 @@ window.addEventListener('hashchange', handleHashChange);
 
 searchBtn.addEventListener('click', () => {
   const query = searchInput.value.trim();
-  // При поиске переходим на главную, если не там
+  // Если сейчас на странице аниме, сначала переключаем на главную
   if (window.location.hash) {
     window.location.hash = '';
-    // Небольшая задержка, чтобы DOM успел обновиться, затем запускаем поиск
     setTimeout(() => fetchAnimeList(query), 50);
   } else {
     fetchAnimeList(query);
@@ -190,14 +199,10 @@ searchInput.addEventListener('keydown', (e) => {
 });
 backBtn.addEventListener('click', goBack);
 
-// ===== СТАРТ ПРИЛОЖЕНИЯ =====
-// Проверяем хеш при загрузке
+// ===== СТАРТ =====
 if (window.location.hash) {
   handleHashChange();
 } else {
-  // Показываем список
   showSection(listSection);
   fetchAnimeList();
-}
-
-// Дополнительно: если пользователь кликнул на карточку, но мы уже на странице аниме, ничего страшного – хеш изменится и перезагрузит данные.
+                      }
