@@ -64,29 +64,30 @@ function updateUserUI() {
     }
 }
 
-// ===== ЗАГРУЗКА СПИСКА АНИМЕ (используем /list) =====
+// ===== ЗАГРУЗКА СПИСКА АНИМЕ (каталог / поиск) =====
 async function fetchAnimeList(query = '') {
     catalogEl.innerHTML = '';
     loaderEl.style.display = 'block';
 
     try {
-        // Всегда используем эндпоинт /list
-        const params = {
+        let endpoint, params = {
             token: KODIK_API_KEY,
             sort: 'updated_at',
             order: 'desc',
             limit: 30,
             with_material_data: 'true',
-            with_player_link: 'true', // просим ссылку на плеер
+            with_player_link: 'true',
             types: 'anime-serial,anime'
         };
 
-        // Если есть поисковый запрос — добавляем параметр title
         if (query.trim()) {
+            endpoint = '/search';
             params.title = query.trim();
+        } else {
+            endpoint = '/list';
         }
 
-        const url = `${KODIK_API_URL}/list?${new URLSearchParams(params)}`;
+        const url = `${KODIK_API_URL}${endpoint}?${new URLSearchParams(params)}`;
         console.log('Запрос каталога:', url);
 
         const response = await fetch(url);
@@ -147,7 +148,6 @@ async function loadAnimeById(animeId) {
     playerIframe.src = '';
 
     try {
-        // Используем /list для получения данных конкретного аниме по ID
         const params = new URLSearchParams({
             token: KODIK_API_KEY,
             id: animeId,
@@ -167,6 +167,7 @@ async function loadAnimeById(animeId) {
         let playerSrc = null;
 
         if (anime.player_link) {
+            // Добавляем https: если ссылка начинается с //
             playerSrc = anime.player_link.startsWith('//') ? `https:${anime.player_link}` : anime.player_link;
             console.log('🎬 player_link от Kodik:', playerSrc);
         } else {
@@ -181,7 +182,7 @@ async function loadAnimeById(animeId) {
             }
         }
 
-        // Добавляем параметр autoplay для автоматического запуска
+        // Добавляем autoplay, если плеер это поддерживает
         if (playerSrc && playerSrc !== 'about:blank') {
             const hasParams = playerSrc.includes('?');
             playerSrc += (hasParams ? '&' : '?') + 'autoplay=1';
@@ -313,18 +314,13 @@ function handleHashChange() {
             return;
         }
     }
-    // Если хеш пустой или не соответствует аниме — показываем список
     showSection(listSection);
-    // Опционально: обновить список при возврате на главную
-    // fetchAnimeList();
 }
 
 // ===== КНОПКА "НАЗАД" =====
 function goBack() {
-    playerIframe.src = ''; // Останавливаем видео
-    // Всегда переходим на главную, убирая хеш
+    playerIframe.src = '';
     window.location.hash = '';
-    // Показываем секцию списка (handleHashChange вызовется автоматически)
 }
 
 // ===== ОБРАБОТЧИКИ СОБЫТИЙ =====
@@ -332,10 +328,8 @@ window.addEventListener('hashchange', handleHashChange);
 
 searchBtn.addEventListener('click', () => {
     const query = searchInput.value.trim();
-    // Если мы на странице аниме — сначала переключаемся на главную
     if (window.location.hash) {
         window.location.hash = '';
-        // Даём время на переключение, затем выполняем поиск
         setTimeout(() => fetchAnimeList(query), 50);
     } else {
         fetchAnimeList(query);
