@@ -7,6 +7,13 @@ const SHIKIMORI_CLIENT_ID = 'ВАШ_CLIENT_ID';
 const SHIKIMORI_REDIRECT_URI = 'https://ваш-сайт.github.io/ваш-репозиторий/callback.html';
 const SHIKIMORI_AUTH_URL = 'https://shikimori.one/oauth/authorize';
 
+// ===== СОСТОЯНИЕ =====
+let currentType = 'anime'; // anime, movie, series, updates
+let currentAnimeId = null;
+let currentAnimeData = null;
+let accessToken = localStorage.getItem('shikimori_token') || null;
+let userData = null;
+
 // ===== DOM-элементы =====
 const listSection = document.getElementById('anime-list');
 const playerSection = document.getElementById('player-section');
@@ -20,18 +27,47 @@ const playerIframe = document.getElementById('player-iframe');
 const animeInfoEl = document.getElementById('anime-info');
 const loginBtn = document.getElementById('login-btn');
 const userInfoEl = document.getElementById('user-info');
-
-// ===== СОСТОЯНИЕ =====
-let currentAnimeId = null;
-let currentAnimeData = null;
-let accessToken = localStorage.getItem('shikimori_token') || null;
-let userData = null;
+const hamburger = document.getElementById('hamburger');
+const navMenu = document.getElementById('nav-menu');
+const menuLinks = document.querySelectorAll('.nav-menu a');
 
 // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
 function showSection(section) {
     document.querySelectorAll('main section').forEach(s => s.classList.remove('active'));
     section.classList.add('active');
 }
+
+// ===== МЕНЮ =====
+function toggleMenu() {
+    hamburger.classList.toggle('active');
+    navMenu.classList.toggle('open');
+}
+
+function setActiveType(type) {
+    currentType = type;
+    // Обновляем активный пункт меню
+    menuLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.dataset.type === type) {
+            link.classList.add('active');
+        }
+    });
+    // Закрываем меню
+    hamburger.classList.remove('active');
+    navMenu.classList.remove('open');
+    // Перезагружаем список
+    fetchAnimeList();
+}
+
+// Обработчики меню
+hamburger.addEventListener('click', toggleMenu);
+menuLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const type = link.dataset.type;
+        if (type) setActiveType(type);
+    });
+});
 
 // ===== АВТОРИЗАЦИЯ SHIKIMORI =====
 function loginShikimori() {
@@ -64,27 +100,43 @@ function updateUserUI() {
     }
 }
 
-// ===== ЗАГРУЗКА КАТАЛОГА =====
+// ===== ЗАГРУЗКА КАТАЛОГА (с учётом типа) =====
 async function fetchAnimeList(query = '') {
     catalogEl.innerHTML = '';
     loaderEl.style.display = 'block';
 
     try {
-        let endpoint, params = {
+        let endpoint = '/list';
+        let params = {
             token: KODIK_API_KEY,
             sort: 'updated_at',
             order: 'desc',
             limit: 30,
             with_material_data: 'true',
             with_player_link: 'true',
-            types: 'anime-serial,anime'
         };
 
+        // Определяем типы в зависимости от currentType
+        let types = [];
+        if (currentType === 'anime') {
+            types = ['anime-serial', 'anime'];
+        } else if (currentType === 'movie') {
+            types = ['movie'];
+        } else if (currentType === 'series') {
+            types = ['anime-serial']; // можно также добавить 'tv-series' если есть
+        } else if (currentType === 'updates') {
+            // Новинки – все типы, только сортировка по дате
+            types = ['anime', 'anime-serial', 'movie', 'cartoon']; // можно расширить
+        }
+        if (types.length) {
+            params.types = types.join(',');
+        }
+
+        // Если поисковой запрос
         if (query.trim()) {
             endpoint = '/search';
             params.title = query.trim();
-        } else {
-            endpoint = '/list';
+            // Поиск лучше вести без фильтра по типам, но оставим
         }
 
         const url = `${KODIK_API_URL}${endpoint}?${new URLSearchParams(params)}`;
@@ -136,9 +188,8 @@ function renderAnimeList(animes) {
     });
 }
 
-// ===== ЗАГРУЗКА ДЕТАЛЕЙ КОНКРЕТНОГО АНИМЕ =====
+// ===== ЗАГРУЗКА ДЕТАЛЕЙ КОНКРЕТНОГО ТАЙТЛА =====
 async function loadAnimeById(animeId) {
-    // Сбрасываем состояние
     currentAnimeId = animeId;
     currentAnimeData = null;
 
@@ -158,7 +209,7 @@ async function loadAnimeById(animeId) {
         const resp = await fetch(url);
         if (!resp.ok) throw new Error(`Ошибка HTTP ${resp.status}`);
         const data = await resp.json();
-        if (!data.results || data.results.length === 0) throw new Error('Аниме не найдено');
+        if (!data.results || data.results.length === 0) throw new Error('Тайтл не найден');
         const anime = data.results[0];
         currentAnimeData = anime;
 
@@ -170,20 +221,18 @@ async function loadAnimeById(animeId) {
             playerSrc = anime.player_link.startsWith('//') ? `https:${anime.player_link}` : anime.player_link;
             console.log('🎬 Исходный player_link от Kodik:', playerSrc);
 
-            // Добавляем параметры для автоматического подтверждения возраста и автозапуска
+            // Добавляем все необходимые параметры, которых может не хватать
             const urlObj = new URL(playerSrc);
-            // Если параметров нет – добавляем
-            if (!urlObj.searchParams.has('min_age_confirmation')) {
-                urlObj.searchParams.set('min_age_confirmation', 'true');
-            }
-            if (!urlObj.searchParams.has('lgbt_preview_icon')) {
-                urlObj.searchParams.set('lgbt_preview_icon', 'true');
-            }
-            if (!urlObj.searchParams.has('lgbt_confirmation')) {
-                urlObj.searchParams.set('lgbt_confirmation', 'true');
-            }
-            if (!urlObj.searchParams.has('autoplay')) {
-                urlObj.searchParams.set('autoplay', '1');
+            const requiredParams = {
+                min_age_confirmation: 'true',
+                lgbt_preview_icon: 'true',
+                lgbt_confirmation: 'true',
+                autoplay: '1'
+            };
+            for (const [key, value] of Object.entries(requiredParams)) {
+                if (!urlObj.searchParams.has(key)) {
+                    urlObj.searchParams.set(key, value);
+                }
             }
             playerSrc = urlObj.toString();
             console.log('✅ Итоговая ссылка плеера:', playerSrc);
@@ -209,14 +258,12 @@ async function loadAnimeById(animeId) {
         const rating = anime.rating?.imdb || anime.material_data?.rating || '—';
         const genres = anime.genres ? anime.genres.join(', ') : (anime.material_data?.genres?.join(', ') || '—');
 
-        // --- Ссылка на Shikimori ---
         const shikimoriId = anime.shikimori_id || anime.material_data?.shikimori_id || null;
         let shikimoriLinkHtml = '';
         if (shikimoriId) {
             shikimoriLinkHtml = `<a href="https://shikimori.one/animes/${shikimoriId}" target="_blank" class="shikimori-link">🔗 Страница на Shikimori</a>`;
         }
 
-        // --- Кнопка добавления в список ---
         let addBtnHtml = '';
         if (accessToken) {
             addBtnHtml = `<button id="add-to-list-btn" class="back-btn" style="margin-top:10px;">📥 Добавить в мой список</button>`;
@@ -248,24 +295,24 @@ async function loadAnimeById(animeId) {
         document.getElementById('add-to-list-btn')?.addEventListener('click', addToShikimoriList);
     } catch (err) {
         console.error(err);
-        animeInfoEl.innerHTML = `<p style="color:#ff7a7a;">Ошибка загрузки аниме: ${err.message}</p>`;
+        animeInfoEl.innerHTML = `<p style="color:#ff7a7a;">Ошибка загрузки: ${err.message}</p>`;
     }
 }
 
 // ===== ДОБАВЛЕНИЕ В СПИСОК SHIKIMORI =====
 async function addToShikimoriList() {
     if (!accessToken) {
-        alert('Войдите в Shikimori, чтобы добавлять аниме в список.');
+        alert('Войдите в Shikimori, чтобы добавлять в список.');
         return;
     }
     if (!currentAnimeData) {
-        alert('Данные аниме не загружены.');
+        alert('Данные не загружены.');
         return;
     }
 
     const shikimoriId = currentAnimeData.shikimori_id || currentAnimeData.material_data?.shikimori_id;
     if (!shikimoriId) {
-        alert('Не удалось найти ID на Shikimori для этого аниме.');
+        alert('Не удалось найти ID на Shikimori для этого тайтла.');
         return;
     }
 
@@ -291,7 +338,7 @@ async function addToShikimoriList() {
         }
 
         const result = await response.json();
-        alert('Аниме добавлено в список "Смотрю"!');
+        alert('Добавлено в список "Смотрю"!');
         console.log('Ответ Shikimori:', result);
     } catch (err) {
         console.error(err);
@@ -385,6 +432,10 @@ async function initUser() {
 // ===== СТАРТ =====
 (async function() {
     await initUser();
+
+    // Устанавливаем активный пункт меню по умолчанию
+    const defaultLink = document.querySelector('.nav-menu a[data-type="anime"]');
+    if (defaultLink) defaultLink.classList.add('active');
 
     if (window.location.hash) {
         handleHashChange();
