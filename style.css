@@ -251,3 +251,48 @@ section.active {
 @media (max-width: 500px) {
   .search-bar input { width: 70%; }
 }
+/* ===== СТРАНИЦА АНИМЕ (постер + детали) ===== */
+.anime-detail {
+  display: flex;
+  gap: 30px;
+  margin: 20px 0 30px;
+  flex-wrap: wrap;
+}
+.anime-detail .poster {
+  flex: 0 0 240px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 0 30px rgba(100, 80, 160, 0.3);
+}
+.anime-detail .poster img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.anime-detail .info {
+  flex: 1;
+  min-width: 200px;
+}
+.anime-detail .info h2 {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+.anime-detail .info .meta {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  color: #9aa3c0;
+  margin: 6px 0 12px;
+  font-size: 0.9rem;
+}
+.anime-detail .info .description {
+  line-height: 1.7;
+  color: #c8d0e8;
+}
+@media (max-width: 700px) {
+  .anime-detail .poster {
+    flex-basis: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+}
