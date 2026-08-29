@@ -2,10 +2,13 @@
 const KODIK_API_KEY = 'd99ff2ab48b0d9c42ace4901bee833ff';
 const KODIK_API_URL = 'https://kodik-api.com';
 
-// Настройки Shikimori OAuth (замените на свои)
+// Настройки Shikimori OAuth
 const SHIKIMORI_CLIENT_ID = 'ВАШ_CLIENT_ID'; // получите на https://shikimori.one/oauth/applications
-const SHIKIMORI_REDIRECT_URI = 'https://ваш-сайт.github.io/callback';
-const SHIKIMORI_AUTH_URL = 'https://shikimori.one/oauth/authorize';
+const SHIKIMORI_REDIRECT_URI = 'https://ваш-сайт.github.io/callback.html'; // УКАЖИТЕ СВОЙ URL
+const SHIKIMORI_AUTH_URL = 'https://shikimori.io/oauth/authorize';
+
+// ===== НОВЫЙ ДОМЕН ПЛЕЕРА =====
+const PLAYER_DOMAIN = 'https://w.kdkonl.com';
 
 // ===== DOM-элементы =====
 const listSection = document.getElementById('anime-list');
@@ -61,17 +64,6 @@ function updateUserUI() {
     loginBtn.textContent = 'Войти через Shikimori';
     loginBtn.onclick = loginShikimori;
     userInfoEl.textContent = '';
-  }
-}
-
-// Обработка колбэка (редирект от Shikimori)
-async function handleShikimoriCallback() {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-  if (code) {
-    console.log('Получен код авторизации:', code);
-    alert('Код получен, но для завершения входа нужен бэкенд. Подробнее в консоли.');
-    window.history.replaceState({}, document.title, window.location.pathname);
   }
 }
 
@@ -146,8 +138,13 @@ function renderAnimeList(animes) {
   });
 }
 
-// ===== ЗАГРУЗКА ДАННЫХ ОДНОГО АНИМЕ (с ссылкой на Shikimori) =====
+// ===== ЗАГРУЗКА ДАННЫХ ОДНОГО АНИМЕ (с новым доменом плеера) =====
 async function loadAnimeById(animeId) {
+  // Предотвращаем дублирование
+  if (currentAnimeId === animeId && document.getElementById('anime-detail')) {
+    return;
+  }
+
   currentAnimeId = animeId;
   showSection(playerSection);
   animeInfoEl.innerHTML = '<div class="loader">Загрузка данных...</div>';
@@ -167,10 +164,10 @@ async function loadAnimeById(animeId) {
     const anime = data.results[0];
     currentAnimeData = anime;
 
-    // --- Плеер ---
+    // --- Плеер с НОВЫМ ДОМЕНОМ ---
     const season = anime.last_season || 1;
     const episode = anime.last_episode || 1;
-    const playerSrc = `https://kodik.tv/seria/${animeId}/${season}/${episode}`;
+    const playerSrc = `${PLAYER_DOMAIN}/seria/${animeId}/${season}/${episode}`;
     playerIframe.src = playerSrc;
 
     // --- Данные ---
@@ -194,9 +191,8 @@ async function loadAnimeById(animeId) {
       addBtnHtml = `<button id="add-to-list-btn" class="back-btn" style="margin-top:10px;">📥 Добавить в мой список</button>`;
     }
 
-    // --- Вёрстка страницы аниме ---
     animeInfoEl.innerHTML = `
-      <div class="anime-detail">
+      <div class="anime-detail" id="anime-detail">
         <div class="poster">
           <img src="${poster}" alt="${title}" />
         </div>
@@ -221,7 +217,6 @@ async function loadAnimeById(animeId) {
 
     document.title = `${title} — Quarwatch`;
 
-    // --- Обработчик кнопки добавления в список ---
     document.getElementById('add-to-list-btn')?.addEventListener('click', addToShikimoriList);
   } catch (err) {
     console.error(err);
@@ -343,6 +338,7 @@ async function initUser() {
       updateUserUI();
     } catch(e) {}
   }
+  // Если есть токен, но нет данных – запрашиваем /whoami
   if (accessToken && !userData) {
     try {
       const resp = await fetch('https://shikimori.one/api/users/whoami', {
@@ -362,7 +358,6 @@ async function initUser() {
 
 // ===== СТАРТ =====
 (async function() {
-  await handleShikimoriCallback();
   await initUser();
 
   if (window.location.hash) {
