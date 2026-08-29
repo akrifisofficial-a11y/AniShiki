@@ -16,20 +16,37 @@
 
   <!-- Шапка -->
   <header>
-    <div class="logo">🌙 Quarwatch</div>
-    <div class="subtitle">смотреть аниме онлайн</div>
-    <div style="margin-top:10px;">
-      <button id="login-btn" class="back-btn">Войти через Shikimori</button>
-      <span id="user-info" style="margin-left:10px;color:#9aa3c0;"></span>
+    <div class="header-container">
+      <!-- Гамбургер -->
+      <div class="hamburger" id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <div class="logo">🌙 Quarwatch</div>
+      <div class="subtitle">смотреть онлайн</div>
+      <div class="auth-buttons">
+        <button id="login-btn" class="back-btn">Войти через Shikimori</button>
+        <span id="user-info" style="margin-left:10px;color:#9aa3c0;"></span>
+      </div>
     </div>
+    <!-- Меню -->
+    <nav id="nav-menu" class="nav-menu">
+      <ul>
+        <li><a href="#" data-type="anime">Аниме</a></li>
+        <li><a href="#" data-type="movie">Фильмы</a></li>
+        <li><a href="#" data-type="series">Сериалы</a></li>
+        <li><a href="#" data-type="updates">Новинки</a></li>
+      </ul>
+    </nav>
   </header>
 
   <!-- Основной контент -->
   <main id="app">
-    <!-- Список аниме -->
+    <!-- Список -->
     <section id="anime-list" class="active">
       <div class="search-bar">
-        <input type="text" id="search-input" placeholder="Поиск аниме..." />
+        <input type="text" id="search-input" placeholder="Поиск..." />
         <button id="search-btn">🔍</button>
       </div>
       <div id="catalog" class="catalog-grid"></div>
@@ -46,7 +63,7 @@
         <iframe id="player-iframe" 
                 src="" 
                 allowfullscreen 
-                allow="autoplay; encrypted-media">
+                allow="autoplay; encrypted-media; fullscreen">
         </iframe>
       </div>
       <div id="anime-info" class="anime-info"></div>
@@ -55,4 +72,4 @@
 
   <script src="script.js"></script>
 </body>
-        </html>
+</html>
