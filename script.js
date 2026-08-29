@@ -1,6 +1,6 @@
 // ===== КОНФИГУРАЦИЯ =====
-const KODIK_API_KEY = 'ВАШ_API_КЛЮЧ'; // замените на свой
-const KODIK_API_URL = 'https://kodikapi.com';
+const KODIK_API_KEY = 'd99ff2ab48b0d9c42ace4901bee833ff'; // замените на свой
+const KODIK_API_URL = 'kodik-api.com';
 
 // ===== DOM-элементы =====
 const listSection = document.getElementById('anime-list');
