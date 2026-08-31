@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quarwatch – аниме онлайн</title>
+  <title>Quarwatch – смотреть онлайн</title>
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
 </head>
@@ -12,18 +12,14 @@
   <div class="moon"></div>
 
   <header>
-    <!-- Логотип теперь кликабельный -->
     <a href="#" id="logo-link" class="logo-link">
       <div class="logo">🌙 Quarwatch</div>
     </a>
-    <div class="subtitle">аниме онлайн</div>
+    <div class="subtitle">смотреть онлайн</div>
     
-    <!-- Категории -->
     <nav class="categories">
-      <button class="category-btn active" data-type="anime">🎌 Аниме</button>
+      <button class="category-btn active" data-type="series">📺 Сериалы</button>
       <button class="category-btn" data-type="movie">🎬 Фильмы</button>
-      <button class="category-btn" data-type="series">📺 Сериалы</button>
-      <button class="category-btn" data-type="updates">🔥 Анонсы</button>
     </nav>
   </header>
 
@@ -35,6 +31,7 @@
         <button id="search-btn">🔍</button>
       </div>
       <div id="catalog" class="catalog-grid"></div>
+      <button id="load-more-btn" class="back-btn" style="display:none; margin: 20px auto; width: fit-content;">📥 Загрузить ещё</button>
       <div id="loader" class="loader">Загрузка...</div>
     </section>
 
@@ -51,6 +48,39 @@
     </section>
   </main>
 
+  <!-- Футер -->
+  <footer id="site-footer" style="
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 30px 20px;
+    margin-top: 40px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    background: linear-gradient(0deg, rgba(10,14,26,0.8) 0%, transparent 100%);
+  ">
+    <p style="
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem;
+      color: #5a6a8a;
+      letter-spacing: 2px;
+      margin: 0;
+      line-height: 1.8;
+    ">
+      © <span id="current-year">2026</span> Quarwatch
+      <span style="display:inline-block; margin:0 10px; color:#3a4060;">|</span>
+      Создатель: <span style="color:#9aa3c0;">quartess</span>
+    </p>
+    <p style="
+      font-size: 0.65rem;
+      color: #3a4060;
+      letter-spacing: 1px;
+      margin: 5px 0 0;
+      font-family: 'Orbitron', sans-serif;
+    ">
+      🌙 Сделано с любовью!
+    </p>
+  </footer>
+
   <script src="script.js"></script>
 </body>
-          </html>
+</html>
