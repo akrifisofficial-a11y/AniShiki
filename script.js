@@ -15,7 +15,7 @@ function filterAnimeOnly(results) {
     return results.filter(item => isAnime(item));
 }
 
-// ===== УДАЛЕНИЕ ДУБЛИКАТОВ =====
+// ===== ОСНОВНАЯ ФУНКЦИЯ УДАЛЕНИЯ ДУБЛИКАТОВ =====
 function removeDuplicates(animes) {
     const seen = new Map();
     
@@ -111,7 +111,7 @@ function showSection(section) {
     section.classList.add('active');
 }
 
-// ===== ЗАГРУЗКА КАТАЛОГА =====
+// ===== ЗАГРУЗКА КАТАЛОГА (С УДАЛЕНИЕМ ДУБЛИКАТОВ) =====
 async function fetchAnimeList(query = '', loadMore = false) {
     if (isLoading) return;
     isLoading = true;
@@ -159,7 +159,10 @@ async function fetchAnimeList(query = '', loadMore = false) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
 
+        // 1. Фильтруем только аниме
         let filteredResults = filterAnimeOnly(data.results);
+        
+        // 2. Удаляем дубликаты по названию (для всех категорий!)
         const uniqueResults = removeDuplicates(filteredResults);
         
         nextPageUrl = (uniqueResults.length > 0) ? data.next_page || null : null;
@@ -190,7 +193,7 @@ async function fetchAnimeList(query = '', loadMore = false) {
     }
 }
 
-// ===== ОТРИСОВКА КАРТОЧЕК =====
+// ===== ОТРИСОВКА КАРТОЧЕК (дополнительная проверка) =====
 function renderAnimeList(animes, append = false) {
     if (!append) {
         catalogEl.innerHTML = '';
@@ -478,4 +481,4 @@ if (window.location.hash) {
 } else {
     showSection(listSection);
     fetchAnimeList();
-            }
+        }
