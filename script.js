@@ -98,16 +98,17 @@ async function fetchAnimeList(query = '', loadMore = false) {
         types: ''
       };
 
+      // Определяем типы в зависимости от категории
       if (currentCategory === 'series') {
-        params.types = 'anime-serial,anime';
+        params.types = 'anime-serial,anime'; // сериалы + полнометражные аниме
       } else if (currentCategory === 'movie') {
-        params.types = 'movie,foreign-movie,russian-movie,foreign-cartoon,russian-cartoon,soviet-cartoon';
+        params.types = 'anime'; // ТОЛЬКО аниме-фильмы (полнометражные)
       }
 
       if (query.trim()) {
         endpoint = '/search';
         params.title = query.trim();
-        delete params.types;
+        delete params.types; // при поиске ищем по всем типам
       }
 
       url = `${KODIK_API_URL}${endpoint}?${new URLSearchParams(params)}`;
@@ -407,4 +408,4 @@ if (window.location.hash) {
 } else {
   showSection(listSection);
   fetchAnimeList();
-  }
+      }
