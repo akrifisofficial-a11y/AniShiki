@@ -15,19 +15,25 @@ const playerIframe = document.getElementById('player-iframe');
 const animeInfoEl = document.getElementById('anime-info');
 const logoLink = document.getElementById('logo-link');
 const categoryBtns = document.querySelectorAll('.category-btn');
+const loadMoreBtn = document.getElementById('load-more-btn');
 
 let currentAnimeId = null;
 let currentSeason = 1;
 let currentEpisode = 1;
-let currentCategory = 'anime'; // anime, movie, series, updates
+let currentCategory = 'series';
+let nextPageUrl = null;
+let isLoading = false;
+let currentQuery = '';
 
 // =========================================
 // КАТЕГОРИИ
 // =========================================
 function setCategory(type) {
   currentCategory = type;
+  nextPageUrl = null;
+  currentQuery = '';
+  searchInput.value = '';
   
-  // Обновляем активную кнопку
   categoryBtns.forEach(btn => {
     btn.classList.remove('active');
     if (btn.dataset.type === type) {
@@ -35,12 +41,10 @@ function setCategory(type) {
     }
   });
   
-  // Если мы на странице плеера – возвращаемся на главную
   if (window.location.hash) {
     window.location.hash = '';
   }
   
-  // Перезагружаем каталог
   fetchAnimeList();
 }
 
@@ -55,11 +59,9 @@ categoryBtns.forEach(btn => {
 // =========================================
 logoLink.addEventListener('click', (e) => {
   e.preventDefault();
-  // Возвращаемся на главную
   if (window.location.hash) {
     window.location.hash = '';
   } else {
-    // Если уже на главной, просто обновляем
     fetchAnimeList();
   }
 });
@@ -69,65 +71,89 @@ function showSection(section) {
   section.classList.add('active');
 }
 
-// ===== ЗАГРУЗКА КАТАЛОГА (с учётом категории) =====
-async function fetchAnimeList(query = '') {
-  catalogEl.innerHTML = '';
+// ===== ЗАГРУЗКА КАТАЛОГА (с пагинацией) =====
+async function fetchAnimeList(query = '', loadMore = false) {
+  if (isLoading) return;
+  isLoading = true;
+  
+  if (!loadMore) {
+    catalogEl.innerHTML = '';
+    nextPageUrl = null;
+    currentQuery = query;
+  }
+  
   loaderEl.style.display = 'block';
 
   try {
-    let endpoint = '/list';
-    let params = {
-      token: KODIK_API_KEY,
-      sort: 'updated_at',
-      order: 'desc',
-      limit: 30,
-      with_material_data: 'true',
-      types: ''
-    };
+    let url;
+    
+    if (loadMore && nextPageUrl) {
+      url = nextPageUrl;
+    } else {
+      let endpoint = '/list';
+      let params = {
+        token: KODIK_API_KEY,
+        limit: 30,
+        with_material_data: 'true',
+        types: ''
+      };
 
-    // Определяем типы в зависимости от категории
-    if (currentCategory === 'anime') {
-      params.types = 'anime-serial,anime';
-    } else if (currentCategory === 'movie') {
-      params.types = 'movie,foreign-movie,russian-movie,foreign-cartoon,russian-cartoon,soviet-cartoon';
-    } else if (currentCategory === 'series') {
-      params.types = 'foreign-serial,russian-serial,cartoon-serial,russian-cartoon-serial,documentary-serial,russian-documentary-serial';
-    } else if (currentCategory === 'updates') {
-      // Анонсы – все типы, но сортировка по дате добавления (самые новые)
-      params.types = 'anime-serial,anime,movie,foreign-serial,russian-serial,cartoon-serial';
-      params.sort = 'created_at'; // сортируем по дате добавления
+      // Определяем типы в зависимости от категории
+      if (currentCategory === 'series') {
+        params.types = 'anime-serial,anime'; // сериалы и полнометражные аниме
+      } else if (currentCategory === 'movie') {
+        params.types = 'movie,foreign-movie,russian-movie,foreign-cartoon,russian-cartoon,soviet-cartoon';
+      }
+
+      if (query.trim()) {
+        endpoint = '/search';
+        params.title = query.trim();
+        delete params.types; // при поиске ищем по всем типам
+      }
+
+      url = `${KODIK_API_URL}${endpoint}?${new URLSearchParams(params)}`;
     }
 
-    if (query.trim()) {
-      endpoint = '/search';
-      params.title = query.trim();
-      // При поиске типы не фильтруем (ищем по всем)
-      delete params.types;
-    }
-
-    const url = `${KODIK_API_URL}${endpoint}?${new URLSearchParams(params)}`;
     console.log('📡 Запрос каталога:', url);
 
     const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
 
+    nextPageUrl = data.next_page || null;
+
     if (!data.results || data.results.length === 0) {
-      catalogEl.innerHTML = '<p style="text-align:center;color:#7a8aaa;">Ничего не найдено</p>';
+      if (!loadMore) {
+        catalogEl.innerHTML = '<p style="text-align:center;color:#7a8aaa;">Ничего не найдено</p>';
+      }
+      loadMoreBtn.style.display = 'none';
       return;
     }
-    renderAnimeList(data.results);
+    
+    renderAnimeList(data.results, loadMore);
+    
+    if (nextPageUrl) {
+      loadMoreBtn.style.display = 'block';
+    } else {
+      loadMoreBtn.style.display = 'none';
+    }
   } catch (err) {
     console.error('❌ Ошибка загрузки каталога:', err);
-    catalogEl.innerHTML = `<p style="text-align:center;color:#ff7a7a;">Ошибка: ${err.message}</p>`;
+    if (!loadMore) {
+      catalogEl.innerHTML = `<p style="text-align:center;color:#ff7a7a;">Ошибка: ${err.message}</p>`;
+    }
   } finally {
     loaderEl.style.display = 'none';
+    isLoading = false;
   }
 }
 
 // ===== ОТРИСОВКА КАРТОЧЕК =====
-function renderAnimeList(animes) {
-  catalogEl.innerHTML = '';
+function renderAnimeList(animes, append = false) {
+  if (!append) {
+    catalogEl.innerHTML = '';
+  }
+  
   animes.forEach(anime => {
     const card = document.createElement('div');
     card.className = 'anime-card';
@@ -369,10 +395,14 @@ searchInput.addEventListener('keydown', (e) => {
 backBtn.addEventListener('click', goBack);
 shareBtn.addEventListener('click', copyPageLink);
 
+loadMoreBtn.addEventListener('click', () => {
+  fetchAnimeList(currentQuery, true);
+});
+
 // ===== СТАРТ =====
 if (window.location.hash) {
   handleHashChange();
 } else {
   showSection(listSection);
   fetchAnimeList();
-      }
+                          }
