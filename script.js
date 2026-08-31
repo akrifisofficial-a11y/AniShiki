@@ -15,6 +15,33 @@ function filterAnimeOnly(results) {
     return results.filter(item => isAnime(item));
 }
 
+// ===== ОСНОВНАЯ ФУНКЦИЯ УДАЛЕНИЯ ДУБЛИКАТОВ =====
+function removeDuplicates(animes) {
+    const seen = new Map();
+    
+    animes.forEach(anime => {
+        const key = anime.title.toLowerCase().trim();
+        
+        if (!seen.has(key)) {
+            seen.set(key, anime);
+        } else {
+            const existing = seen.get(key);
+            if (anime.year && !existing.year) {
+                seen.set(key, anime);
+            } else if (anime.quality && existing.quality) {
+                const qualityOrder = ['720p', '1080p', 'BDRip', 'WEB-DL'];
+                const newQualityIndex = qualityOrder.findIndex(q => anime.quality.includes(q));
+                const oldQualityIndex = qualityOrder.findIndex(q => existing.quality.includes(q));
+                if (newQualityIndex > oldQualityIndex) {
+                    seen.set(key, anime);
+                }
+            }
+        }
+    });
+    
+    return Array.from(seen.values());
+}
+
 // ===== DOM =====
 const listSection = document.getElementById('anime-list');
 const playerSection = document.getElementById('player-section');
@@ -37,7 +64,6 @@ let currentCategory = 'series';
 let nextPageUrl = null;
 let isLoading = false;
 let currentQuery = '';
-let loadedAnimeIds = new Set(); // Хранит ID уже загруженных страниц
 
 // =========================================
 // КАТЕГОРИИ
@@ -85,7 +111,7 @@ function showSection(section) {
     section.classList.add('active');
 }
 
-// ===== ЗАГРУЗКА КАТАЛОГА =====
+// ===== ЗАГРУЗКА КАТАЛОГА (С УДАЛЕНИЕМ ДУБЛИКАТОВ) =====
 async function fetchAnimeList(query = '', loadMore = false) {
     if (isLoading) return;
     isLoading = true;
@@ -107,7 +133,7 @@ async function fetchAnimeList(query = '', loadMore = false) {
             let endpoint = '/list';
             let params = {
                 token: KODIK_API_KEY,
-                limit: 30,
+                limit: 50,
                 with_material_data: 'true',
                 types: 'anime-serial,anime'
             };
@@ -133,10 +159,15 @@ async function fetchAnimeList(query = '', loadMore = false) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
 
+        // 1. Фильтруем только аниме
         let filteredResults = filterAnimeOnly(data.results);
-        nextPageUrl = (filteredResults.length > 0) ? data.next_page || null : null;
+        
+        // 2. Удаляем дубликаты по названию (для всех категорий!)
+        const uniqueResults = removeDuplicates(filteredResults);
+        
+        nextPageUrl = (uniqueResults.length > 0) ? data.next_page || null : null;
 
-        if (!filteredResults || filteredResults.length === 0) {
+        if (!uniqueResults || uniqueResults.length === 0) {
             if (!loadMore) {
                 catalogEl.innerHTML = '<p style="text-align:center;color:#7a8aaa;">Аниме не найдено</p>';
             }
@@ -144,7 +175,7 @@ async function fetchAnimeList(query = '', loadMore = false) {
             return;
         }
 
-        renderAnimeList(filteredResults, loadMore);
+        renderAnimeList(uniqueResults, loadMore);
 
         if (nextPageUrl) {
             loadMoreBtn.style.display = 'block';
@@ -162,19 +193,21 @@ async function fetchAnimeList(query = '', loadMore = false) {
     }
 }
 
-// ===== ОТРИСОВКА КАРТОЧЕК =====
+// ===== ОТРИСОВКА КАРТОЧЕК (дополнительная проверка) =====
 function renderAnimeList(animes, append = false) {
     if (!append) {
         catalogEl.innerHTML = '';
     }
 
-    // Убираем дубликаты по ID перед отрисовкой
     const uniqueAnimes = [];
     const seenIds = new Set();
+    const seenTitles = new Set();
     
     animes.forEach(anime => {
-        if (!seenIds.has(anime.id)) {
+        const titleKey = anime.title.toLowerCase().trim();
+        if (!seenIds.has(anime.id) && !seenTitles.has(titleKey)) {
             seenIds.add(anime.id);
+            seenTitles.add(titleKey);
             uniqueAnimes.push(anime);
         }
     });
@@ -195,9 +228,18 @@ function renderAnimeList(animes, append = false) {
                 <div class="year">${year}</div>
             </div>
         `;
-        card.addEventListener('click', () => {
-            window.location.hash = `anime/${id}`;
+        
+        card.dataset.animeId = id;
+        
+        card.addEventListener('click', function() {
+            const animeId = this.dataset.animeId;
+            if (currentAnimeId === animeId) {
+                console.log('⏭️ Это аниме уже открыто');
+                return;
+            }
+            window.location.hash = `anime/${animeId}`;
         });
+        
         catalogEl.appendChild(card);
     });
 }
@@ -273,17 +315,14 @@ function showCopyNotification(message) {
     }, 3000);
 }
 
-// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА (БЕЗ ДУБЛИРОВАНИЯ) =====
+// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА =====
 async function loadAnimeById(animeId) {
-    // Если эта страница уже загружена — не перезагружаем
-    if (loadedAnimeIds.has(animeId)) {
-        console.log('⏭️ Страница уже загружена, пропускаем');
+    if (currentAnimeId === animeId) {
+        console.log('⏭️ Аниме уже открыто, пропускаем загрузку');
         return;
     }
 
     currentAnimeId = animeId;
-    loadedAnimeIds.add(animeId); // Запоминаем, что страница загружена
-
     showSection(playerSection);
     animeInfoEl.innerHTML = '<div class="loader">Загрузка...</div>';
     playerIframe.src = '';
@@ -303,7 +342,6 @@ async function loadAnimeById(animeId) {
 
         const anime = data.results[0];
 
-        // === БЛОКИРОВКА НЕ-АНИМЕ ===
         if (!isAnime(anime)) {
             console.warn('⛔ БЛОКИРОВКА! Не аниме:', anime.type, anime.title);
             animeInfoEl.innerHTML = `
@@ -319,11 +357,9 @@ async function loadAnimeById(animeId) {
                 </div>
             `;
             playerIframe.src = 'about:blank';
-            loadedAnimeIds.delete(animeId); // Удаляем из кэша, чтобы можно было повторить попытку
             return;
         }
 
-        // ===== ПЛЕЕР =====
         let playerSrc = null;
         if (anime.link) {
             playerSrc = anime.link.startsWith('//') ? `https:${anime.link}` : anime.link;
@@ -344,7 +380,6 @@ async function loadAnimeById(animeId) {
 
         playerIframe.src = playerSrc || 'about:blank';
 
-        // ===== ДАННЫЕ ТАЙТЛА =====
         currentSeason = anime.last_season || 1;
         currentEpisode = anime.last_episode || 1;
 
@@ -384,7 +419,6 @@ async function loadAnimeById(animeId) {
     } catch (err) {
         console.error('❌ Ошибка загрузки тайтла:', err);
         animeInfoEl.innerHTML = `<p style="color:#ff7a7a;">Ошибка: ${err.message}</p>`;
-        loadedAnimeIds.delete(animeId); // Удаляем из кэша при ошибке
     }
 }
 
@@ -398,16 +432,14 @@ function handleHashChange() {
             return;
         }
     }
-    // При возврате на главную очищаем кэш загруженных страниц
-    loadedAnimeIds.clear();
+    currentAnimeId = null;
     showSection(listSection);
 }
 
 // ===== НАЗАД =====
 function goBack() {
     playerIframe.src = '';
-    // Очищаем кэш при возврате на главную
-    loadedAnimeIds.clear();
+    currentAnimeId = null;
     window.location.hash = '';
 }
 
@@ -449,4 +481,4 @@ if (window.location.hash) {
 } else {
     showSection(listSection);
     fetchAnimeList();
-}
+                    }
