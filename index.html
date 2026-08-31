@@ -20,7 +20,7 @@
     <!-- Каталог -->
     <section id="anime-list" class="active">
       <div class="search-bar">
-        <input type="text" id="search-input" placeholder="Поиск аниме..." />
+        <input type="text" id="search-input" placeholder="Поиск..." />
         <button id="search-btn">🔍</button>
       </div>
       <div id="catalog" class="catalog-grid"></div>
@@ -29,7 +29,10 @@
 
     <!-- Плеер -->
     <section id="player-section">
-      <button id="back-btn" class="back-btn">← Назад</button>
+      <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+        <button id="back-btn" class="back-btn">← Назад</button>
+        <button id="share-btn" class="back-btn">🔗 Поделиться</button>
+      </div>
       <div id="player-container">
         <iframe id="player-iframe" src="" allowfullscreen allow="autoplay; encrypted-media; fullscreen"></iframe>
       </div>
