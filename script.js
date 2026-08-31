@@ -10,20 +10,66 @@ const loaderEl = document.getElementById('loader');
 const searchInput = document.getElementById('search-input');
 const searchBtn = document.getElementById('search-btn');
 const backBtn = document.getElementById('back-btn');
-const shareBtn = document.getElementById('share-btn'); // новая кнопка
+const shareBtn = document.getElementById('share-btn');
 const playerIframe = document.getElementById('player-iframe');
 const animeInfoEl = document.getElementById('anime-info');
+const logoLink = document.getElementById('logo-link');
+const categoryBtns = document.querySelectorAll('.category-btn');
 
 let currentAnimeId = null;
 let currentSeason = 1;
 let currentEpisode = 1;
+let currentCategory = 'anime'; // anime, movie, series, updates
+
+// =========================================
+// КАТЕГОРИИ
+// =========================================
+function setCategory(type) {
+  currentCategory = type;
+  
+  // Обновляем активную кнопку
+  categoryBtns.forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.dataset.type === type) {
+      btn.classList.add('active');
+    }
+  });
+  
+  // Если мы на странице плеера – возвращаемся на главную
+  if (window.location.hash) {
+    window.location.hash = '';
+  }
+  
+  // Перезагружаем каталог
+  fetchAnimeList();
+}
+
+categoryBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    setCategory(btn.dataset.type);
+  });
+});
+
+// =========================================
+// КЛИКАБЕЛЬНЫЙ ЛОГОТИП
+// =========================================
+logoLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  // Возвращаемся на главную
+  if (window.location.hash) {
+    window.location.hash = '';
+  } else {
+    // Если уже на главной, просто обновляем
+    fetchAnimeList();
+  }
+});
 
 function showSection(section) {
   document.querySelectorAll('main section').forEach(s => s.classList.remove('active'));
   section.classList.add('active');
 }
 
-// ===== ЗАГРУЗКА КАТАЛОГА =====
+// ===== ЗАГРУЗКА КАТАЛОГА (с учётом категории) =====
 async function fetchAnimeList(query = '') {
   catalogEl.innerHTML = '';
   loaderEl.style.display = 'block';
@@ -36,12 +82,27 @@ async function fetchAnimeList(query = '') {
       order: 'desc',
       limit: 30,
       with_material_data: 'true',
-      types: 'anime-serial,anime,movie'
+      types: ''
     };
+
+    // Определяем типы в зависимости от категории
+    if (currentCategory === 'anime') {
+      params.types = 'anime-serial,anime';
+    } else if (currentCategory === 'movie') {
+      params.types = 'movie,foreign-movie,russian-movie,foreign-cartoon,russian-cartoon,soviet-cartoon';
+    } else if (currentCategory === 'series') {
+      params.types = 'foreign-serial,russian-serial,cartoon-serial,russian-cartoon-serial,documentary-serial,russian-documentary-serial';
+    } else if (currentCategory === 'updates') {
+      // Анонсы – все типы, но сортировка по дате добавления (самые новые)
+      params.types = 'anime-serial,anime,movie,foreign-serial,russian-serial,cartoon-serial';
+      params.sort = 'created_at'; // сортируем по дате добавления
+    }
 
     if (query.trim()) {
       endpoint = '/search';
       params.title = query.trim();
+      // При поиске типы не фильтруем (ищем по всем)
+      delete params.types;
     }
 
     const url = `${KODIK_API_URL}${endpoint}?${new URLSearchParams(params)}`;
@@ -94,23 +155,19 @@ function renderAnimeList(animes) {
 function copyPageLink() {
   const url = window.location.href;
   
-  // Используем современный API, если доступен
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(url)
       .then(() => {
         showCopyNotification('✅ Ссылка скопирована!');
       })
       .catch(() => {
-        // Если clipboard API не сработал, используем fallback
         fallbackCopy(url);
       });
   } else {
-    // Для старых браузеров
     fallbackCopy(url);
   }
 }
 
-// ===== FALLBACK ДЛЯ СТАРЫХ БРАУЗЕРОВ =====
 function fallbackCopy(text) {
   const input = document.createElement('input');
   input.value = text;
@@ -127,9 +184,7 @@ function fallbackCopy(text) {
   document.body.removeChild(input);
 }
 
-// ===== УВЕДОМЛЕНИЕ О КОПИРОВАНИИ =====
 function showCopyNotification(message) {
-  // Удаляем старое уведомление, если есть
   const oldNotification = document.querySelector('.copy-notification');
   if (oldNotification) {
     oldNotification.remove();
@@ -156,7 +211,6 @@ function showCopyNotification(message) {
     box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   `;
 
-  // Добавляем анимацию
   const style = document.createElement('style');
   style.textContent = `
     @keyframes slideUp {
@@ -174,7 +228,6 @@ function showCopyNotification(message) {
 
   document.body.appendChild(notification);
 
-  // Автоматически скрываем через 3 секунды
   setTimeout(() => {
     notification.style.opacity = '0';
     notification.style.transition = 'opacity 0.3s';
@@ -211,7 +264,6 @@ async function loadAnimeById(animeId) {
     // =========================================
     let playerSrc = null;
 
-    // Прямая ссылка на плеер из поля link
     if (anime.link) {
       playerSrc = anime.link.startsWith('//') ? `https:${anime.link}` : anime.link;
       console.log('🎬 Ссылка на плеер из API:', playerSrc);
@@ -220,7 +272,6 @@ async function loadAnimeById(animeId) {
       playerSrc = 'about:blank';
     }
 
-    // Добавляем autoplay
     if (playerSrc && playerSrc !== 'about:blank') {
       try {
         const urlObj = new URL(playerSrc);
@@ -247,7 +298,6 @@ async function loadAnimeById(animeId) {
     const rating = anime.rating?.imdb || anime.material_data?.rating || '—';
     const genres = anime.genres ? anime.genres.join(', ') : (anime.material_data?.genres?.join(', ') || '—');
 
-    // ===== ПОКАЗЫВАЕМ НОМЕР СЕЗОНА И СЕРИИ ПОД ПЛЕЕРОМ =====
     const episodeInfo = `
       <div style="margin-top: 12px; padding: 10px 16px; background: rgba(20, 26, 50, 0.5); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
         <span style="color: #9aa3c0; font-size: 0.9rem;">
@@ -317,7 +367,7 @@ searchInput.addEventListener('keydown', (e) => {
 });
 
 backBtn.addEventListener('click', goBack);
-shareBtn.addEventListener('click', copyPageLink); // добавляем обработчик
+shareBtn.addEventListener('click', copyPageLink);
 
 // ===== СТАРТ =====
 if (window.location.hash) {
@@ -325,4 +375,4 @@ if (window.location.hash) {
 } else {
   showSection(listSection);
   fetchAnimeList();
-        }
+      }
