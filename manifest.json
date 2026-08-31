@@ -1,0 +1,10 @@
+{
+  "name": "Quarwatch",
+  "short_name": "Quarwatch",
+  "description": "Смотри аниме онлайн",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0e1a",
+  "theme_color": "#0a0e1a",
+  "orientation": "portrait"
+}
