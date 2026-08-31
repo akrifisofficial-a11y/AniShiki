@@ -98,9 +98,8 @@ async function fetchAnimeList(query = '', loadMore = false) {
         types: ''
       };
 
-      // Определяем типы в зависимости от категории
       if (currentCategory === 'series') {
-        params.types = 'anime-serial,anime'; // сериалы и полнометражные аниме
+        params.types = 'anime-serial,anime';
       } else if (currentCategory === 'movie') {
         params.types = 'movie,foreign-movie,russian-movie,foreign-cartoon,russian-cartoon,soviet-cartoon';
       }
@@ -108,7 +107,7 @@ async function fetchAnimeList(query = '', loadMore = false) {
       if (query.trim()) {
         endpoint = '/search';
         params.title = query.trim();
-        delete params.types; // при поиске ищем по всем типам
+        delete params.types;
       }
 
       url = `${KODIK_API_URL}${endpoint}?${new URLSearchParams(params)}`;
@@ -285,9 +284,6 @@ async function loadAnimeById(animeId) {
     if (!data.results || data.results.length === 0) throw new Error('Тайтл не найден');
     const anime = data.results[0];
 
-    // =========================================
-    // ПЛЕЕР – ИСПОЛЬЗУЕМ ГОТОВУЮ ССЫЛКУ ИЗ API
-    // =========================================
     let playerSrc = null;
 
     if (anime.link) {
@@ -312,11 +308,9 @@ async function loadAnimeById(animeId) {
 
     playerIframe.src = playerSrc || 'about:blank';
 
-    // ===== ОПРЕДЕЛЯЕМ СЕЗОН И СЕРИЮ =====
     currentSeason = anime.last_season || 1;
     currentEpisode = anime.last_episode || 1;
 
-    // ===== ОСТАЛЬНЫЕ ДАННЫЕ =====
     const title = anime.title || 'Без названия';
     const poster = anime.material_data?.poster_url || anime.poster_url || 'https://via.placeholder.com/300x450?text=No+Image';
     const description = anime.description || anime.material_data?.description || 'Описание отсутствует.';
@@ -399,10 +393,18 @@ loadMoreBtn.addEventListener('click', () => {
   fetchAnimeList(currentQuery, true);
 });
 
+// ===== АВТОМАТИЧЕСКОЕ ОБНОВЛЕНИЕ ГОДА В ФУТЕРЕ =====
+(function updateFooterYear() {
+  const yearSpan = document.getElementById('current-year');
+  if (yearSpan) {
+    yearSpan.textContent = new Date().getFullYear();
+  }
+})();
+
 // ===== СТАРТ =====
 if (window.location.hash) {
   handleHashChange();
 } else {
   showSection(listSection);
   fetchAnimeList();
-                          }
+  }
