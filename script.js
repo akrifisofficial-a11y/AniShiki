@@ -54,6 +54,7 @@ const searchBtn = document.getElementById('search-btn');
 const backBtn = document.getElementById('back-btn');
 const shareBtn = document.getElementById('share-btn');
 const animeInfoEl = document.getElementById('anime-info');
+const playerIframe = document.getElementById('player-iframe');
 const logoLink = document.getElementById('logo-link');
 const categoryBtns = document.querySelectorAll('.category-btn');
 const loadMoreBtn = document.getElementById('load-more-btn');
@@ -263,9 +264,13 @@ async function fetchAnimeList(query = '', loadMore = false) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
 
+        console.log('📦 Получено данных:', data.results ? data.results.length : 0);
+
         let filteredResults = filterAnimeOnly(data.results);
         const uniqueResults = removeDuplicates(filteredResults);
         
+        console.log('📦 После фильтрации:', uniqueResults.length);
+
         nextPageUrl = (uniqueResults.length > 0) ? data.next_page || null : null;
 
         if (!uniqueResults || uniqueResults.length === 0) {
@@ -312,6 +317,8 @@ function renderAnimeList(animes, append = false) {
             uniqueAnimes.push(anime);
         }
     });
+
+    console.log('🎨 Отрисовка карточек:', uniqueAnimes.length);
 
     uniqueAnimes.forEach(anime => {
         const card = document.createElement('div');
@@ -416,7 +423,7 @@ function showCopyNotification(message) {
     }, 3000);
 }
 
-// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА (ПЛЕЕР ВНИЗУ) =====
+// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА =====
 async function loadAnimeById(animeId) {
     if (currentAnimeId === animeId) {
         console.log('⏭️ Аниме уже открыто, пропускаем загрузку');
@@ -426,6 +433,7 @@ async function loadAnimeById(animeId) {
     currentAnimeId = animeId;
     showSection(playerSection);
     animeInfoEl.innerHTML = '<div class="loader">Загрузка...</div>';
+    playerIframe.src = '';
 
     try {
         const params = new URLSearchParams({
@@ -456,10 +464,11 @@ async function loadAnimeById(animeId) {
                     </div>
                 </div>
             `;
+            playerIframe.src = 'about:blank';
             return;
         }
 
-        // ===== ПЛЕЕР (сохраняем ссылку) =====
+        // ===== ПЛЕЕР =====
         let playerSrc = null;
         if (anime.link) {
             playerSrc = anime.link.startsWith('//') ? `https:${anime.link}` : anime.link;
@@ -478,7 +487,7 @@ async function loadAnimeById(animeId) {
             } catch (e) {}
         }
 
-        const savedPlayerSrc = playerSrc || 'about:blank';
+        playerIframe.src = playerSrc || 'about:blank';
 
         // ===== ДАННЫЕ =====
         currentSeason = anime.last_season || 1;
@@ -554,10 +563,6 @@ async function loadAnimeById(animeId) {
                     ${screenshotsHtml}
                 </div>
             </div>
-            <!-- ПЛЕЕР ВНИЗУ -->
-            <div id="player-container" style="margin-top: 25px; position: relative; width: 100%; padding-bottom: 56.25%; background: #000; border-radius: 16px; overflow: hidden; box-shadow: 0 0 40px rgba(100, 80, 160, 0.3);">
-                <iframe id="player-iframe" src="${savedPlayerSrc}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allowfullscreen allow="autoplay; encrypted-media; fullscreen"></iframe>
-            </div>
         `;
         document.title = `${title} — Quarwatch`;
     } catch (err) {
@@ -582,6 +587,8 @@ function handleHashChange() {
 
 // ===== НАЗАД =====
 function goBack() {
+    playerIframe.src = '';
+    currentAnimeId = null;
     window.location.hash = '';
 }
 
@@ -589,4 +596,39 @@ function goBack() {
 window.addEventListener('hashchange', handleHashChange);
 
 searchBtn.addEventListener('click', () => {
-    const q
+    const query = searchInput.value.trim();
+    if (window.location.hash) {
+        window.location.hash = '';
+        setTimeout(() => fetchAnimeList(query), 50);
+    } else {
+        fetchAnimeList(query);
+    }
+});
+
+searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchBtn.click();
+});
+
+backBtn.addEventListener('click', goBack);
+shareBtn.addEventListener('click', copyPageLink);
+
+loadMoreBtn.addEventListener('click', () => {
+    fetchAnimeList(currentQuery, true);
+});
+
+// ===== АВТОМАТИЧЕСКОЕ ОБНОВЛЕНИЕ ГОДА =====
+(function updateFooterYear() {
+    const yearSpan = document.getElementById('current-year');
+    if (yearSpan) {
+        yearSpan.textContent = new Date().getFullYear();
+    }
+})();
+
+// ===== СТАРТ =====
+console.log('🚀 Запуск Quarwatch...');
+if (window.location.hash) {
+    handleHashChange();
+} else {
+    showSection(listSection);
+    fetchAnimeList();
+}
