@@ -12,29 +12,25 @@
   <div class="moon"></div>
 
   <header>
-    <!-- Шапка с гамбургером -->
     <div class="header-top">
-      <!-- Гамбургер -->
       <div class="hamburger" id="hamburger">
         <span></span>
         <span></span>
         <span></span>
       </div>
-      
       <a href="#" id="logo-link" class="logo-link">
         <div class="logo">🌙 Quarwatch</div>
       </a>
       <div class="subtitle">смотреть онлайн</div>
     </div>
 
-    <!-- Меню -->
     <nav class="nav-menu" id="nav-menu">
       <ul>
         <li><a href="#" id="menu-developer">👨‍💻 Разработчик</a></li>
         <li><a href="#" id="menu-updates">🔄 Обновления</a></li>
       </ul>
     </nav>
-    
+
     <nav class="categories">
       <button class="category-btn active" data-type="series">📺 Сериалы</button>
       <button class="category-btn" data-type="movie">🎬 Фильмы</button>
@@ -42,7 +38,6 @@
   </header>
 
   <main>
-    <!-- Каталог -->
     <section id="anime-list" class="active">
       <div class="search-bar">
         <input type="text" id="search-input" placeholder="Поиск..." />
@@ -53,26 +48,22 @@
       <div id="loader" class="loader">Загрузка...</div>
     </section>
 
-    <!-- Плеер -->
     <section id="player-section">
       <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
         <button id="back-btn" class="back-btn">← Назад</button>
         <button id="share-btn" class="back-btn">🔗 Поделиться</button>
       </div>
-      <div id="player-container">
-        <iframe id="player-iframe" src="" allowfullscreen allow="autoplay; encrypted-media; fullscreen"></iframe>
-      </div>
       <div id="anime-info" class="anime-info"></div>
     </section>
-
-    <!-- Модальное окно -->
-    <div id="modal-overlay" class="modal-overlay">
-      <div class="modal-content">
-        <button id="modal-close" class="modal-close">✕</button>
-        <div id="modal-body"></div>
-      </div>
-    </div>
   </main>
+
+  <!-- Модальное окно -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div class="modal-content">
+      <button id="modal-close" class="modal-close">✕</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
 
   <!-- Футер -->
   <footer id="site-footer" style="
