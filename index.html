@@ -38,7 +38,6 @@
   </header>
 
   <main>
-    <!-- Каталог -->
     <section id="anime-list" class="active">
       <div class="search-bar">
         <input type="text" id="search-input" placeholder="Поиск..." />
@@ -49,27 +48,30 @@
       <div id="loader" class="loader">Загрузка...</div>
     </section>
 
-    <!-- Плеер + информация -->
     <section id="player-section">
       <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
         <button id="back-btn" class="back-btn">← Назад</button>
         <button id="share-btn" class="back-btn">🔗 Поделиться</button>
       </div>
-      <!-- Информация о тайтле -->
       <div id="anime-info" class="anime-info"></div>
-      <!-- ПЛЕЕР (добавлен контейнер) -->
       <div id="player-container" style="margin-top: 25px; position: relative; width: 100%; padding-bottom: 56.25%; background: #000; border-radius: 16px; overflow: hidden; box-shadow: 0 0 40px rgba(100, 80, 160, 0.3);">
         <iframe id="player-iframe" src="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allowfullscreen allow="autoplay; encrypted-media; fullscreen"></iframe>
       </div>
     </section>
   </main>
 
-  <!-- Модальное окно -->
+  <!-- Модальное окно (информация) -->
   <div id="modal-overlay" class="modal-overlay">
     <div class="modal-content">
       <button id="modal-close" class="modal-close">✕</button>
       <div id="modal-body"></div>
     </div>
+  </div>
+
+  <!-- Увеличенное изображение -->
+  <div id="modal-image-overlay" class="modal-image-overlay">
+    <button class="close-btn" id="modal-image-close">✕</button>
+    <img id="modal-image" src="" alt="Увеличенное изображение" />
   </div>
 
   <!-- Футер -->
