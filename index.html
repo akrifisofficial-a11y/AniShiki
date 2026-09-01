@@ -12,10 +12,28 @@
   <div class="moon"></div>
 
   <header>
-    <a href="#" id="logo-link" class="logo-link">
-      <div class="logo">🌙 Quarwatch</div>
-    </a>
-    <div class="subtitle">смотреть онлайн</div>
+    <!-- Шапка с гамбургером -->
+    <div class="header-top">
+      <!-- Гамбургер -->
+      <div class="hamburger" id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      
+      <a href="#" id="logo-link" class="logo-link">
+        <div class="logo">🌙 Quarwatch</div>
+      </a>
+      <div class="subtitle">смотреть онлайн</div>
+    </div>
+
+    <!-- Меню -->
+    <nav class="nav-menu" id="nav-menu">
+      <ul>
+        <li><a href="#" id="menu-developer">👨‍💻 Разработчик</a></li>
+        <li><a href="#" id="menu-updates">🔄 Обновления</a></li>
+      </ul>
+    </nav>
     
     <nav class="categories">
       <button class="category-btn active" data-type="series">📺 Сериалы</button>
@@ -46,6 +64,14 @@
       </div>
       <div id="anime-info" class="anime-info"></div>
     </section>
+
+    <!-- Модальное окно -->
+    <div id="modal-overlay" class="modal-overlay">
+      <div class="modal-content">
+        <button id="modal-close" class="modal-close">✕</button>
+        <div id="modal-body"></div>
+      </div>
+    </div>
   </main>
 
   <!-- Футер -->
