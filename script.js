@@ -210,11 +210,16 @@ menuUpdates.addEventListener('click', (e) => {
 });
 
 // =========================================
-// КАТЕГОРИИ
+// КАТЕГОРИИ (ИСПРАВЛЕНО)
 // =========================================
 function setCategory(type) {
     // Если выбран пункт "Важно" — показываем модальное окно с информацией
     if (type === 'important') {
+        // Убираем активный класс со всех кнопок
+        categoryBtns.forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
         openModal(`
             <h2>❓ Важно</h2>
             <div style="margin: 15px 0; padding: 15px; background: rgba(255, 70, 70, 0.1); border-radius: 12px; border-left: 3px solid #ff7a7a;">
@@ -262,8 +267,10 @@ function setCategory(type) {
     fetchAnimeList();
 }
 
+// ===== ОБРАБОТЧИК КНОПОК КАТЕГОРИЙ (ИСПРАВЛЕНО) =====
 categoryBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+        e.preventDefault();
         setCategory(btn.dataset.type);
     });
 });
@@ -697,4 +704,4 @@ if (window.location.hash) {
 } else {
     showSection(listSection);
     fetchAnimeList();
-                                        }
+    }
