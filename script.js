@@ -19,7 +19,7 @@ function filterAnimeOnly(results) {
     return results.filter(item => isAnime(item));
 }
 
-// ===== УДАЛЕНИЕ ДУБЛИКАТОВ (ПО ID И НАЗВАНИЮ) =====
+// ===== УДАЛЕНИЕ ДУБЛИКАТОВ =====
 function removeDuplicates(animes) {
     const seenIds = new Set();
     const seenTitles = new Set();
@@ -31,8 +31,6 @@ function removeDuplicates(animes) {
             seenIds.add(anime.id);
             seenTitles.add(titleKey);
             unique.push(anime);
-        } else {
-            console.warn(`⛔ Заблокирован дубликат: ${anime.title} (${anime.id})`);
         }
     });
 
@@ -41,7 +39,6 @@ function removeDuplicates(animes) {
 
 // ===== ГЛОБАЛЬНОЕ ХРАНИЛИЩЕ =====
 let allLoadedIds = new Set();
-let cachedAnime = []; // Кэш для офлайн-режима
 
 // ===== DOM =====
 const listSection = document.getElementById('anime-list');
@@ -99,7 +96,7 @@ if (hamburger) {
 }
 
 // =========================================
-// МОДАЛЬНОЕ ОКНО (информация)
+// МОДАЛЬНОЕ ОКНО
 // =========================================
 function openModal(content) {
     modalBody.innerHTML = content;
@@ -388,7 +385,7 @@ function renderAnimeList(animes, append = false) {
     });
 }
 
-// ===== ЗАГРУЗКА КАТАЛОГА (БЕЗ ОШИБОК) =====
+// ===== ЗАГРУЗКА КАТАЛОГА =====
 async function fetchAnimeList(query = '', loadMore = false) {
     if (isLoading) return;
     isLoading = true;
@@ -399,7 +396,6 @@ async function fetchAnimeList(query = '', loadMore = false) {
         nextPageUrl = null;
         currentQuery = query;
         allLoadedIds.clear();
-        // Показываем заглушку загрузки только на 0.5 секунды, затем скрываем
         if (loaderEl) loaderEl.style.display = 'block';
         setTimeout(() => {
             if (loaderEl) loaderEl.style.display = 'none';
@@ -416,7 +412,6 @@ async function fetchAnimeList(query = '', loadMore = false) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
 
-        // Фильтрация
         let filteredResults = filterAnimeOnly(data.results);
         let uniqueResults = removeDuplicates(filteredResults);
 
@@ -449,19 +444,15 @@ async function fetchAnimeList(query = '', loadMore = false) {
         }
     } catch (err) {
         console.warn('⚠️ Ошибка загрузки:', err.message);
-        // Если есть кэшированные данные, показываем их
-        if (cachedAnime.length > 0 && !loadMore) {
-            renderAnimeList(cachedAnime);
-            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
-        } else if (!loadMore && catalogEl) {
+        if (!loadMore && catalogEl) {
             catalogEl.innerHTML = `
                 <p style="text-align:center;color:#7a8aaa; margin-top:20px;">
                     ⚠️ Не удалось загрузить данные
                 </p>
                 <p style="text-align:center;color:#5a6a8a; font-size:0.85rem; margin-top:10px;">
-                    Проверьте подключение к интернету или нажмите
+                    Проверьте подключение или нажмите
                     <strong style="color:#9aa3c0;">«Сериалы»</strong> или
-                    <strong style="color:#9aa3c0;">«Фильмы»</strong> для повторной попытки.
+                    <strong style="color:#9aa3c0;">«Фильмы»</strong>.
                 </p>
             `;
         }
@@ -862,11 +853,33 @@ if (loadMoreBtn) {
 // ===== НАСТРАИВАЕМ БЕСКОНЕЧНЫЙ СКРОЛЛ =====
 setupInfiniteScroll();
 
-// ===== СТАРТ =====
+// =========================================
+// АВТООБНОВЛЕНИЕ КАЖДЫЕ 30 СЕКУНД
+// =========================================
+setInterval(() => {
+    if (!window.location.hash && !isLoading) {
+        console.log('🔄 Автообновление каталога...');
+        fetchAnimeList(currentQuery);
+    }
+}, 30000); // 30 секунд
+
+// =========================================
+// ОБНОВЛЕНИЕ ПРИ АКТИВАЦИИ ВКЛАДКИ
+// =========================================
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && !window.location.hash && !isLoading) {
+        console.log('🔄 Обновление при возвращении...');
+        fetchAnimeList(currentQuery);
+    }
+});
+
+// =========================================
+// СТАРТ
+// =========================================
 console.log('🚀 Запуск Quarwatch...');
 if (window.location.hash) {
     handleHashChange();
 } else {
     showSection(listSection);
     fetchAnimeList();
-                    }
+                                            }
