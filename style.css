@@ -347,6 +347,7 @@ section.active {
   line-height: 1.6;
 }
 
+/* ===== ПОСТЕР 340px (всегда) ===== */
 .anime-detail {
   display: flex;
   gap: 30px;
@@ -354,12 +355,14 @@ section.active {
   flex-wrap: wrap;
 }
 .anime-detail .poster {
-  flex: 0 0 280px;
+  flex: 0 0 340px;
+  max-width: 340px;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 0 30px rgba(100, 80, 160, 0.3);
   cursor: pointer;
   transition: 0.3s;
+  margin: 0 auto;
 }
 .anime-detail .poster:hover {
   transform: scale(1.02);
@@ -651,7 +654,7 @@ section.active {
   color: #b8a0d0;
 }
 
-/* ===== АДАПТИВ ===== */
+/* ===== АДАПТИВ (постер 340px везде) ===== */
 @media (max-width: 700px) {
   .header-top {
     padding-left: 50px;
@@ -667,7 +670,14 @@ section.active {
   .moon { width: 50px; height: 50px; right: 20px; top: 20px; }
   .catalog-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
   .anime-card img { height: 200px; }
-  .anime-detail .poster { flex: 0 0 200px; }
+  .anime-detail {
+    flex-direction: column;
+    align-items: center;
+  }
+  .anime-detail .poster {
+    flex: 0 0 340px;
+    max-width: 340px;
+  }
   .screenshot-item { width: 90px; height: 50px; }
   .categories { gap: 6px; }
   .category-btn { font-size: 0.65rem; padding: 6px 14px; }
@@ -675,6 +685,9 @@ section.active {
 }
 @media (max-width: 500px) {
   .search-bar input { width: 70%; }
-  .anime-detail .poster { flex: 0 0 160px; }
+  .anime-detail .poster {
+    flex: 0 0 340px;
+    max-width: 340px;
+  }
   .screenshot-item { width: 70px; height: 39px; }
 }
