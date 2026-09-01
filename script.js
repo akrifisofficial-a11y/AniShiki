@@ -79,22 +79,26 @@ let currentAnimeId = null;
 let currentCategory = 'series';
 let nextPageUrl = null;
 let isLoading = false;
+let isFetchingMore = false;
 let currentQuery = '';
+let timeoutId = null;
 
 // =========================================
 // ГАМБУРГЕР
 // =========================================
-hamburger.addEventListener('click', () => {
-    hamburger.classList.toggle('active');
-    navMenu.classList.toggle('open');
-});
+if (hamburger) {
+    hamburger.addEventListener('click', () => {
+        hamburger.classList.toggle('active');
+        navMenu.classList.toggle('open');
+    });
 
-document.addEventListener('click', (e) => {
-    if (!hamburger.contains(e.target) && !navMenu.contains(e.target)) {
-        hamburger.classList.remove('active');
-        navMenu.classList.remove('open');
-    }
-});
+    document.addEventListener('click', (e) => {
+        if (!hamburger.contains(e.target) && !navMenu.contains(e.target)) {
+            hamburger.classList.remove('active');
+            navMenu.classList.remove('open');
+        }
+    });
+}
 
 // =========================================
 // МОДАЛЬНОЕ ОКНО (информация)
@@ -110,10 +114,12 @@ function closeModal() {
     document.body.style.overflow = '';
 }
 
-modalClose.addEventListener('click', closeModal);
-modalOverlay.addEventListener('click', (e) => {
-    if (e.target === modalOverlay) closeModal();
-});
+if (modalClose) {
+    modalClose.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeModal();
+    });
+}
 
 // =========================================
 // УВЕЛИЧЕНИЕ ИЗОБРАЖЕНИЙ
@@ -149,73 +155,72 @@ document.addEventListener('keydown', (e) => {
 });
 
 // =========================================
-// ПУНКТ МЕНЮ "РАЗРАБОТЧИК"
+// ПУНКТЫ МЕНЮ
 // =========================================
-menuDeveloper.addEventListener('click', (e) => {
-    e.preventDefault();
-    hamburger.classList.remove('active');
-    navMenu.classList.remove('open');
-    
-    openModal(`
-        <h2>👨‍💻 Разработчик</h2>
-        <div class="info-item">
-            <span>Название</span>
-            <span>Quarwatch</span>
-        </div>
-        <div class="info-item">
-            <span>Создатель</span>
-            <span>quartess</span>
-        </div>
-        <div class="info-item">
-            <span>Версия</span>
-            <span>2.0</span>
-        </div>
-        <div class="info-item">
-            <span>Технологии</span>
-            <span>HTML, CSS, JS, Kodik API</span>
-        </div>
-        <div class="info-item">
-            <span>Сайт</span>
-            <span><a href="#" style="color:#b8a0d0; text-decoration:none;">quarwatch.ck6.ru</a></span>
-        </div>
-        <p style="margin-top:15px; text-align:center; color:#7a8aaa; font-size:0.8rem;">
-            🌙 Сделано с любовью к аниме
-        </p>
-    `);
-});
-
-// =========================================
-// ПУНКТ МЕНЮ "ОБНОВЛЕНИЯ"
-// =========================================
-menuUpdates.addEventListener('click', (e) => {
-    e.preventDefault();
-    hamburger.classList.remove('active');
-    navMenu.classList.remove('open');
-    
-    const lastUpdate = new Date().toLocaleDateString('ru-RU', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+if (menuDeveloper) {
+    menuDeveloper.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (hamburger) hamburger.classList.remove('active');
+        if (navMenu) navMenu.classList.remove('open');
+        
+        openModal(`
+            <h2>👨‍💻 Разработчик</h2>
+            <div class="info-item">
+                <span>Название</span>
+                <span>Quarwatch</span>
+            </div>
+            <div class="info-item">
+                <span>Создатель</span>
+                <span>quartess</span>
+            </div>
+            <div class="info-item">
+                <span>Версия</span>
+                <span>2.0</span>
+            </div>
+            <div class="info-item">
+                <span>Технологии</span>
+                <span>HTML, CSS, JS, Kodik API</span>
+            </div>
+            <div class="info-item">
+                <span>Сайт</span>
+                <span><a href="#" style="color:#b8a0d0; text-decoration:none;">quarwatch.ck6.ru</a></span>
+            </div>
+            <p style="margin-top:15px; text-align:center; color:#7a8aaa; font-size:0.8rem;">
+                🌙 Сделано с любовью к аниме
+            </p>
+        `);
     });
-    
-    openModal(`
-        <h2>🔄 Обновления</h2>
-        <div class="info-item">
-            <span>Последнее обновление</span>
-            <span>${lastUpdate}</span>
-        </div>
-    `);
-});
+}
+
+if (menuUpdates) {
+    menuUpdates.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (hamburger) hamburger.classList.remove('active');
+        if (navMenu) navMenu.classList.remove('open');
+        
+        const lastUpdate = new Date().toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        openModal(`
+            <h2>🔄 Обновления</h2>
+            <div class="info-item">
+                <span>Последнее обновление</span>
+                <span>${lastUpdate}</span>
+            </div>
+        `);
+    });
+}
 
 // =========================================
-// КАТЕГОРИИ (ИСПРАВЛЕНО)
+// КАТЕГОРИИ
 // =========================================
 function setCategory(type) {
-    // Если выбран пункт "Важно" — показываем модальное окно с информацией
     if (type === 'important') {
-        // Убираем активный класс со всех кнопок
         categoryBtns.forEach(btn => {
             btn.classList.remove('active');
         });
@@ -244,14 +249,13 @@ function setCategory(type) {
                 </p>
             </div>
         `);
-        return; // Не загружаем каталог
+        return;
     }
 
-    // Обычная логика для категорий
     currentCategory = type;
     nextPageUrl = null;
     currentQuery = '';
-    searchInput.value = '';
+    if (searchInput) searchInput.value = '';
 
     categoryBtns.forEach(btn => {
         btn.classList.remove('active');
@@ -267,7 +271,6 @@ function setCategory(type) {
     fetchAnimeList();
 }
 
-// ===== ОБРАБОТЧИК КНОПОК КАТЕГОРИЙ (ИСПРАВЛЕНО) =====
 categoryBtns.forEach(btn => {
     btn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -278,32 +281,48 @@ categoryBtns.forEach(btn => {
 // =========================================
 // ЛОГОТИП → ГЛАВНАЯ
 // =========================================
-logoLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (window.location.hash) {
-        window.location.hash = '';
-    } else {
-        fetchAnimeList();
-    }
-});
+if (logoLink) {
+    logoLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (window.location.hash) {
+            window.location.hash = '';
+        } else {
+            fetchAnimeList();
+        }
+    });
+}
 
 function showSection(section) {
     document.querySelectorAll('main section').forEach(s => s.classList.remove('active'));
     section.classList.add('active');
 }
 
-// ===== ЗАГРУЗКА КАТАЛОГА =====
+// ===== ЗАГРУЗКА КАТАЛОГА (с таймаутом) =====
 async function fetchAnimeList(query = '', loadMore = false) {
     if (isLoading) return;
     isLoading = true;
+    isFetchingMore = loadMore;
 
     if (!loadMore) {
-        catalogEl.innerHTML = '';
+        if (catalogEl) catalogEl.innerHTML = '';
         nextPageUrl = null;
         currentQuery = query;
     }
 
-    loaderEl.style.display = 'block';
+    if (loaderEl) loaderEl.style.display = 'block';
+    if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+
+    // Таймаут на случай, если API завис
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+        if (isLoading) {
+            isLoading = false;
+            if (loaderEl) loaderEl.style.display = 'none';
+            if (catalogEl && !loadMore) {
+                catalogEl.innerHTML = '<p style="text-align:center;color:#ff7a7a;">⏱️ Превышено время ожидания. Попробуйте обновить страницу или нажать «Сериалы»/«Фильмы».</p>';
+            }
+        }
+    }, 10000);
 
     try {
         let url;
@@ -314,7 +333,7 @@ async function fetchAnimeList(query = '', loadMore = false) {
             let endpoint = '/list';
             let params = {
                 token: KODIK_API_KEY,
-                limit: 50,
+                limit: 30,
                 with_material_data: 'true',
                 types: 'anime-serial,anime'
             };
@@ -340,39 +359,56 @@ async function fetchAnimeList(query = '', loadMore = false) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
 
+        // Успешно загрузили — отменяем таймаут
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = null;
+
         let filteredResults = filterAnimeOnly(data.results);
         const uniqueResults = removeDuplicates(filteredResults);
         
         nextPageUrl = (uniqueResults.length > 0) ? data.next_page || null : null;
 
         if (!uniqueResults || uniqueResults.length === 0) {
-            if (!loadMore) {
+            if (!loadMore && catalogEl) {
                 catalogEl.innerHTML = '<p style="text-align:center;color:#7a8aaa;">Аниме не найдено</p>';
             }
-            loadMoreBtn.style.display = 'none';
+            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
             return;
         }
 
         renderAnimeList(uniqueResults, loadMore);
 
-        if (nextPageUrl) {
-            loadMoreBtn.style.display = 'block';
-        } else {
-            loadMoreBtn.style.display = 'none';
+        if (loadMoreBtn) {
+            if (nextPageUrl) {
+                loadMoreBtn.style.display = 'block';
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
         }
     } catch (err) {
         console.error('❌ Ошибка загрузки каталога:', err);
-        if (!loadMore) {
-            catalogEl.innerHTML = `<p style="text-align:center;color:#ff7a7a;">Ошибка: ${err.message}</p>`;
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = null;
+        
+        if (!loadMore && catalogEl) {
+            catalogEl.innerHTML = `
+                <p style="text-align:center;color:#ff7a7a;">❌ Ошибка загрузки: ${err.message}</p>
+                <p style="text-align:center;color:#9aa3c0; margin-top:10px; font-size:0.85rem;">
+                    Попробуйте нажать кнопку <strong>«Сериалы»</strong> или <strong>«Фильмы»</strong> для обновления.
+                </p>
+            `;
         }
     } finally {
-        loaderEl.style.display = 'none';
+        if (loaderEl) loaderEl.style.display = 'none';
         isLoading = false;
+        isFetchingMore = false;
     }
 }
 
 // ===== ОТРИСОВКА КАРТОЧЕК =====
 function renderAnimeList(animes, append = false) {
+    if (!catalogEl) return;
+    
     if (!append) {
         catalogEl.innerHTML = '';
     }
@@ -419,6 +455,22 @@ function renderAnimeList(animes, append = false) {
         });
         
         catalogEl.appendChild(card);
+    });
+}
+
+// ===== БЕСКОНЕЧНЫЙ СКРОЛЛ (автоматическая подгрузка) =====
+function setupInfiniteScroll() {
+    window.addEventListener('scroll', () => {
+        if (isLoading || isFetchingMore || !nextPageUrl) return;
+        
+        const scrollPosition = window.innerHeight + window.scrollY;
+        const pageHeight = document.documentElement.scrollHeight;
+        
+        // Когда доходим до 200px до конца страницы
+        if (scrollPosition >= pageHeight - 200) {
+            console.log('📦 Автоматическая подгрузка...');
+            fetchAnimeList(currentQuery, true);
+        }
     });
 }
 
@@ -493,7 +545,7 @@ function showCopyNotification(message) {
     }, 3000);
 }
 
-// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА =====
+// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА (с автопрокруткой вверх) =====
 async function loadAnimeById(animeId) {
     if (currentAnimeId === animeId) {
         console.log('⏭️ Аниме уже открыто, пропускаем загрузку');
@@ -502,8 +554,11 @@ async function loadAnimeById(animeId) {
 
     currentAnimeId = animeId;
     showSection(playerSection);
-    animeInfoEl.innerHTML = '<div class="loader">Загрузка...</div>';
-    playerIframe.src = '';
+    if (animeInfoEl) animeInfoEl.innerHTML = '<div class="loader">Загрузка...</div>';
+    if (playerIframe) playerIframe.src = '';
+
+    // Прокручиваем страницу вверх
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     try {
         const params = new URLSearchParams({
@@ -522,19 +577,21 @@ async function loadAnimeById(animeId) {
 
         if (!isAnime(anime)) {
             console.warn('⛔ БЛОКИРОВКА! Не аниме:', anime.type, anime.title);
-            animeInfoEl.innerHTML = `
-                <div class="anime-detail" id="anime-detail">
-                    <div class="info" style="text-align:center; padding:40px 20px;">
-                        <h2 style="color:#ff7a7a;">⛔ ДОСТУП ЗАПРЕЩЁН</h2>
-                        <p style="color:#9aa3c0; margin:20px 0;">
-                            Этот тайтл (${anime.type}) не является аниме и заблокирован.<br>
-                            Сайт предназначен только для просмотра АНИМЕ.
-                        </p>
-                        <button class="back-btn" onclick="window.location.hash=''">← На главную</button>
+            if (animeInfoEl) {
+                animeInfoEl.innerHTML = `
+                    <div class="anime-detail" id="anime-detail">
+                        <div class="info" style="text-align:center; padding:40px 20px;">
+                            <h2 style="color:#ff7a7a;">⛔ ДОСТУП ЗАПРЕЩЁН</h2>
+                            <p style="color:#9aa3c0; margin:20px 0;">
+                                Этот тайтл (${anime.type}) не является аниме и заблокирован.<br>
+                                Сайт предназначен только для просмотра АНИМЕ.
+                            </p>
+                            <button class="back-btn" onclick="window.location.hash=''">← На главную</button>
+                        </div>
                     </div>
-                </div>
-            `;
-            playerIframe.src = 'about:blank';
+                `;
+            }
+            if (playerIframe) playerIframe.src = 'about:blank';
             return;
         }
 
@@ -557,7 +614,7 @@ async function loadAnimeById(animeId) {
             } catch (e) {}
         }
 
-        playerIframe.src = playerSrc || 'about:blank';
+        if (playerIframe) playerIframe.src = playerSrc || 'about:blank';
 
         // ===== ДАННЫЕ =====
         const title = anime.title || 'Без названия';
@@ -603,24 +660,26 @@ async function loadAnimeById(animeId) {
         }
 
         // ===== СБОРКА СТРАНИЦЫ =====
-        animeInfoEl.innerHTML = `
-            <div class="anime-detail" id="anime-detail">
-                <div class="poster">
-                    <img src="${poster}" alt="${title}" />
-                </div>
-                <div class="info">
-                    <h2>${title}</h2>
-                    <div class="meta">
-                        <span>📅 ${year}</span>
-                        <span>⭐ ${rating}</span>
-                        <span>🎭 ${genres}</span>
+        if (animeInfoEl) {
+            animeInfoEl.innerHTML = `
+                <div class="anime-detail" id="anime-detail">
+                    <div class="poster">
+                        <img src="${poster}" alt="${title}" />
                     </div>
-                    <div class="description">${description}</div>
-                    ${updateDateHtml}
-                    ${screenshotsHtml}
+                    <div class="info">
+                        <h2>${title}</h2>
+                        <div class="meta">
+                            <span>📅 ${year}</span>
+                            <span>⭐ ${rating}</span>
+                            <span>🎭 ${genres}</span>
+                        </div>
+                        <div class="description">${description}</div>
+                        ${updateDateHtml}
+                        ${screenshotsHtml}
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        }
         document.title = `${title} — Quarwatch`;
 
         // ===== ДОБАВЛЯЕМ ОБРАБОТЧИКИ ДЛЯ УВЕЛИЧЕНИЯ =====
@@ -640,7 +699,9 @@ async function loadAnimeById(animeId) {
         });
     } catch (err) {
         console.error('❌ Ошибка загрузки тайтла:', err);
-        animeInfoEl.innerHTML = `<p style="color:#ff7a7a;">Ошибка: ${err.message}</p>`;
+        if (animeInfoEl) {
+            animeInfoEl.innerHTML = `<p style="color:#ff7a7a;">Ошибка: ${err.message}</p>`;
+        }
     }
 }
 
@@ -658,36 +719,52 @@ function handleHashChange() {
     showSection(listSection);
 }
 
-// ===== НАЗАД =====
+// ===== НАЗАД (исправлено — работает с первого нажатия) =====
 function goBack() {
-    playerIframe.src = '';
+    if (playerIframe) {
+        playerIframe.src = '';
+    }
     currentAnimeId = null;
-    window.location.hash = '';
+    // Сбрасываем хеш и переключаемся на список
+    if (window.location.hash) {
+        window.location.hash = '';
+    } else {
+        showSection(listSection);
+    }
 }
 
 // ===== ОБРАБОТЧИКИ =====
 window.addEventListener('hashchange', handleHashChange);
 
-searchBtn.addEventListener('click', () => {
-    const query = searchInput.value.trim();
-    if (window.location.hash) {
-        window.location.hash = '';
-        setTimeout(() => fetchAnimeList(query), 50);
-    } else {
-        fetchAnimeList(query);
-    }
-});
+if (searchBtn && searchInput) {
+    searchBtn.addEventListener('click', () => {
+        const query = searchInput.value.trim();
+        if (window.location.hash) {
+            window.location.hash = '';
+            setTimeout(() => fetchAnimeList(query), 50);
+        } else {
+            fetchAnimeList(query);
+        }
+    });
 
-searchInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') searchBtn.click();
-});
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && searchBtn) searchBtn.click();
+    });
+}
 
-backBtn.addEventListener('click', goBack);
-shareBtn.addEventListener('click', copyPageLink);
+if (backBtn) {
+    backBtn.addEventListener('click', goBack);
+}
 
-loadMoreBtn.addEventListener('click', () => {
-    fetchAnimeList(currentQuery, true);
-});
+if (shareBtn) {
+    shareBtn.addEventListener('click', copyPageLink);
+}
+
+if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', () => {
+        fetchAnimeList(currentQuery, true);
+    });
+}
 
 // ===== АВТОМАТИЧЕСКОЕ ОБНОВЛЕНИЕ ГОДА =====
 (function updateFooterYear() {
@@ -697,6 +774,9 @@ loadMoreBtn.addEventListener('click', () => {
     }
 })();
 
+// ===== НАСТРАИВАЕМ БЕСКОНЕЧНЫЙ СКРОЛЛ =====
+setupInfiniteScroll();
+
 // ===== СТАРТ =====
 console.log('🚀 Запуск Quarwatch...');
 if (window.location.hash) {
@@ -704,4 +784,4 @@ if (window.location.hash) {
 } else {
     showSection(listSection);
     fetchAnimeList();
-    }
+        }
