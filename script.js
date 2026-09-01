@@ -312,7 +312,6 @@ async function fetchAnimeList(query = '', loadMore = false) {
     if (loaderEl) loaderEl.style.display = 'block';
     if (loadMoreBtn) loadMoreBtn.style.display = 'none';
 
-    // Таймаут на случай, если API завис
     if (timeoutId) clearTimeout(timeoutId);
     timeoutId = setTimeout(() => {
         if (isLoading) {
@@ -359,7 +358,6 @@ async function fetchAnimeList(query = '', loadMore = false) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
 
-        // Успешно загрузили — отменяем таймаут
         if (timeoutId) clearTimeout(timeoutId);
         timeoutId = null;
 
@@ -458,7 +456,7 @@ function renderAnimeList(animes, append = false) {
     });
 }
 
-// ===== БЕСКОНЕЧНЫЙ СКРОЛЛ (автоматическая подгрузка) =====
+// ===== БЕСКОНЕЧНЫЙ СКРОЛЛ =====
 function setupInfiniteScroll() {
     window.addEventListener('scroll', () => {
         if (isLoading || isFetchingMore || !nextPageUrl) return;
@@ -466,7 +464,6 @@ function setupInfiniteScroll() {
         const scrollPosition = window.innerHeight + window.scrollY;
         const pageHeight = document.documentElement.scrollHeight;
         
-        // Когда доходим до 200px до конца страницы
         if (scrollPosition >= pageHeight - 200) {
             console.log('📦 Автоматическая подгрузка...');
             fetchAnimeList(currentQuery, true);
@@ -545,7 +542,7 @@ function showCopyNotification(message) {
     }, 3000);
 }
 
-// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА (с автопрокруткой вверх) =====
+// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА (с внешними ссылками) =====
 async function loadAnimeById(animeId) {
     if (currentAnimeId === animeId) {
         console.log('⏭️ Аниме уже открыто, пропускаем загрузку');
@@ -557,7 +554,6 @@ async function loadAnimeById(animeId) {
     if (animeInfoEl) animeInfoEl.innerHTML = '<div class="loader">Загрузка...</div>';
     if (playerIframe) playerIframe.src = '';
 
-    // Прокручиваем страницу вверх
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     try {
@@ -624,6 +620,72 @@ async function loadAnimeById(animeId) {
         const rating = anime.rating?.imdb || anime.material_data?.rating || '—';
         const genres = anime.genres ? anime.genres.join(', ') : (anime.material_data?.genres?.join(', ') || '—');
 
+        // =========================================
+        // ВНЕШНИЕ ССЫЛКИ
+        // =========================================
+        let externalLinksHtml = '';
+
+        const shikimoriId = anime.shikimori_id || anime.material_data?.shikimori_id || null;
+        if (shikimoriId) {
+            externalLinksHtml += `
+                <a href="https://shikimori.one/animes/${shikimoriId}" target="_blank" class="external-link shikimori-link" title="Открыть на Shikimori">
+                    <img src="https://shikimori.one/favicon.ico" alt="Shikimori" width="16" height="16" style="vertical-align:middle; border-radius:4px;" />
+                    Shikimori
+                </a>
+            `;
+        }
+
+        const worldartLink = anime.worldart_link || anime.material_data?.worldart_link || null;
+        if (worldartLink) {
+            externalLinksHtml += `
+                <a href="${worldartLink}" target="_blank" class="external-link worldart-link" title="Открыть на World-Art">
+                    <img src="https://www.world-art.ru/favicon.ico" alt="World-Art" width="16" height="16" style="vertical-align:middle; border-radius:4px;" />
+                    World-Art
+                </a>
+            `;
+        }
+
+        const kinopoiskId = anime.kinopoisk_id || anime.material_data?.kinopoisk_id || null;
+        if (kinopoiskId) {
+            externalLinksHtml += `
+                <a href="https://www.kinopoisk.ru/film/${kinopoiskId}/" target="_blank" class="external-link kinopoisk-link" title="Открыть на Кинопоиске">
+                    <img src="https://st.kp.yandex.net/images/favicon.ico" alt="Kinopoisk" width="16" height="16" style="vertical-align:middle; border-radius:4px;" />
+                    Кинопоиск
+                </a>
+            `;
+        }
+
+        const imdbId = anime.imdb_id || anime.material_data?.imdb_id || null;
+        if (imdbId) {
+            externalLinksHtml += `
+                <a href="https://www.imdb.com/title/${imdbId}/" target="_blank" class="external-link imdb-link" title="Открыть на IMDb">
+                    <img src="https://www.imdb.com/favicon.ico" alt="IMDb" width="16" height="16" style="vertical-align:middle; border-radius:4px;" />
+                    IMDb
+                </a>
+            `;
+        }
+
+        const mdlId = anime.mdl_id || anime.material_data?.mdl_id || null;
+        if (mdlId) {
+            externalLinksHtml += `
+                <a href="https://mydramalist.com/${mdlId}" target="_blank" class="external-link mdl-link" title="Открыть на MyDramaList">
+                    <img src="https://mydramalist.com/favicon.ico" alt="MDL" width="16" height="16" style="vertical-align:middle; border-radius:4px;" />
+                    MDL
+                </a>
+            `;
+        }
+
+        if (!externalLinksHtml) {
+            externalLinksHtml = `<span style="color:#5a6a8a; font-size:0.8rem;">Нет внешних ссылок</span>`;
+        }
+
+        const externalLinksBlock = `
+            <div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.05);">
+                <span style="color: #7a8aaa; font-size: 0.75rem; letter-spacing: 1px; margin-right: 5px;">🔗 Ссылки:</span>
+                ${externalLinksHtml}
+            </div>
+        `;
+
         // ===== СКРИНШОТЫ =====
         let screenshotsHtml = '';
         if (anime.screenshots && anime.screenshots.length > 0) {
@@ -674,6 +736,7 @@ async function loadAnimeById(animeId) {
                             <span>🎭 ${genres}</span>
                         </div>
                         <div class="description">${description}</div>
+                        ${externalLinksBlock}
                         ${updateDateHtml}
                         ${screenshotsHtml}
                     </div>
@@ -719,13 +782,12 @@ function handleHashChange() {
     showSection(listSection);
 }
 
-// ===== НАЗАД (исправлено — работает с первого нажатия) =====
+// ===== НАЗАД (исправлено) =====
 function goBack() {
     if (playerIframe) {
         playerIframe.src = '';
     }
     currentAnimeId = null;
-    // Сбрасываем хеш и переключаемся на список
     if (window.location.hash) {
         window.location.hash = '';
     } else {
@@ -784,4 +846,4 @@ if (window.location.hash) {
 } else {
     showSection(listSection);
     fetchAnimeList();
-        }
+            }
