@@ -70,6 +70,11 @@ const modalOverlay = document.getElementById('modal-overlay');
 const modalClose = document.getElementById('modal-close');
 const modalBody = document.getElementById('modal-body');
 
+// ===== УВЕЛИЧЕНИЕ ИЗОБРАЖЕНИЙ =====
+const modalImageOverlay = document.getElementById('modal-image-overlay');
+const modalImage = document.getElementById('modal-image');
+const modalImageClose = document.getElementById('modal-image-close');
+
 let currentAnimeId = null;
 let currentSeason = 1;
 let currentEpisode = 1;
@@ -79,106 +84,132 @@ let isLoading = false;
 let currentQuery = '';
 
 // =========================================
-// ГАМБУРГЕР (с проверками)
+// ГАМБУРГЕР
 // =========================================
-if (hamburger && navMenu) {
-    hamburger.addEventListener('click', () => {
-        hamburger.classList.toggle('active');
-        navMenu.classList.toggle('open');
-    });
+hamburger.addEventListener('click', () => {
+    hamburger.classList.toggle('active');
+    navMenu.classList.toggle('open');
+});
 
-    document.addEventListener('click', (e) => {
-        if (!hamburger.contains(e.target) && !navMenu.contains(e.target)) {
-            hamburger.classList.remove('active');
-            navMenu.classList.remove('open');
-        }
-    });
-}
+document.addEventListener('click', (e) => {
+    if (!hamburger.contains(e.target) && !navMenu.contains(e.target)) {
+        hamburger.classList.remove('active');
+        navMenu.classList.remove('open');
+    }
+});
 
 // =========================================
-// МОДАЛЬНОЕ ОКНО (с проверками)
+// МОДАЛЬНОЕ ОКНО (информация)
 // =========================================
 function openModal(content) {
-    if (!modalBody || !modalOverlay) return;
     modalBody.innerHTML = content;
     modalOverlay.classList.add('open');
     document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
-    if (!modalOverlay) return;
     modalOverlay.classList.remove('open');
     document.body.style.overflow = '';
 }
 
-if (modalClose && modalOverlay) {
-    modalClose.addEventListener('click', closeModal);
-    modalOverlay.addEventListener('click', (e) => {
-        if (e.target === modalOverlay) closeModal();
+modalClose.addEventListener('click', closeModal);
+modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) closeModal();
+});
+
+// =========================================
+// УВЕЛИЧЕНИЕ ИЗОБРАЖЕНИЙ
+// =========================================
+function openImageModal(src) {
+    if (!modalImageOverlay || !modalImage) return;
+    modalImage.src = src;
+    modalImageOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal() {
+    if (!modalImageOverlay) return;
+    modalImageOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+if (modalImageClose) {
+    modalImageClose.addEventListener('click', closeImageModal);
+}
+
+if (modalImageOverlay) {
+    modalImageOverlay.addEventListener('click', (e) => {
+        if (e.target === modalImageOverlay) closeImageModal();
     });
 }
 
-// =========================================
-// ПУНКТЫ МЕНЮ (с проверками)
-// =========================================
-if (menuDeveloper) {
-    menuDeveloper.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (hamburger) hamburger.classList.remove('active');
-        if (navMenu) navMenu.classList.remove('open');
-        
-        openModal(`
-            <h2>👨‍💻 Разработчик</h2>
-            <div class="info-item">
-                <span>Название</span>
-                <span>Quarwatch</span>
-            </div>
-            <div class="info-item">
-                <span>Создатель</span>
-                <span>quartess</span>
-            </div>
-            <div class="info-item">
-                <span>Версия</span>
-                <span>2.0</span>
-            </div>
-            <div class="info-item">
-                <span>Технологии</span>
-                <span>HTML, CSS, JS, Kodik API</span>
-            </div>
-            <div class="info-item">
-                <span>Сайт</span>
-                <span><a href="#" style="color:#b8a0d0; text-decoration:none;">quarwatch.ck6.ru</a></span>
-            </div>
-            <p style="margin-top:15px; text-align:center; color:#7a8aaa; font-size:0.8rem;">
-                🌙 Сделано с любовью к аниме
-            </p>
-        `);
-    });
-}
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeImageModal();
+        closeModal();
+    }
+});
 
-if (menuUpdates) {
-    menuUpdates.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (hamburger) hamburger.classList.remove('active');
-        if (navMenu) navMenu.classList.remove('open');
-        
-        const lastUpdate = new Date().toLocaleDateString('ru-RU', {
-            day: '2-digit',
-            month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        openModal(`
-            <h2>🔄 Обновления</h2>
-            <div class="info-item">
-                <span>Последнее обновление</span>
-                <span>${lastUpdate}</span>
-            </div>
-        `);
+// =========================================
+// ПУНКТ МЕНЮ "РАЗРАБОТЧИК"
+// =========================================
+menuDeveloper.addEventListener('click', (e) => {
+    e.preventDefault();
+    hamburger.classList.remove('active');
+    navMenu.classList.remove('open');
+    
+    openModal(`
+        <h2>👨‍💻 Разработчик</h2>
+        <div class="info-item">
+            <span>Название</span>
+            <span>Quarwatch</span>
+        </div>
+        <div class="info-item">
+            <span>Создатель</span>
+            <span>quartess</span>
+        </div>
+        <div class="info-item">
+            <span>Версия</span>
+            <span>2.0</span>
+        </div>
+        <div class="info-item">
+            <span>Технологии</span>
+            <span>HTML, CSS, JS, Kodik API</span>
+        </div>
+        <div class="info-item">
+            <span>Сайт</span>
+            <span><a href="#" style="color:#b8a0d0; text-decoration:none;">quarwatch.ck6.ru</a></span>
+        </div>
+        <p style="margin-top:15px; text-align:center; color:#7a8aaa; font-size:0.8rem;">
+            🌙 Сделано с любовью к аниме
+        </p>
+    `);
+});
+
+// =========================================
+// ПУНКТ МЕНЮ "ОБНОВЛЕНИЯ"
+// =========================================
+menuUpdates.addEventListener('click', (e) => {
+    e.preventDefault();
+    hamburger.classList.remove('active');
+    navMenu.classList.remove('open');
+    
+    const lastUpdate = new Date().toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
     });
-}
+    
+    openModal(`
+        <h2>🔄 Обновления</h2>
+        <div class="info-item">
+            <span>Последнее обновление</span>
+            <span>${lastUpdate}</span>
+        </div>
+    `);
+});
 
 // =========================================
 // КАТЕГОРИИ
@@ -187,7 +218,7 @@ function setCategory(type) {
     currentCategory = type;
     nextPageUrl = null;
     currentQuery = '';
-    if (searchInput) searchInput.value = '';
+    searchInput.value = '';
 
     categoryBtns.forEach(btn => {
         btn.classList.remove('active');
@@ -212,16 +243,14 @@ categoryBtns.forEach(btn => {
 // =========================================
 // ЛОГОТИП → ГЛАВНАЯ
 // =========================================
-if (logoLink) {
-    logoLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (window.location.hash) {
-            window.location.hash = '';
-        } else {
-            fetchAnimeList();
-        }
-    });
-}
+logoLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (window.location.hash) {
+        window.location.hash = '';
+    } else {
+        fetchAnimeList();
+    }
+});
 
 function showSection(section) {
     document.querySelectorAll('main section').forEach(s => s.classList.remove('active'));
@@ -234,12 +263,12 @@ async function fetchAnimeList(query = '', loadMore = false) {
     isLoading = true;
 
     if (!loadMore) {
-        if (catalogEl) catalogEl.innerHTML = '';
+        catalogEl.innerHTML = '';
         nextPageUrl = null;
         currentQuery = query;
     }
 
-    if (loaderEl) loaderEl.style.display = 'block';
+    loaderEl.style.display = 'block';
 
     try {
         let url;
@@ -282,37 +311,33 @@ async function fetchAnimeList(query = '', loadMore = false) {
         nextPageUrl = (uniqueResults.length > 0) ? data.next_page || null : null;
 
         if (!uniqueResults || uniqueResults.length === 0) {
-            if (!loadMore && catalogEl) {
+            if (!loadMore) {
                 catalogEl.innerHTML = '<p style="text-align:center;color:#7a8aaa;">Аниме не найдено</p>';
             }
-            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+            loadMoreBtn.style.display = 'none';
             return;
         }
 
         renderAnimeList(uniqueResults, loadMore);
 
-        if (loadMoreBtn) {
-            if (nextPageUrl) {
-                loadMoreBtn.style.display = 'block';
-            } else {
-                loadMoreBtn.style.display = 'none';
-            }
+        if (nextPageUrl) {
+            loadMoreBtn.style.display = 'block';
+        } else {
+            loadMoreBtn.style.display = 'none';
         }
     } catch (err) {
         console.error('❌ Ошибка загрузки каталога:', err);
-        if (!loadMore && catalogEl) {
+        if (!loadMore) {
             catalogEl.innerHTML = `<p style="text-align:center;color:#ff7a7a;">Ошибка: ${err.message}</p>`;
         }
     } finally {
-        if (loaderEl) loaderEl.style.display = 'none';
+        loaderEl.style.display = 'none';
         isLoading = false;
     }
 }
 
 // ===== ОТРИСОВКА КАРТОЧЕК =====
 function renderAnimeList(animes, append = false) {
-    if (!catalogEl) return;
-    
     if (!append) {
         catalogEl.innerHTML = '';
     }
@@ -442,8 +467,8 @@ async function loadAnimeById(animeId) {
 
     currentAnimeId = animeId;
     showSection(playerSection);
-    if (animeInfoEl) animeInfoEl.innerHTML = '<div class="loader">Загрузка...</div>';
-    if (playerIframe) playerIframe.src = '';
+    animeInfoEl.innerHTML = '<div class="loader">Загрузка...</div>';
+    playerIframe.src = '';
 
     try {
         const params = new URLSearchParams({
@@ -462,21 +487,19 @@ async function loadAnimeById(animeId) {
 
         if (!isAnime(anime)) {
             console.warn('⛔ БЛОКИРОВКА! Не аниме:', anime.type, anime.title);
-            if (animeInfoEl) {
-                animeInfoEl.innerHTML = `
-                    <div class="anime-detail" id="anime-detail">
-                        <div class="info" style="text-align:center; padding:40px 20px;">
-                            <h2 style="color:#ff7a7a;">⛔ ДОСТУП ЗАПРЕЩЁН</h2>
-                            <p style="color:#9aa3c0; margin:20px 0;">
-                                Этот тайтл (${anime.type}) не является аниме и заблокирован.<br>
-                                Сайт предназначен только для просмотра АНИМЕ.
-                            </p>
-                            <button class="back-btn" onclick="window.location.hash=''">← На главную</button>
-                        </div>
+            animeInfoEl.innerHTML = `
+                <div class="anime-detail" id="anime-detail">
+                    <div class="info" style="text-align:center; padding:40px 20px;">
+                        <h2 style="color:#ff7a7a;">⛔ ДОСТУП ЗАПРЕЩЁН</h2>
+                        <p style="color:#9aa3c0; margin:20px 0;">
+                            Этот тайтл (${anime.type}) не является аниме и заблокирован.<br>
+                            Сайт предназначен только для просмотра АНИМЕ.
+                        </p>
+                        <button class="back-btn" onclick="window.location.hash=''">← На главную</button>
                     </div>
-                `;
-            }
-            if (playerIframe) playerIframe.src = 'about:blank';
+                </div>
+            `;
+            playerIframe.src = 'about:blank';
             return;
         }
 
@@ -499,7 +522,7 @@ async function loadAnimeById(animeId) {
             } catch (e) {}
         }
 
-        if (playerIframe) playerIframe.src = playerSrc || 'about:blank';
+        playerIframe.src = playerSrc || 'about:blank';
 
         // ===== ДАННЫЕ =====
         currentSeason = anime.last_season || 1;
@@ -518,10 +541,10 @@ async function loadAnimeById(animeId) {
             screenshotsHtml = `
                 <div style="margin-top: 15px;">
                     <p style="color: #9aa3c0; font-size: 0.8rem; margin-bottom: 10px;">📸 Кадры из серии:</p>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-start;">
+                    <div class="screenshots-grid">
                         ${anime.screenshots.map(url => `
-                            <a href="${url}" target="_blank" style="display: block; width: 100px; height: 56px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; flex-shrink: 0;">
-                                <img src="${url}" alt="Скриншот" style="width: 100%; height: 100%; object-fit: cover; display: block;" loading="lazy" />
+                            <a class="screenshot-item" data-image="${url}">
+                                <img src="${url}" alt="Скриншот" loading="lazy" />
                             </a>
                         `).join('')}
                     </div>
@@ -558,32 +581,46 @@ async function loadAnimeById(animeId) {
         `;
 
         // ===== СБОРКА СТРАНИЦЫ =====
-        if (animeInfoEl) {
-            animeInfoEl.innerHTML = `
-                <div class="anime-detail" id="anime-detail">
-                    <div class="poster">
-                        <img src="${poster}" alt="${title}" />
-                    </div>
-                    <div class="info">
-                        <h2>${title}</h2>
-                        <div class="meta">
-                            <span>📅 ${year}</span>
-                            <span>⭐ ${rating}</span>
-                            <span>🎭 ${genres}</span>
-                        </div>
-                        <div class="description">${description}</div>
-                        ${episodeInfo}
-                        ${screenshotsHtml}
-                    </div>
+        animeInfoEl.innerHTML = `
+            <div class="anime-detail" id="anime-detail">
+                <div class="poster">
+                    <img src="${poster}" alt="${title}" />
                 </div>
-            `;
-        }
+                <div class="info">
+                    <h2>${title}</h2>
+                    <div class="meta">
+                        <span>📅 ${year}</span>
+                        <span>⭐ ${rating}</span>
+                        <span>🎭 ${genres}</span>
+                    </div>
+                    <div class="description">${description}</div>
+                    ${episodeInfo}
+                    ${screenshotsHtml}
+                </div>
+            </div>
+        `;
         document.title = `${title} — Quarwatch`;
+
+        // ===== ДОБАВЛЯЕМ ОБРАБОТЧИКИ ДЛЯ УВЕЛИЧЕНИЯ =====
+        // Постер
+        const posterImg = document.querySelector('.anime-detail .poster img');
+        if (posterImg) {
+            posterImg.style.cursor = 'pointer';
+            posterImg.addEventListener('click', () => {
+                openImageModal(posterImg.src);
+            });
+        }
+        
+        // Скриншоты
+        document.querySelectorAll('.screenshot-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const img = item.querySelector('img');
+                if (img) openImageModal(img.src);
+            });
+        });
     } catch (err) {
         console.error('❌ Ошибка загрузки тайтла:', err);
-        if (animeInfoEl) {
-            animeInfoEl.innerHTML = `<p style="color:#ff7a7a;">Ошибка: ${err.message}</p>`;
-        }
+        animeInfoEl.innerHTML = `<p style="color:#ff7a7a;">Ошибка: ${err.message}</p>`;
     }
 }
 
@@ -603,7 +640,7 @@ function handleHashChange() {
 
 // ===== НАЗАД =====
 function goBack() {
-    if (playerIframe) playerIframe.src = '';
+    playerIframe.src = '';
     currentAnimeId = null;
     window.location.hash = '';
 }
@@ -611,35 +648,26 @@ function goBack() {
 // ===== ОБРАБОТЧИКИ =====
 window.addEventListener('hashchange', handleHashChange);
 
-if (searchBtn && searchInput) {
-    searchBtn.addEventListener('click', () => {
-        const query = searchInput.value.trim();
-        if (window.location.hash) {
-            window.location.hash = '';
-            setTimeout(() => fetchAnimeList(query), 50);
-        } else {
-            fetchAnimeList(query);
-        }
-    });
+searchBtn.addEventListener('click', () => {
+    const query = searchInput.value.trim();
+    if (window.location.hash) {
+        window.location.hash = '';
+        setTimeout(() => fetchAnimeList(query), 50);
+    } else {
+        fetchAnimeList(query);
+    }
+});
 
-    searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') searchBtn.click();
-    });
-}
+searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchBtn.click();
+});
 
-if (backBtn) {
-    backBtn.addEventListener('click', goBack);
-}
+backBtn.addEventListener('click', goBack);
+shareBtn.addEventListener('click', copyPageLink);
 
-if (shareBtn) {
-    shareBtn.addEventListener('click', copyPageLink);
-}
-
-if (loadMoreBtn) {
-    loadMoreBtn.addEventListener('click', () => {
-        fetchAnimeList(currentQuery, true);
-    });
-}
+loadMoreBtn.addEventListener('click', () => {
+    fetchAnimeList(currentQuery, true);
+});
 
 // ===== АВТОМАТИЧЕСКОЕ ОБНОВЛЕНИЕ ГОДА =====
 (function updateFooterYear() {
@@ -657,4 +685,3 @@ if (window.location.hash) {
     showSection(listSection);
     fetchAnimeList();
 }
-  
