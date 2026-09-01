@@ -53,8 +53,8 @@ const searchInput = document.getElementById('search-input');
 const searchBtn = document.getElementById('search-btn');
 const backBtn = document.getElementById('back-btn');
 const shareBtn = document.getElementById('share-btn');
-const animeInfoEl = document.getElementById('anime-info');
 const playerIframe = document.getElementById('player-iframe');
+const animeInfoEl = document.getElementById('anime-info');
 const logoLink = document.getElementById('logo-link');
 const categoryBtns = document.querySelectorAll('.category-btn');
 const loadMoreBtn = document.getElementById('load-more-btn');
@@ -86,6 +86,7 @@ hamburger.addEventListener('click', () => {
     navMenu.classList.toggle('open');
 });
 
+// Закрываем меню при клике вне его
 document.addEventListener('click', (e) => {
     if (!hamburger.contains(e.target) && !navMenu.contains(e.target)) {
         hamburger.classList.remove('active');
@@ -113,7 +114,7 @@ modalOverlay.addEventListener('click', (e) => {
 });
 
 // =========================================
-// ПУНКТЫ МЕНЮ
+// ПУНКТ МЕНЮ "РАЗРАБОТЧИК"
 // =========================================
 menuDeveloper.addEventListener('click', (e) => {
     e.preventDefault();
@@ -140,7 +141,7 @@ menuDeveloper.addEventListener('click', (e) => {
         </div>
         <div class="info-item">
             <span>Сайт</span>
-            <span><a href="#">quarwatch.ck6.ru</a></span>
+            <span><a href="#" style="color:#b8a0d0; text-decoration:none;">quarwatch.ck6.ru</a></span>
         </div>
         <p style="margin-top:15px; text-align:center; color:#7a8aaa; font-size:0.8rem;">
             🌙 Сделано с любовью к аниме
@@ -148,6 +149,9 @@ menuDeveloper.addEventListener('click', (e) => {
     `);
 });
 
+// =========================================
+// ПУНКТ МЕНЮ "ОБНОВЛЕНИЯ" (только дата)
+// =========================================
 menuUpdates.addEventListener('click', (e) => {
     e.preventDefault();
     hamburger.classList.remove('active');
@@ -216,7 +220,7 @@ function showSection(section) {
     section.classList.add('active');
 }
 
-// ===== ЗАГРУЗКА КАТАЛОГА =====
+// ===== ЗАГРУЗКА КАТАЛОГА (С УДАЛЕНИЕМ ДУБЛИКАТОВ) =====
 async function fetchAnimeList(query = '', loadMore = false) {
     if (isLoading) return;
     isLoading = true;
@@ -264,13 +268,12 @@ async function fetchAnimeList(query = '', loadMore = false) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
 
-        console.log('📦 Получено данных:', data.results ? data.results.length : 0);
-
+        // 1. Фильтруем только аниме
         let filteredResults = filterAnimeOnly(data.results);
+        
+        // 2. Удаляем дубликаты по названию (для всех категорий!)
         const uniqueResults = removeDuplicates(filteredResults);
         
-        console.log('📦 После фильтрации:', uniqueResults.length);
-
         nextPageUrl = (uniqueResults.length > 0) ? data.next_page || null : null;
 
         if (!uniqueResults || uniqueResults.length === 0) {
@@ -299,7 +302,7 @@ async function fetchAnimeList(query = '', loadMore = false) {
     }
 }
 
-// ===== ОТРИСОВКА КАРТОЧЕК =====
+// ===== ОТРИСОВКА КАРТОЧЕК (дополнительная проверка) =====
 function renderAnimeList(animes, append = false) {
     if (!append) {
         catalogEl.innerHTML = '';
@@ -317,8 +320,6 @@ function renderAnimeList(animes, append = false) {
             uniqueAnimes.push(anime);
         }
     });
-
-    console.log('🎨 Отрисовка карточек:', uniqueAnimes.length);
 
     uniqueAnimes.forEach(anime => {
         const card = document.createElement('div');
@@ -423,7 +424,7 @@ function showCopyNotification(message) {
     }, 3000);
 }
 
-// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА =====
+// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА (ПЛЕЕР ВНИЗУ ПОСЛЕ СКРИНШОТОВ) =====
 async function loadAnimeById(animeId) {
     if (currentAnimeId === animeId) {
         console.log('⏭️ Аниме уже открыто, пропускаем загрузку');
@@ -468,7 +469,7 @@ async function loadAnimeById(animeId) {
             return;
         }
 
-        // ===== ПЛЕЕР =====
+        // ===== ПЛЕЕР (сохраняем ссылку для вставки внизу) =====
         let playerSrc = null;
         if (anime.link) {
             playerSrc = anime.link.startsWith('//') ? `https:${anime.link}` : anime.link;
@@ -487,7 +488,8 @@ async function loadAnimeById(animeId) {
             } catch (e) {}
         }
 
-        playerIframe.src = playerSrc || 'about:blank';
+        // Не вставляем плеер сразу, сохраняем ссылку
+        const savedPlayerSrc = playerSrc || 'about:blank';
 
         // ===== ДАННЫЕ =====
         currentSeason = anime.last_season || 1;
@@ -500,7 +502,9 @@ async function loadAnimeById(animeId) {
         const rating = anime.rating?.imdb || anime.material_data?.rating || '—';
         const genres = anime.genres ? anime.genres.join(', ') : (anime.material_data?.genres?.join(', ') || '—');
 
-        // ===== СКРИНШОТЫ =====
+        // =========================================
+        // СКРИНШОТЫ
+        // =========================================
         let screenshotsHtml = '';
         if (anime.screenshots && anime.screenshots.length > 0) {
             screenshotsHtml = `
@@ -517,7 +521,9 @@ async function loadAnimeById(animeId) {
             `;
         }
 
-        // ===== ДАТА ОБНОВЛЕНИЯ =====
+        // =========================================
+        // ДАТА ОБНОВЛЕНИЯ
+        // =========================================
         let updateDateHtml = '';
         if (anime.updated_at) {
             const updateDate = new Date(anime.updated_at);
@@ -535,7 +541,9 @@ async function loadAnimeById(animeId) {
             `;
         }
 
-        // ===== ИНФОРМАЦИЯ О СЕРИИ =====
+        // =========================================
+        // ИНФОРМАЦИЯ О СЕРИИ
+        // =========================================
         const episodeInfo = `
             <div style="margin-top: 12px; padding: 10px 16px; background: rgba(20, 26, 50, 0.5); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
                 <span style="color: #9aa3c0; font-size: 0.9rem;">
@@ -545,7 +553,9 @@ async function loadAnimeById(animeId) {
             </div>
         `;
 
-        // ===== СБОРКА СТРАНИЦЫ =====
+        // =========================================
+        // СБОРКА СТРАНИЦЫ — СНАЧАЛА ПОСТЕР И ИНФО, ПОТОМ СКРИНШОТЫ, ПОТОМ ПЛЕЕР
+        // =========================================
         animeInfoEl.innerHTML = `
             <div class="anime-detail" id="anime-detail">
                 <div class="poster">
@@ -562,6 +572,10 @@ async function loadAnimeById(animeId) {
                     ${episodeInfo}
                     ${screenshotsHtml}
                 </div>
+            </div>
+            <!-- ПЛЕЕР ВНИЗУ, ПОСЛЕ СКРИНШОТОВ -->
+            <div id="player-container" style="margin-top: 25px; position: relative; width: 100%; padding-bottom: 56.25%; background: #000; border-radius: 16px; overflow: hidden; box-shadow: 0 0 40px rgba(100, 80, 160, 0.3);">
+                <iframe id="player-iframe" src="${savedPlayerSrc}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allowfullscreen allow="autoplay; encrypted-media; fullscreen"></iframe>
             </div>
         `;
         document.title = `${title} — Quarwatch`;
@@ -631,4 +645,4 @@ if (window.location.hash) {
 } else {
     showSection(listSection);
     fetchAnimeList();
-}
+            }
