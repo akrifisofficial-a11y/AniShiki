@@ -5,6 +5,8 @@ const KODIK_API_URL = 'https://kodik-api.com';
 // ===== ТОЛЬКО ЭТИ ТИПЫ РАЗРЕШЕНЫ =====
 const ALLOWED_TYPES = ['anime-serial', 'anime'];
 
+console.log('🚀 Quarwatch загружен!');
+
 function isAnime(item) {
     if (!item) return false;
     return ALLOWED_TYPES.includes(item.type);
@@ -57,6 +59,17 @@ const logoLink = document.getElementById('logo-link');
 const categoryBtns = document.querySelectorAll('.category-btn');
 const loadMoreBtn = document.getElementById('load-more-btn');
 
+// ===== ГАМБУРГЕР-МЕНЮ =====
+const hamburger = document.getElementById('hamburger');
+const navMenu = document.getElementById('nav-menu');
+const menuDeveloper = document.getElementById('menu-developer');
+const menuUpdates = document.getElementById('menu-updates');
+
+// ===== МОДАЛЬНОЕ ОКНО =====
+const modalOverlay = document.getElementById('modal-overlay');
+const modalClose = document.getElementById('modal-close');
+const modalBody = document.getElementById('modal-body');
+
 let currentAnimeId = null;
 let currentSeason = 1;
 let currentEpisode = 1;
@@ -64,6 +77,102 @@ let currentCategory = 'series';
 let nextPageUrl = null;
 let isLoading = false;
 let currentQuery = '';
+
+// =========================================
+// ГАМБУРГЕР
+// =========================================
+hamburger.addEventListener('click', () => {
+    hamburger.classList.toggle('active');
+    navMenu.classList.toggle('open');
+});
+
+// Закрываем меню при клике вне его
+document.addEventListener('click', (e) => {
+    if (!hamburger.contains(e.target) && !navMenu.contains(e.target)) {
+        hamburger.classList.remove('active');
+        navMenu.classList.remove('open');
+    }
+});
+
+// =========================================
+// МОДАЛЬНОЕ ОКНО
+// =========================================
+function openModal(content) {
+    modalBody.innerHTML = content;
+    modalOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    modalOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+modalClose.addEventListener('click', closeModal);
+modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) closeModal();
+});
+
+// =========================================
+// ПУНКТ МЕНЮ "РАЗРАБОТЧИК"
+// =========================================
+menuDeveloper.addEventListener('click', (e) => {
+    e.preventDefault();
+    hamburger.classList.remove('active');
+    navMenu.classList.remove('open');
+    
+    openModal(`
+        <h2>👨‍💻 Разработчик</h2>
+        <div class="info-item">
+            <span>Название</span>
+            <span>Quarwatch</span>
+        </div>
+        <div class="info-item">
+            <span>Создатель</span>
+            <span>quartess</span>
+        </div>
+        <div class="info-item">
+            <span>Версия</span>
+            <span>2.0</span>
+        </div>
+        <div class="info-item">
+            <span>Технологии</span>
+            <span>HTML, CSS, JS, Kodik API</span>
+        </div>
+        <div class="info-item">
+            <span>Сайт</span>
+            <span><a href="#" style="color:#b8a0d0; text-decoration:none;">quarwatch.ck6.ru</a></span>
+        </div>
+        <p style="margin-top:15px; text-align:center; color:#7a8aaa; font-size:0.8rem;">
+            🌙 Сделано с любовью к аниме
+        </p>
+    `);
+});
+
+// =========================================
+// ПУНКТ МЕНЮ "ОБНОВЛЕНИЯ" (только дата)
+// =========================================
+menuUpdates.addEventListener('click', (e) => {
+    e.preventDefault();
+    hamburger.classList.remove('active');
+    navMenu.classList.remove('open');
+    
+    const lastUpdate = new Date().toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    openModal(`
+        <h2>🔄 Обновления</h2>
+        <div class="info-item">
+            <span>Последнее обновление</span>
+            <span>${lastUpdate}</span>
+        </div>
+    `);
+});
 
 // =========================================
 // КАТЕГОРИИ
@@ -476,6 +585,7 @@ loadMoreBtn.addEventListener('click', () => {
 })();
 
 // ===== СТАРТ =====
+console.log('🚀 Запуск Quarwatch...');
 if (window.location.hash) {
     handleHashChange();
 } else {
