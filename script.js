@@ -213,6 +213,36 @@ menuUpdates.addEventListener('click', (e) => {
 // КАТЕГОРИИ
 // =========================================
 function setCategory(type) {
+    // Если выбран пункт "Важно" — показываем модальное окно с информацией
+    if (type === 'important') {
+        openModal(`
+            <h2>❓ Важно</h2>
+            <div style="margin: 15px 0; padding: 15px; background: rgba(255, 70, 70, 0.1); border-radius: 12px; border-left: 3px solid #ff7a7a;">
+                <p style="color: #ff7a7a; font-size: 0.9rem; line-height: 1.6;">
+                    ⚠️ Если аниме не появляется и вы видите только бесконечную загрузку:
+                </p>
+            </div>
+            <div style="margin: 15px 0; padding: 15px; background: rgba(184, 160, 208, 0.1); border-radius: 12px;">
+                <p style="color: #b0b8d0; line-height: 1.8;">
+                    1️⃣ Нажмите кнопку <strong style="color: #e0e5ff;">«Сериалы»</strong> или <strong style="color: #e0e5ff;">«Фильмы»</strong> в меню выше.
+                </p>
+                <p style="color: #b0b8d0; line-height: 1.8; margin-top: 8px;">
+                    2️⃣ Это обновит страницу и перезагрузит список аниме.
+                </p>
+                <p style="color: #b0b8d0; line-height: 1.8; margin-top: 8px;">
+                    3️⃣ Если проблема осталась — попробуйте обновить страницу (F5).
+                </p>
+            </div>
+            <div style="margin-top: 15px; padding: 12px; background: rgba(100, 80, 160, 0.1); border-radius: 12px; text-align: center;">
+                <p style="color: #7a8aaa; font-size: 0.8rem;">
+                    🕐 Если ничего не помогает — подождите 5-10 минут и попробуйте снова.
+                </p>
+            </div>
+        `);
+        return; // Не загружаем каталог
+    }
+
+    // Обычная логика для категорий
     currentCategory = type;
     nextPageUrl = null;
     currentQuery = '';
@@ -456,7 +486,7 @@ function showCopyNotification(message) {
     }, 3000);
 }
 
-// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА (БЕЗ СЕЗОНА И СЕРИИ) =====
+// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА =====
 async function loadAnimeById(animeId) {
     if (currentAnimeId === animeId) {
         console.log('⏭️ Аниме уже открыто, пропускаем загрузку');
@@ -565,7 +595,7 @@ async function loadAnimeById(animeId) {
             `;
         }
 
-        // ===== СБОРКА СТРАНИЦЫ (БЕЗ СЕЗОНА И СЕРИИ) =====
+        // ===== СБОРКА СТРАНИЦЫ =====
         animeInfoEl.innerHTML = `
             <div class="anime-detail" id="anime-detail">
                 <div class="poster">
@@ -667,4 +697,4 @@ if (window.location.hash) {
 } else {
     showSection(listSection);
     fetchAnimeList();
-}
+                                        }
