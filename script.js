@@ -76,8 +76,6 @@ const modalImage = document.getElementById('modal-image');
 const modalImageClose = document.getElementById('modal-image-close');
 
 let currentAnimeId = null;
-let currentSeason = 1;
-let currentEpisode = 1;
 let currentCategory = 'series';
 let nextPageUrl = null;
 let isLoading = false;
@@ -458,7 +456,7 @@ function showCopyNotification(message) {
     }, 3000);
 }
 
-// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА =====
+// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА (БЕЗ СЕЗОНА И СЕРИИ) =====
 async function loadAnimeById(animeId) {
     if (currentAnimeId === animeId) {
         console.log('⏭️ Аниме уже открыто, пропускаем загрузку');
@@ -525,9 +523,6 @@ async function loadAnimeById(animeId) {
         playerIframe.src = playerSrc || 'about:blank';
 
         // ===== ДАННЫЕ =====
-        currentSeason = anime.last_season || 1;
-        currentEpisode = anime.last_episode || 1;
-
         const title = anime.title || 'Без названия';
         const poster = anime.material_data?.poster_url || anime.poster_url || 'https://via.placeholder.com/300x450?text=No+Image';
         const description = anime.description || anime.material_data?.description || 'Описание отсутствует.';
@@ -570,17 +565,7 @@ async function loadAnimeById(animeId) {
             `;
         }
 
-        // ===== ИНФОРМАЦИЯ О СЕРИИ =====
-        const episodeInfo = `
-            <div style="margin-top: 12px; padding: 10px 16px; background: rgba(20, 26, 50, 0.5); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                <span style="color: #9aa3c0; font-size: 0.9rem;">
-                    ▶ Сезон ${currentSeason}, серия ${currentEpisode}
-                </span>
-                ${updateDateHtml}
-            </div>
-        `;
-
-        // ===== СБОРКА СТРАНИЦЫ =====
+        // ===== СБОРКА СТРАНИЦЫ (БЕЗ СЕЗОНА И СЕРИИ) =====
         animeInfoEl.innerHTML = `
             <div class="anime-detail" id="anime-detail">
                 <div class="poster">
@@ -594,7 +579,7 @@ async function loadAnimeById(animeId) {
                         <span>🎭 ${genres}</span>
                     </div>
                     <div class="description">${description}</div>
-                    ${episodeInfo}
+                    ${updateDateHtml}
                     ${screenshotsHtml}
                 </div>
             </div>
@@ -602,7 +587,6 @@ async function loadAnimeById(animeId) {
         document.title = `${title} — Quarwatch`;
 
         // ===== ДОБАВЛЯЕМ ОБРАБОТЧИКИ ДЛЯ УВЕЛИЧЕНИЯ =====
-        // Постер
         const posterImg = document.querySelector('.anime-detail .poster img');
         if (posterImg) {
             posterImg.style.cursor = 'pointer';
@@ -611,7 +595,6 @@ async function loadAnimeById(animeId) {
             });
         }
         
-        // Скриншоты
         document.querySelectorAll('.screenshot-item').forEach(item => {
             item.addEventListener('click', () => {
                 const img = item.querySelector('img');
