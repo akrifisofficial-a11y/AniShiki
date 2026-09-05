@@ -1,6 +1,7 @@
 // ===== КОНФИГУРАЦИЯ =====
 const KODIK_API_KEY = 'd99ff2ab48b0d9c42ace4901bee833ff';
 const KODIK_API_URL = 'https://kodik-api.com';
+const API_URL = 'https://shikimori.one/api'; // для Shikimori
 
 // ===== ТОЛЬКО ЭТИ ТИПЫ РАЗРЕШЕНЫ (АНИМЕ) =====
 const ALLOWED_TYPES = ['anime-serial', 'anime'];
@@ -9,7 +10,7 @@ console.log('🚀 Quarwatch загружен!');
 
 // ===== АВТОРИЗАЦИЯ ЧЕРЕЗ SHIKIMORI =====
 const CLIENT_ID = '_7QqZ-kZdFcxAVNWVnO9NLPTec6QcLRRzKscR7Ex_kw';
-const REDIRECT_URI = 'https://quarwatch.c6t.ru/oauth/callback.html';
+const REDIRECT_URI = 'https://quarwatch.c6t.ru/oauth/callback';
 const AUTH_URL = 'https://shikimori.one/oauth/authorize';
 
 let currentUser = null;
@@ -58,6 +59,86 @@ function logout() {
     localStorage.removeItem('shikimori_user');
     currentUser = null;
     loadUser();
+}
+
+// ===== УВЕЛИЧЕНИЕ ПРОСМОТРОВ В SHIKIMORI =====
+async function incrementShikimoriView(animeId, season, episode) {
+    const token = localStorage.getItem('shikimori_token');
+    if (!token) return; // Если не авторизован — пропускаем
+    
+    try {
+        // Проверяем, есть ли уже такая запись
+        const checkResponse = await fetch(
+            `${API_URL}/v2/user_rates?user_id=me&target_id=${animeId}&target_type=Anime`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        );
+        
+        if (!checkResponse.ok) throw new Error('Ошибка проверки записи');
+        const rates = await checkResponse.json();
+        
+        let rateId = null;
+        let currentEpisodes = 0;
+        
+        if (rates.length > 0) {
+            const rate = rates[0];
+            rateId = rate.id;
+            currentEpisodes = rate.episodes || 0;
+        }
+        
+        const newEpisodes = currentEpisodes + 1;
+        
+        if (rateId) {
+            // Обновляем существующую запись
+            const updateResponse = await fetch(
+                `${API_URL}/v2/user_rates/${rateId}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_rate: {
+                            episodes: newEpisodes
+                        }
+                    })
+                }
+            );
+            
+            if (!updateResponse.ok) throw new Error('Ошибка обновления просмотров');
+            console.log(`✅ Просмотры обновлены: ${newEpisodes}`);
+        } else {
+            // Создаём новую запись со статусом "watching"
+            const createResponse = await fetch(
+                `${API_URL}/v2/user_rates`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_rate: {
+                            target_id: animeId,
+                            target_type: 'Anime',
+                            status: 'watching',
+                            episodes: 1
+                        }
+                    })
+                }
+            );
+            
+            if (!createResponse.ok) throw new Error('Ошибка создания записи');
+            console.log('✅ Создана новая запись с просмотрами');
+        }
+    } catch (err) {
+        console.warn('⚠️ Ошибка обновления просмотров:', err.message);
+        // Не показываем ошибку пользователю, чтобы не мешать просмотру
+    }
 }
 
 // ===== ПРОВЕРКА, ЧТО ТАЙТЛ - АНИМЕ =====
@@ -657,7 +738,7 @@ function showCopyNotification(message) {
     }, 3000);
 }
 
-// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА =====
+// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА (с увеличением просмотров) =====
 async function loadAnimeById(animeId) {
     if (currentAnimeId === animeId) {
         console.log('⏭️ Аниме уже открыто, пропускаем загрузку');
@@ -705,6 +786,7 @@ async function loadAnimeById(animeId) {
             return;
         }
 
+        // ===== ПЛЕЕР =====
         let playerSrc = null;
         if (anime.link) {
             playerSrc = anime.link.startsWith('//') ? `https:${anime.link}` : anime.link;
@@ -725,6 +807,29 @@ async function loadAnimeById(animeId) {
 
         if (playerIframe) playerIframe.src = playerSrc || 'about:blank';
 
+        // ===== УВЕЛИЧЕНИЕ ПРОСМОТРОВ В SHIKIMORI =====
+        if (playerSrc && playerSrc !== 'about:blank') {
+            // Пытаемся определить сезон и серию из ссылки
+            const urlParts = playerSrc.split('/');
+            let season = 1;
+            let episode = 1;
+            
+            // Пробуем извлечь из формата /serial/{id}/{hash}/{quality}
+            // или /seria/{id}/{season}/{episode}
+            if (urlParts.length >= 5) {
+                const lastPart = urlParts[urlParts.length - 2];
+                const prevPart = urlParts[urlParts.length - 3];
+                if (!isNaN(parseInt(lastPart)) && !isNaN(parseInt(prevPart))) {
+                    season = parseInt(prevPart) || 1;
+                    episode = parseInt(lastPart) || 1;
+                }
+            }
+            
+            // Запускаем увеличение просмотров в фоне
+            incrementShikimoriView(animeId, season, episode);
+        }
+
+        // ===== ДАННЫЕ =====
         const title = anime.title || 'Без названия';
         const poster = anime.material_data?.poster_url || anime.poster_url || 'https://via.placeholder.com/300x450?text=No+Image';
         const description = anime.description || anime.material_data?.description || 'Описание отсутствует.';
@@ -943,13 +1048,16 @@ async function rateAnime(animeId, score) {
                 user_rate: {
                     target_id: animeId,
                     target_type: 'Anime',
-                    status: 'planned',
+                    status: 'watching',
                     score: score
                 }
             })
         });
         
-        if (!response.ok) throw new Error('Ошибка при сохранении оценки');
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Ошибка ${response.status}: ${errorText}`);
+        }
         const data = await response.json();
         console.log('Оценка сохранена:', data);
         
