@@ -43,6 +43,7 @@ let allLoadedIds = new Set();
 // ===== DOM =====
 const listSection = document.getElementById('anime-list');
 const playerSection = document.getElementById('player-section');
+const updatesSection = document.getElementById('updates-section');
 const catalogEl = document.getElementById('catalog');
 const loaderEl = document.getElementById('loader');
 const searchInput = document.getElementById('search-input');
@@ -51,6 +52,8 @@ const backBtn = document.getElementById('back-btn');
 const shareBtn = document.getElementById('share-btn');
 const playerIframe = document.getElementById('player-iframe');
 const animeInfoEl = document.getElementById('anime-info');
+const updatesContent = document.getElementById('updates-content');
+const updatesBackBtn = document.getElementById('updates-back-btn');
 const logoLink = document.getElementById('logo-link');
 const categoryBtns = document.querySelectorAll('.category-btn');
 const loadMoreBtn = document.getElementById('load-more-btn');
@@ -150,7 +153,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 // =========================================
-// ПУНКТЫ МЕНЮ
+// ПУНКТ МЕНЮ "РАЗРАБОТЧИК"
 // =========================================
 if (menuDeveloper) {
     menuDeveloper.addEventListener('click', (e) => {
@@ -187,27 +190,15 @@ if (menuDeveloper) {
     });
 }
 
+// =========================================
+// ПУНКТ МЕНЮ "ОБНОВЛЕНИЯ" → СТРАНИЦА
+// =========================================
 if (menuUpdates) {
     menuUpdates.addEventListener('click', (e) => {
         e.preventDefault();
         if (hamburger) hamburger.classList.remove('active');
         if (navMenu) navMenu.classList.remove('open');
-        
-        const lastUpdate = new Date().toLocaleDateString('ru-RU', {
-            day: '2-digit',
-            month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        openModal(`
-            <h2>🔄 Обновления</h2>
-            <div class="info-item">
-                <span>Последнее обновление</span>
-                <span>${lastUpdate}</span>
-            </div>
-        `);
+        showSection(updatesSection);
     });
 }
 
@@ -291,6 +282,69 @@ if (logoLink) {
 function showSection(section) {
     document.querySelectorAll('main section').forEach(s => s.classList.remove('active'));
     section.classList.add('active');
+    if (section.id === 'updates-section') {
+        loadUpdates();
+    }
+}
+
+// =========================================
+// КНОПКА НАЗАД НА СТРАНИЦЕ ОБНОВЛЕНИЙ// =========================================
+if (updatesBackBtn) {
+    updatesBackBtn.addEventListener('click', () => {
+        showSection(listSection);
+    });
+}
+
+// ===== ЗАГРУЗКА ОБНОВЛЕНИЙ =====
+async function loadUpdates() {
+    if (!updatesContent) return;
+    
+    updatesContent.innerHTML = '<div class="loader">Загрузка обновлений...</div>';
+    
+    try {
+        const response = await fetch('updates.json');
+        if (!response.ok) throw new Error('Не удалось загрузить обновления');
+        const data = await response.json();
+        
+        if (!data.updates || data.updates.length === 0) {
+            updatesContent.innerHTML = '<div class="no-updates">Нет записей об обновлениях</div>';
+            return;
+        }
+        
+        data.updates.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        let html = '';
+        data.updates.forEach(update => {
+            const date = new Date(update.date).toLocaleDateString('ru-RU', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            });
+            
+            html += `
+                <div class="update-item">
+                    <div class="update-header">
+                        <span class="update-version">${update.version || 'v1.0'}</span>
+                        <span class="update-date">${date}</span>
+                    </div>
+                    <div class="update-title">${update.title || 'Обновление'}</div>
+                    <ul class="update-changes">
+                        ${update.changes.map(change => `<li>${change}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        });
+        
+        updatesContent.innerHTML = html;
+    } catch (err) {
+        console.error('Ошибка загрузки обновлений:', err);
+        updatesContent.innerHTML = `
+            <div class="no-updates">
+                ⚠️ Не удалось загрузить обновления<br>
+                <span style="font-size:0.8rem;color:#444;">Проверьте файл updates.json</span>
+            </div>
+        `;
+    }
 }
 
 // ===== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ =====
@@ -861,7 +915,7 @@ setInterval(() => {
         console.log('🔄 Автообновление каталога...');
         fetchAnimeList(currentQuery);
     }
-}, 30000); // 30 секунд
+}, 30000);
 
 // =========================================
 // ОБНОВЛЕНИЕ ПРИ АКТИВАЦИИ ВКЛАДКИ
@@ -882,4 +936,4 @@ if (window.location.hash) {
 } else {
     showSection(listSection);
     fetchAnimeList();
-                                            }
+            }
