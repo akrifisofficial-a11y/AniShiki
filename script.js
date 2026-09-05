@@ -2,244 +2,10 @@
 const KODIK_API_KEY = 'd99ff2ab48b0d9c42ace4901bee833ff';
 const KODIK_API_URL = 'https://kodik-api.com';
 
-// ===== Shikimori OAuth =====
-const CLIENT_ID = '_7QqZ-kZdFcxAVNWVnO9NLPTec6QcLRRzKscR7Ex_kw';
-const CLIENT_SECRET = 'qlLNtimt90rKiFmoAf2iJPNS5pmZ3BPhv4w9ocQM4H4';
-const REDIRECT_URI = 'https://quarwatch.c6t.ru/oauth/callback.html';
-const AUTH_URL = 'https://shikimori.one/oauth/authorize';
-const TOKEN_URL = 'https://shikimori.one/oauth/token';
-const API_URL = 'https://shikimori.one/api';
-
 // ===== ТОЛЬКО ЭТИ ТИПЫ РАЗРЕШЕНЫ (АНИМЕ) =====
 const ALLOWED_TYPES = ['anime-serial', 'anime'];
 
 console.log('🚀 Quarwatch загружен!');
-
-// ===== АВТОРИЗАЦИЯ ЧЕРЕЗ SHIKIMORI =====
-let currentUser = null;
-
-// Загружаем пользователя из localStorage
-function loadUser() {
-    const token = localStorage.getItem('shikimori_token');
-    const userJson = localStorage.getItem('shikimori_user');
-    
-    if (token && userJson) {
-        try {
-            currentUser = JSON.parse(userJson);
-            const loginBtn = document.getElementById('login-btn');
-            const userInfo = document.getElementById('user-info');
-            if (loginBtn) loginBtn.style.display = 'none';
-            if (userInfo) {
-                userInfo.style.display = 'inline';
-                userInfo.innerHTML = `👤 ${currentUser.nickname} (выйти)`;
-                userInfo.onclick = logout;
-            }
-        } catch (e) {
-            console.error('Ошибка парсинга пользователя:', e);
-        }
-    } else {
-        const loginBtn = document.getElementById('login-btn');
-        const userInfo = document.getElementById('user-info');
-        if (loginBtn) loginBtn.style.display = 'inline';
-        if (userInfo) userInfo.style.display = 'none';
-    }
-}
-
-// Проверяем, есть ли код для обмена
-async function checkAuthCode() {
-    const code = localStorage.getItem('shikimori_auth_code');
-    if (!code) return;
-    
-    localStorage.removeItem('shikimori_auth_code');
-    
-    try {
-        console.log('⏳ Обмен кода на токен...');
-        
-        // Используем corsproxy для обхода CORS
-        const response = await fetch('https://corsproxy.io/?' + encodeURIComponent(TOKEN_URL), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                client_id: CLIENT_ID,
-                client_secret: CLIENT_SECRET,
-                code: code,
-                grant_type: 'authorization_code',
-                redirect_uri: REDIRECT_URI
-            })
-        });
-
-        if (!response.ok) {
-            const errorData = await response.text();
-            throw new Error('Ошибка получения токена: ' + errorData);
-        }
-
-        const data = await response.json();
-        const { access_token } = data;
-
-        const userResponse = await fetch(`${API_URL}/users/whoami`, {
-            headers: {
-                'Authorization': `Bearer ${access_token}`
-            }
-        });
-
-        if (!userResponse.ok) {
-            throw new Error('Ошибка получения данных пользователя');
-        }
-
-        const user = await userResponse.json();
-
-        localStorage.setItem('shikimori_token', access_token);
-        localStorage.setItem('shikimori_user', JSON.stringify(user));
-
-        console.log('✅ Авторизация успешна!');
-        loadUser();
-        location.reload();
-
-    } catch (err) {
-        console.error('❌ Ошибка:', err);
-        alert('❌ Ошибка авторизации: ' + err.message);
-    }
-}
-
-// Вход через Shikimori
-function login() {
-    const params = new URLSearchParams({
-        client_id: CLIENT_ID,
-        redirect_uri: REDIRECT_URI,
-        response_type: 'code',
-        scope: 'user_rates'
-    });
-    window.location.href = `${AUTH_URL}?${params}`;
-}
-
-// Выход
-function logout() {
-    localStorage.removeItem('shikimori_token');
-    localStorage.removeItem('shikimori_user');
-    currentUser = null;
-    loadUser();
-}
-
-// ===== УВЕЛИЧЕНИЕ ПРОСМОТРОВ В SHIKIMORI =====
-async function incrementShikimoriView(animeId) {
-    const token = localStorage.getItem('shikimori_token');
-    if (!token) return;
-    
-    try {
-        const checkResponse = await fetch(
-            `${API_URL}/v2/user_rates?user_id=me&target_id=${animeId}&target_type=Anime`,
-            {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            }
-        );
-        
-        if (!checkResponse.ok) throw new Error('Ошибка проверки записи');
-        const rates = await checkResponse.json();
-        
-        let rateId = null;
-        let currentEpisodes = 0;
-        
-        if (rates.length > 0) {
-            const rate = rates[0];
-            rateId = rate.id;
-            currentEpisodes = rate.episodes || 0;
-        }
-        
-        const newEpisodes = currentEpisodes + 1;
-        
-        if (rateId) {
-            const updateResponse = await fetch(
-                `${API_URL}/v2/user_rates/${rateId}`,
-                {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_rate: {
-                            episodes: newEpisodes
-                        }
-                    })
-                }
-            );
-            
-            if (!updateResponse.ok) throw new Error('Ошибка обновления просмотров');
-            console.log(`✅ Просмотры обновлены: ${newEpisodes}`);
-        } else {
-            const createResponse = await fetch(
-                `${API_URL}/v2/user_rates`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_rate: {
-                            target_id: animeId,
-                            target_type: 'Anime',
-                            status: 'watching',
-                            episodes: 1
-                        }
-                    })
-                }
-            );
-            
-            if (!createResponse.ok) throw new Error('Ошибка создания записи');
-            console.log('✅ Создана новая запись с просмотрами');
-        }
-    } catch (err) {
-        console.warn('⚠️ Ошибка обновления просмотров:', err.message);
-    }
-}
-
-// ===== ОЦЕНКА АНИМЕ =====
-async function rateAnime(animeId, score) {
-    const token = localStorage.getItem('shikimori_token');
-    if (!token) {
-        alert('Войдите через Shikimori, чтобы оценивать аниме.');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_URL}/v2/user_rates`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                user_rate: {
-                    target_id: animeId,
-                    target_type: 'Anime',
-                    status: 'watching',
-                    score: score
-                }
-            })
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Ошибка ${response.status}: ${errorText}`);
-        }
-        const data = await response.json();
-        console.log('Оценка сохранена:', data);
-        
-        const ratingText = document.querySelector('.rating-text');
-        if (ratingText) {
-            ratingText.textContent = `⭐ ${score}/5`;
-            ratingText.style.color = '#f7dc6f';
-        }
-    } catch (err) {
-        console.error(err);
-        alert('Не удалось сохранить оценку. Попробуйте позже.');
-    }
-}
 
 // ===== ПРОВЕРКА, ЧТО ТАЙТЛ - АНИМЕ =====
 function isAnime(item) {
@@ -414,7 +180,7 @@ if (menuDeveloper) {
             </div>
             <div class="info-item">
                 <span>Сайт</span>
-                <span><a href="#" style="color:#b8a0d0; text-decoration:none;">quarwatch.ck6.ru</a></span>
+                <span><a href="#" style="color:#b8a0d0; text-decoration:none;">quarwatch.c6t.ru</a></span>
             </div>
             <p style="margin-top:15px; text-align:center; color:#7a8aaa; font-size:0.8rem;">
                 🌙 Сделано с любовью к аниме
@@ -906,33 +672,13 @@ async function loadAnimeById(animeId) {
 
         if (playerIframe) playerIframe.src = playerSrc || 'about:blank';
 
-        // ===== УВЕЛИЧЕНИЕ ПРОСМОТРОВ =====
-        if (playerSrc && playerSrc !== 'about:blank') {
-            incrementShikimoriView(animeId);
-        }
-
+        // ===== ДАННЫЕ =====
         const title = anime.title || 'Без названия';
         const poster = anime.material_data?.poster_url || anime.poster_url || 'https://via.placeholder.com/300x450?text=No+Image';
         const description = anime.description || anime.material_data?.description || 'Описание отсутствует.';
         const year = anime.year || anime.material_data?.year || '—';
         const rating = anime.rating?.imdb || anime.material_data?.rating || '—';
         const genres = anime.genres ? anime.genres.join(', ') : (anime.material_data?.genres?.join(', ') || '—');
-
-        // ===== ОЦЕНКА =====
-        let ratingHtml = '';
-        if (currentUser) {
-            ratingHtml = `
-                <div class="rating-section" style="margin-top: 15px;">
-                    <p style="color: #666; font-size: 0.85rem; margin-bottom: 4px;">Ваша оценка:</p>
-                    <div class="stars" data-anime-id="${animeId}">
-                        ${[1,2,3,4,5].map(i => `
-                            <span class="star" data-value="${i}" style="cursor:pointer; font-size:1.6rem; color:#444; transition:0.3s;">★</span>
-                        `).join('')}
-                    </div>
-                    <span class="rating-text"></span>
-                </div>
-            `;
-        }
 
         // ===== ВНЕШНИЕ ССЫЛКИ =====
         let externalLinksHtml = '';
@@ -1003,7 +749,7 @@ async function loadAnimeById(animeId) {
         if (anime.screenshots && anime.screenshots.length > 0) {
             screenshotsHtml = `
                 <div style="margin-top: 15px;">
-                    <p style="color: #9aa3c0; font-size: 0.8rem; margin-bottom: 10px;">📸 Кадры из серии:</p>
+                    <p style="color: #9aa3c0; font-size: 0.8rem; margin-bottom: 10px;">📸 Кадры из аниме:</p>
                     <div class="screenshots-grid">
                         ${anime.screenshots.map(url => `
                             <a class="screenshot-item" data-image="${url}">
@@ -1050,30 +796,12 @@ async function loadAnimeById(animeId) {
                         <div class="description">${description}</div>
                         ${externalLinksBlock}
                         ${updateDateHtml}
-                        ${ratingHtml}
                         ${screenshotsHtml}
                     </div>
                 </div>
             `;
         }
         document.title = `${title} — Quarwatch`;
-
-        // ===== ОБРАБОТЧИКИ ДЛЯ ЗВЁЗД =====
-        document.querySelectorAll('.stars').forEach(container => {
-            container.querySelectorAll('.star').forEach(star => {
-                star.addEventListener('click', function() {
-                    const value = parseInt(this.dataset.value);
-                    const starsContainer = this.closest('.stars');
-                    const animeId = starsContainer.dataset.animeId;
-                    
-                    starsContainer.querySelectorAll('.star').forEach(s => {
-                        s.classList.toggle('active', parseInt(s.dataset.value) <= value);
-                    });
-                    
-                    rateAnime(animeId, value);
-                });
-            });
-        });
 
         // ===== ОБРАБОТЧИКИ ДЛЯ УВЕЛИЧЕНИЯ =====
         const posterImg = document.querySelector('.anime-detail .poster img');
@@ -1204,17 +932,10 @@ document.addEventListener('visibilitychange', () => {
 // =========================================
 // СТАРТ
 // =========================================
-document.addEventListener('DOMContentLoaded', () => {
-    const loginBtn = document.getElementById('login-btn');
-    if (loginBtn) loginBtn.addEventListener('click', login);
-    loadUser();
-    checkAuthCode();
-    
-    console.log('🚀 Запуск Quarwatch...');
-    if (window.location.hash) {
-        handleHashChange();
-    } else {
-        showSection(listSection);
-        fetchAnimeList();
+console.log('🚀 Запуск Quarwatch...');
+if (window.location.hash) {
+    handleHashChange();
+} else {
+    showSection(listSection);
+    fetchAnimeList();
     }
-});
