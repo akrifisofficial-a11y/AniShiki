@@ -10,8 +10,11 @@ console.log('🚀 Quarwatch загружен!');
 
 // ===== АВТОРИЗАЦИЯ ЧЕРЕЗ SHIKIMORI =====
 const CLIENT_ID = '_7QqZ-kZdFcxAVNWVnO9NLPTec6QcLRRzKscR7Ex_kw';
+const CLIENT_SECRET = 'qlLNtimt90rKiFmoAf2iJPNS5pmZ3BPhv4w9ocQM4H4';
 const REDIRECT_URI = 'https://quarwatch.c6t.ru/oauth/callback.html';
 const AUTH_URL = 'https://shikimori.one/oauth/authorize';
+const TOKEN_URL = 'https://shikimori.one/oauth/token';
+const API_URL = 'https://shikimori.one/api';
 
 let currentUser = null;
 
@@ -42,6 +45,66 @@ function loadUser() {
     }
 }
 
+// Проверяем, есть ли код для обмена
+async function checkAuthCode() {
+    const code = localStorage.getItem('shikimori_auth_code');
+    if (!code) return;
+    
+    // Удаляем код, чтобы не обрабатывать повторно
+    localStorage.removeItem('shikimori_auth_code');
+    
+    try {
+        console.log('⏳ Обмен кода на токен...');
+        
+        // Пытаемся обменять код на токен через corsproxy
+        const response = await fetch('https://corsproxy.io/?' + encodeURIComponent(TOKEN_URL), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                client_id: CLIENT_ID,
+                client_secret: CLIENT_SECRET,
+                code: code,
+                grant_type: 'authorization_code',
+                redirect_uri: REDIRECT_URI
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.text();
+            throw new Error('Ошибка получения токена: ' + errorData);
+        }
+
+        const data = await response.json();
+        const { access_token } = data;
+
+        // Получаем данные пользователя
+        const userResponse = await fetch(`${API_URL}/users/whoami`, {
+            headers: {
+                'Authorization': `Bearer ${access_token}`
+            }
+        });
+
+        if (!userResponse.ok) {
+            throw new Error('Ошибка получения данных пользователя');
+        }
+
+        const user = await userResponse.json();
+
+        localStorage.setItem('shikimori_token', access_token);
+        localStorage.setItem('shikimori_user', JSON.stringify(user));
+
+        console.log('✅ Авторизация успешна!');
+        loadUser();
+        location.reload();
+
+    } catch (err) {
+        console.error('❌ Ошибка:', err);
+        alert('❌ Ошибка авторизации: ' + err.message);
+    }
+}
+
 // Вход через Shikimori
 function login() {
     const params = new URLSearchParams({
@@ -61,85 +124,13 @@ function logout() {
     loadUser();
 }
 
-// ===== УВЕЛИЧЕНИЕ ПРОСМОТРОВ В SHIKIMORI =====
-async function incrementShikimoriView(animeId, season, episode) {
-    const token = localStorage.getItem('shikimori_token');
-    if (!token) return; // Если не авторизован — пропускаем
-    
-    try {
-        // Проверяем, есть ли уже такая запись
-        const checkResponse = await fetch(
-            `${API_URL}/v2/user_rates?user_id=me&target_id=${animeId}&target_type=Anime`,
-            {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            }
-        );
-        
-        if (!checkResponse.ok) throw new Error('Ошибка проверки записи');
-        const rates = await checkResponse.json();
-        
-        let rateId = null;
-        let currentEpisodes = 0;
-        
-        if (rates.length > 0) {
-            const rate = rates[0];
-            rateId = rate.id;
-            currentEpisodes = rate.episodes || 0;
-        }
-        
-        const newEpisodes = currentEpisodes + 1;
-        
-        if (rateId) {
-            // Обновляем существующую запись
-            const updateResponse = await fetch(
-                `${API_URL}/v2/user_rates/${rateId}`,
-                {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_rate: {
-                            episodes: newEpisodes
-                        }
-                    })
-                }
-            );
-            
-            if (!updateResponse.ok) throw new Error('Ошибка обновления просмотров');
-            console.log(`✅ Просмотры обновлены: ${newEpisodes}`);
-        } else {
-            // Создаём новую запись со статусом "watching"
-            const createResponse = await fetch(
-                `${API_URL}/v2/user_rates`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_rate: {
-                            target_id: animeId,
-                            target_type: 'Anime',
-                            status: 'watching',
-                            episodes: 1
-                        }
-                    })
-                }
-            );
-            
-            if (!createResponse.ok) throw new Error('Ошибка создания записи');
-            console.log('✅ Создана новая запись с просмотрами');
-        }
-    } catch (err) {
-        console.warn('⚠️ Ошибка обновления просмотров:', err.message);
-        // Не показываем ошибку пользователю, чтобы не мешать просмотру
-    }
-}
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', () => {
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) loginBtn.addEventListener('click', login);
+    loadUser();
+    checkAuthCode();
+});
 
 // ===== ПРОВЕРКА, ЧТО ТАЙТЛ - АНИМЕ =====
 function isAnime(item) {
