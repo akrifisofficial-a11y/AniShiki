@@ -1,7 +1,14 @@
 // ===== КОНФИГУРАЦИЯ =====
 const KODIK_API_KEY = 'd99ff2ab48b0d9c42ace4901bee833ff';
 const KODIK_API_URL = 'https://kodik-api.com';
-const API_URL = 'https://shikimori.io/api/doc'; // для Shikimori
+
+// ===== Shikimori OAuth =====
+const CLIENT_ID = '_7QqZ-kZdFcxAVNWVnO9NLPTec6QcLRRzKscR7Ex_kw';
+const CLIENT_SECRET = 'qlLNtimt90rKiFmoAf2iJPNS5pmZ3BPhv4w9ocQM4H4';
+const REDIRECT_URI = 'https://quarwatch.c6t.ru/oauth/callback.html';
+const AUTH_URL = 'https://shikimori.one/oauth/authorize';
+const TOKEN_URL = 'https://shikimori.one/oauth/token';
+const API_URL = 'https://shikimori.one/api';
 
 // ===== ТОЛЬКО ЭТИ ТИПЫ РАЗРЕШЕНЫ (АНИМЕ) =====
 const ALLOWED_TYPES = ['anime-serial', 'anime'];
@@ -9,13 +16,6 @@ const ALLOWED_TYPES = ['anime-serial', 'anime'];
 console.log('🚀 Quarwatch загружен!');
 
 // ===== АВТОРИЗАЦИЯ ЧЕРЕЗ SHIKIMORI =====
-const CLIENT_ID = '_7QqZ-kZdFcxAVNWVnO9NLPTec6QcLRRzKscR7Ex_kw';
-const CLIENT_SECRET = 'qlLNtimt90rKiFmoAf2iJPNS5pmZ3BPhv4w9ocQM4H4';
-const REDIRECT_URI = 'https://quarwatch.c6t.ru/oauth/callback.html';
-const AUTH_URL = 'https://shikimori.one/oauth/authorize';
-const TOKEN_URL = 'https://shikimori.one/oauth/token';
-const API_URL = 'https://shikimori.io/api/doc';
-
 let currentUser = null;
 
 // Загружаем пользователя из localStorage
@@ -50,13 +50,12 @@ async function checkAuthCode() {
     const code = localStorage.getItem('shikimori_auth_code');
     if (!code) return;
     
-    // Удаляем код, чтобы не обрабатывать повторно
     localStorage.removeItem('shikimori_auth_code');
     
     try {
         console.log('⏳ Обмен кода на токен...');
         
-        // Пытаемся обменять код на токен через corsproxy
+        // Используем corsproxy для обхода CORS
         const response = await fetch('https://corsproxy.io/?' + encodeURIComponent(TOKEN_URL), {
             method: 'POST',
             headers: {
@@ -79,7 +78,6 @@ async function checkAuthCode() {
         const data = await response.json();
         const { access_token } = data;
 
-        // Получаем данные пользователя
         const userResponse = await fetch(`${API_URL}/users/whoami`, {
             headers: {
                 'Authorization': `Bearer ${access_token}`
@@ -124,13 +122,124 @@ function logout() {
     loadUser();
 }
 
-// Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', () => {
-    const loginBtn = document.getElementById('login-btn');
-    if (loginBtn) loginBtn.addEventListener('click', login);
-    loadUser();
-    checkAuthCode();
-});
+// ===== УВЕЛИЧЕНИЕ ПРОСМОТРОВ В SHIKIMORI =====
+async function incrementShikimoriView(animeId) {
+    const token = localStorage.getItem('shikimori_token');
+    if (!token) return;
+    
+    try {
+        const checkResponse = await fetch(
+            `${API_URL}/v2/user_rates?user_id=me&target_id=${animeId}&target_type=Anime`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        );
+        
+        if (!checkResponse.ok) throw new Error('Ошибка проверки записи');
+        const rates = await checkResponse.json();
+        
+        let rateId = null;
+        let currentEpisodes = 0;
+        
+        if (rates.length > 0) {
+            const rate = rates[0];
+            rateId = rate.id;
+            currentEpisodes = rate.episodes || 0;
+        }
+        
+        const newEpisodes = currentEpisodes + 1;
+        
+        if (rateId) {
+            const updateResponse = await fetch(
+                `${API_URL}/v2/user_rates/${rateId}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_rate: {
+                            episodes: newEpisodes
+                        }
+                    })
+                }
+            );
+            
+            if (!updateResponse.ok) throw new Error('Ошибка обновления просмотров');
+            console.log(`✅ Просмотры обновлены: ${newEpisodes}`);
+        } else {
+            const createResponse = await fetch(
+                `${API_URL}/v2/user_rates`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_rate: {
+                            target_id: animeId,
+                            target_type: 'Anime',
+                            status: 'watching',
+                            episodes: 1
+                        }
+                    })
+                }
+            );
+            
+            if (!createResponse.ok) throw new Error('Ошибка создания записи');
+            console.log('✅ Создана новая запись с просмотрами');
+        }
+    } catch (err) {
+        console.warn('⚠️ Ошибка обновления просмотров:', err.message);
+    }
+}
+
+// ===== ОЦЕНКА АНИМЕ =====
+async function rateAnime(animeId, score) {
+    const token = localStorage.getItem('shikimori_token');
+    if (!token) {
+        alert('Войдите через Shikimori, чтобы оценивать аниме.');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/v2/user_rates`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                user_rate: {
+                    target_id: animeId,
+                    target_type: 'Anime',
+                    status: 'watching',
+                    score: score
+                }
+            })
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Ошибка ${response.status}: ${errorText}`);
+        }
+        const data = await response.json();
+        console.log('Оценка сохранена:', data);
+        
+        const ratingText = document.querySelector('.rating-text');
+        if (ratingText) {
+            ratingText.textContent = `⭐ ${score}/5`;
+            ratingText.style.color = '#f7dc6f';
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Не удалось сохранить оценку. Попробуйте позже.');
+    }
+}
 
 // ===== ПРОВЕРКА, ЧТО ТАЙТЛ - АНИМЕ =====
 function isAnime(item) {
@@ -138,7 +247,6 @@ function isAnime(item) {
     return ALLOWED_TYPES.includes(item.type);
 }
 
-// ===== ФИЛЬТРАЦИЯ: ОСТАВЛЯЕМ ТОЛЬКО АНИМЕ =====
 function filterAnimeOnly(results) {
     if (!results || !Array.isArray(results)) return [];
     return results.filter(item => isAnime(item));
@@ -729,7 +837,7 @@ function showCopyNotification(message) {
     }, 3000);
 }
 
-// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА (с увеличением просмотров) =====
+// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА =====
 async function loadAnimeById(animeId) {
     if (currentAnimeId === animeId) {
         console.log('⏭️ Аниме уже открыто, пропускаем загрузку');
@@ -798,29 +906,11 @@ async function loadAnimeById(animeId) {
 
         if (playerIframe) playerIframe.src = playerSrc || 'about:blank';
 
-        // ===== УВЕЛИЧЕНИЕ ПРОСМОТРОВ В SHIKIMORI =====
+        // ===== УВЕЛИЧЕНИЕ ПРОСМОТРОВ =====
         if (playerSrc && playerSrc !== 'about:blank') {
-            // Пытаемся определить сезон и серию из ссылки
-            const urlParts = playerSrc.split('/');
-            let season = 1;
-            let episode = 1;
-            
-            // Пробуем извлечь из формата /serial/{id}/{hash}/{quality}
-            // или /seria/{id}/{season}/{episode}
-            if (urlParts.length >= 5) {
-                const lastPart = urlParts[urlParts.length - 2];
-                const prevPart = urlParts[urlParts.length - 3];
-                if (!isNaN(parseInt(lastPart)) && !isNaN(parseInt(prevPart))) {
-                    season = parseInt(prevPart) || 1;
-                    episode = parseInt(lastPart) || 1;
-                }
-            }
-            
-            // Запускаем увеличение просмотров в фоне
-            incrementShikimoriView(animeId, season, episode);
+            incrementShikimoriView(animeId);
         }
 
-        // ===== ДАННЫЕ =====
         const title = anime.title || 'Без названия';
         const poster = anime.material_data?.poster_url || anime.poster_url || 'https://via.placeholder.com/300x450?text=No+Image';
         const description = anime.description || anime.material_data?.description || 'Описание отсутствует.';
@@ -828,7 +918,7 @@ async function loadAnimeById(animeId) {
         const rating = anime.rating?.imdb || anime.material_data?.rating || '—';
         const genres = anime.genres ? anime.genres.join(', ') : (anime.material_data?.genres?.join(', ') || '—');
 
-        // ===== ОЦЕНКА (только для авторизованных) =====
+        // ===== ОЦЕНКА =====
         let ratingHtml = '';
         if (currentUser) {
             ratingHtml = `
@@ -1020,49 +1110,6 @@ async function loadAnimeById(animeId) {
     }
 }
 
-// ===== ОЦЕНКА АНИМЕ =====
-async function rateAnime(animeId, score) {
-    const token = localStorage.getItem('shikimori_token');
-    if (!token) {
-        alert('Войдите через Shikimori, чтобы оценивать аниме.');
-        return;
-    }
-    
-    try {
-        const response = await fetch('https://shikimori.one/api/v2/user_rates', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                user_rate: {
-                    target_id: animeId,
-                    target_type: 'Anime',
-                    status: 'watching',
-                    score: score
-                }
-            })
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Ошибка ${response.status}: ${errorText}`);
-        }
-        const data = await response.json();
-        console.log('Оценка сохранена:', data);
-        
-        const ratingText = document.querySelector('.rating-text');
-        if (ratingText) {
-            ratingText.textContent = `⭐ ${score}/5`;
-            ratingText.style.color = '#f7dc6f';
-        }
-    } catch (err) {
-        console.error(err);
-        alert('Не удалось сохранить оценку. Попробуйте позже.');
-    }
-}
-
 // ===== МАРШРУТИЗАЦИЯ =====
 function handleHashChange() {
     const hash = window.location.hash.slice(1);
@@ -1161,6 +1208,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginBtn = document.getElementById('login-btn');
     if (loginBtn) loginBtn.addEventListener('click', login);
     loadUser();
+    checkAuthCode();
     
     console.log('🚀 Запуск Quarwatch...');
     if (window.location.hash) {
