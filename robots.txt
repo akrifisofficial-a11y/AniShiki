@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://quarwatch.c6t.ru/sitemap.xml
