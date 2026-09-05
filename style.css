@@ -13,92 +13,11 @@ body {
   overflow-x: hidden;
 }
 
-/* ===== АВАТАРКА / ЛОГОТИП ===== */
-.site-avatar {
-  position: fixed;
-  top: 25px;
-  right: 35px;
-  z-index: 0;
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.avatar-circle {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Inter', sans-serif;
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: #fff;
-  box-shadow: 0 0 40px rgba(108, 92, 231, 0.2);
-  transition: 0.3s;
-  border: 2px solid rgba(255,255,255,0.05);
-}
-
-.avatar-circle:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 60px rgba(108, 92, 231, 0.3);
-}
-
-.avatar-text {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.55rem;
-  font-weight: 600;
-  color: #555;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-
-/* ===== ЛОГОТИП-ИЗОБРАЖЕНИЕ (альтернатива) ===== */
-.site-logo-img {
-  position: fixed;
-  top: 25px;
-  right: 35px;
-  z-index: 0;
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
-.site-logo-img .logo-image {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  object-fit: cover;
-  box-shadow: 0 0 40px rgba(108, 92, 231, 0.2);
-  transition: 0.3s;
-  border: 2px solid rgba(255,255,255,0.05);
-}
-
-.site-logo-img .logo-image:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 60px rgba(108, 92, 231, 0.3);
-}
-
-.site-logo-img .logo-name {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.55rem;
-  font-weight: 600;
-  color: #555;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-
 /* ===== ШАПКА ===== */
 header {
   position: relative;
   z-index: 10;
-  padding: 15px 20px;
+  padding: 12px 20px;
   background: rgba(10, 11, 14, 0.85);
   backdrop-filter: blur(15px);
   border-bottom: 1px solid rgba(255,255,255,0.04);
@@ -110,6 +29,13 @@ header {
   justify-content: space-between;
   max-width: 1400px;
   margin: 0 auto;
+  gap: 12px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .logo-link {
@@ -120,7 +46,7 @@ header {
 }
 
 .logo {
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   font-weight: 800;
   letter-spacing: 0.5px;
   background: linear-gradient(135deg, #6c5ce7, #a29bfe);
@@ -129,8 +55,8 @@ header {
 }
 
 .subtitle {
-  font-size: 0.75rem;
-  color: #666;
+  font-size: 0.7rem;
+  color: #555;
   letter-spacing: 2px;
   text-transform: uppercase;
 }
@@ -686,7 +612,7 @@ section.active {
 }
 
 /* ===== УБИРАЕМ СТАРЫЕ ЭЛЕМЕНТЫ ===== */
-.stars, .moon {
+.stars, .moon, .site-avatar, .site-logo-img {
   display: none;
 }
 
@@ -710,34 +636,12 @@ footer .footer-sub {
 
 /* ===== АДАПТИВ ===== */
 @media (max-width: 700px) {
-  .site-avatar {
-    top: 15px;
-    right: 15px;
-  }
-  .avatar-circle {
-    width: 45px;
-    height: 45px;
-    font-size: 1.3rem;
-  }
-  .avatar-text {
-    font-size: 0.45rem;
-  }
-  .site-logo-img {
-    top: 15px;
-    right: 15px;
-  }
-  .site-logo-img .logo-image {
-    width: 50px;
-    height: 50px;
-  }
-  .site-logo-img .logo-name {
-    font-size: 0.45rem;
-  }
   .logo {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
   }
   .subtitle {
-    font-size: 0.65rem;
+    font-size: 0.55rem;
+    letter-spacing: 1px;
   }
   .catalog-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
