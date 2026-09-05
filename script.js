@@ -10,7 +10,7 @@ console.log('🚀 Quarwatch загружен!');
 
 // ===== АВТОРИЗАЦИЯ ЧЕРЕЗ SHIKIMORI =====
 const CLIENT_ID = '_7QqZ-kZdFcxAVNWVnO9NLPTec6QcLRRzKscR7Ex_kw';
-const REDIRECT_URI = 'https://quarwatch.c6t.ru/oauth/callback';
+const REDIRECT_URI = 'https://quarwatch.c6t.ru/oauth/callback.html';
 const AUTH_URL = 'https://shikimori.one/oauth/authorize';
 
 let currentUser = null;
