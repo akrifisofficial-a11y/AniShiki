@@ -54,12 +54,6 @@ header {
   gap: 10px;
 }
 
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
 .logo-link {
   text-decoration: none;
   display: flex;
@@ -81,42 +75,6 @@ header {
   color: #555;
   letter-spacing: 2px;
   text-transform: uppercase;
-}
-
-/* ===== АВТОРИЗАЦИЯ ===== */
-.auth-section {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.auth-btn {
-  background: rgba(108, 92, 231, 0.15);
-  border: 1px solid rgba(108, 92, 231, 0.2);
-  color: #a29bfe;
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: 0.3s;
-  font-family: 'Inter', sans-serif;
-  white-space: nowrap;
-}
-.auth-btn:hover {
-  background: rgba(108, 92, 231, 0.25);
-}
-.auth-btn:active {
-  transform: scale(0.95);
-}
-
-#user-info {
-  font-size: 0.75rem;
-  color: #888;
-  cursor: pointer;
-  white-space: nowrap;
-}
-#user-info:hover {
-  color: #a29bfe;
 }
 
 /* ===== ГАМБУРГЕР ===== */
@@ -413,29 +371,6 @@ section.active {
 .anime-detail .info .description {
   line-height: 1.7;
   color: #aaa;
-}
-
-/* ===== ЗВЁЗДЫ ДЛЯ ОЦЕНКИ ===== */
-.stars {
-  display: flex;
-  gap: 4px;
-  margin-top: 4px;
-}
-.stars .star {
-  cursor: pointer;
-  font-size: 1.6rem;
-  color: #444;
-  transition: 0.3s;
-}
-.stars .star:hover,
-.stars .star.active {
-  color: #f7dc6f;
-  text-shadow: 0 0 20px rgba(247, 220, 111, 0.3);
-}
-.rating-text {
-  color: #666;
-  font-size: 0.8rem;
-  margin-left: 8px;
 }
 
 /* ===== СКРИНШОТЫ ===== */
@@ -754,13 +689,6 @@ footer .footer-sub {
     font-size: 0.55rem;
     letter-spacing: 1px;
   }
-  .auth-btn {
-    font-size: 0.65rem;
-    padding: 4px 12px;
-  }
-  #user-info {
-    font-size: 0.65rem;
-  }
   .catalog-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
@@ -776,10 +704,6 @@ footer .footer-sub {
 @media (max-width: 500px) {
   .search-bar input {
     width: 70%;
-  }
-  .auth-btn {
-    font-size: 0.55rem;
-    padding: 3px 10px;
   }
   .anime-detail .poster {
     flex: 0 0 200px;
