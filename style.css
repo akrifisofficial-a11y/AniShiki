@@ -28,15 +28,19 @@ body {
   background: #3a3a5a;
 }
 
-/* ===== ШАПКА ===== */
+/* ===== ШАПКА (ЗАФИКСИРОВАНА) ===== */
 header {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 10;
+  left: 0;
+  right: 0;
+  z-index: 1000;
   padding: 12px 20px;
-  background: rgba(10, 11, 14, 0.85);
+  background: rgba(10, 11, 14, 0.92);
   backdrop-filter: blur(15px);
   border-bottom: 1px solid rgba(255,255,255,0.04);
+  box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+  transition: background 0.3s ease;
 }
 
 .header-top {
@@ -178,7 +182,7 @@ header {
   color: #a29bfe;
 }
 
-/* ===== ОСНОВНОЙ КОНТЕЙНЕР ===== */
+/* ===== ОСНОВНОЙ КОНТЕЙНЕР (с отступом под шапку) ===== */
 main {
   max-width: 1400px;
   margin: 0 auto;
@@ -186,6 +190,7 @@ main {
   position: relative;
   z-index: 1;
   min-height: 70vh;
+  padding-top: 110px; /* Отступ под высоту шапки */
 }
 
 section {
@@ -682,6 +687,9 @@ footer .footer-sub {
 
 /* ===== АДАПТИВ ===== */
 @media (max-width: 700px) {
+  main {
+    padding-top: 100px; /* Меньший отступ на телефоне */
+  }
   .logo {
     font-size: 1.1rem;
   }
@@ -712,4 +720,4 @@ footer .footer-sub {
     width: 60px;
     height: 34px;
   }
-  }
+                   }
