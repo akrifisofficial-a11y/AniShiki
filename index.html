@@ -11,7 +11,7 @@
   <link rel="canonical" href="https://quarwatch.c6t.ru/" />
   <meta name="robots" content="index, follow" />
   
-  <!-- Open Graph (для соцсетей) -->
+  <!-- Open Graph -->
   <meta property="og:title" content="Quarwatch – смотреть аниме онлайн" />
   <meta property="og:description" content="Смотри аниме онлайн бесплатно. Большой каталог аниме сериалов и фильмов." />
   <meta property="og:url" content="https://quarwatch.c6t.ru/" />
@@ -30,10 +30,17 @@
         </a>
         <div class="subtitle">смотреть онлайн</div>
       </div>
-      <div class="hamburger" id="hamburger">
-        <span></span>
-        <span></span>
-        <span></span>
+      <div class="header-right">
+        <!-- Авторизация -->
+        <div class="auth-section">
+          <button id="login-btn" class="auth-btn">Войти через Shikimori</button>
+          <span id="user-info" style="display:none; color:#888; cursor:pointer;"></span>
+        </div>
+        <div class="hamburger" id="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
       </div>
     </div>
 
@@ -70,8 +77,8 @@
         <button id="share-btn" class="back-btn">🔗 Поделиться</button>
       </div>
       <div id="anime-info" class="anime-info"></div>
-      <div id="player-container" style="margin-top: 25px; position: relative; width: 100%; padding-bottom: 56.25%; background: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.5);">
-        <iframe id="player-iframe" src="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allowfullscreen allow="autoplay; encrypted-media; fullscreen"></iframe>
+      <div id="player-container">
+        <iframe id="player-iframe" src="" allowfullscreen allow="autoplay; encrypted-media; fullscreen"></iframe>
       </div>
     </section>
 
@@ -112,4 +119,4 @@
 
   <script src="script.js"></script>
 </body>
-</html>
+  </html>
