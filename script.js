@@ -7,6 +7,59 @@ const ALLOWED_TYPES = ['anime-serial', 'anime'];
 
 console.log('🚀 Quarwatch загружен!');
 
+// ===== АВТОРИЗАЦИЯ ЧЕРЕЗ SHIKIMORI =====
+const CLIENT_ID = '_7QqZ-kZdFcxAVNWVnO9NLPTec6QcLRRzKscR7Ex_kw';
+const REDIRECT_URI = 'https://quarwatch.c6t.ru/oauth/callback';
+const AUTH_URL = 'https://shikimori.one/oauth/authorize';
+
+let currentUser = null;
+
+// Загружаем пользователя из localStorage
+function loadUser() {
+    const token = localStorage.getItem('shikimori_token');
+    const userJson = localStorage.getItem('shikimori_user');
+    
+    if (token && userJson) {
+        try {
+            currentUser = JSON.parse(userJson);
+            const loginBtn = document.getElementById('login-btn');
+            const userInfo = document.getElementById('user-info');
+            if (loginBtn) loginBtn.style.display = 'none';
+            if (userInfo) {
+                userInfo.style.display = 'inline';
+                userInfo.innerHTML = `👤 ${currentUser.nickname} (выйти)`;
+                userInfo.onclick = logout;
+            }
+        } catch (e) {
+            console.error('Ошибка парсинга пользователя:', e);
+        }
+    } else {
+        const loginBtn = document.getElementById('login-btn');
+        const userInfo = document.getElementById('user-info');
+        if (loginBtn) loginBtn.style.display = 'inline';
+        if (userInfo) userInfo.style.display = 'none';
+    }
+}
+
+// Вход через Shikimori
+function login() {
+    const params = new URLSearchParams({
+        client_id: CLIENT_ID,
+        redirect_uri: REDIRECT_URI,
+        response_type: 'code',
+        scope: 'user_rates'
+    });
+    window.location.href = `${AUTH_URL}?${params}`;
+}
+
+// Выход
+function logout() {
+    localStorage.removeItem('shikimori_token');
+    localStorage.removeItem('shikimori_user');
+    currentUser = null;
+    loadUser();
+}
+
 // ===== ПРОВЕРКА, ЧТО ТАЙТЛ - АНИМЕ =====
 function isAnime(item) {
     if (!item) return false;
@@ -288,7 +341,8 @@ function showSection(section) {
 }
 
 // =========================================
-// КНОПКА НАЗАД НА СТРАНИЦЕ ОБНОВЛЕНИЙ// =========================================
+// КНОПКА НАЗАД НА СТРАНИЦЕ ОБНОВЛЕНИЙ
+// =========================================
 if (updatesBackBtn) {
     updatesBackBtn.addEventListener('click', () => {
         showSection(listSection);
@@ -678,6 +732,22 @@ async function loadAnimeById(animeId) {
         const rating = anime.rating?.imdb || anime.material_data?.rating || '—';
         const genres = anime.genres ? anime.genres.join(', ') : (anime.material_data?.genres?.join(', ') || '—');
 
+        // ===== ОЦЕНКА (только для авторизованных) =====
+        let ratingHtml = '';
+        if (currentUser) {
+            ratingHtml = `
+                <div class="rating-section" style="margin-top: 15px;">
+                    <p style="color: #666; font-size: 0.85rem; margin-bottom: 4px;">Ваша оценка:</p>
+                    <div class="stars" data-anime-id="${animeId}">
+                        ${[1,2,3,4,5].map(i => `
+                            <span class="star" data-value="${i}" style="cursor:pointer; font-size:1.6rem; color:#444; transition:0.3s;">★</span>
+                        `).join('')}
+                    </div>
+                    <span class="rating-text"></span>
+                </div>
+            `;
+        }
+
         // ===== ВНЕШНИЕ ССЫЛКИ =====
         let externalLinksHtml = '';
 
@@ -794,6 +864,7 @@ async function loadAnimeById(animeId) {
                         <div class="description">${description}</div>
                         ${externalLinksBlock}
                         ${updateDateHtml}
+                        ${ratingHtml}
                         ${screenshotsHtml}
                     </div>
                 </div>
@@ -801,7 +872,24 @@ async function loadAnimeById(animeId) {
         }
         document.title = `${title} — Quarwatch`;
 
-        // ===== ДОБАВЛЯЕМ ОБРАБОТЧИКИ ДЛЯ УВЕЛИЧЕНИЯ =====
+        // ===== ОБРАБОТЧИКИ ДЛЯ ЗВЁЗД =====
+        document.querySelectorAll('.stars').forEach(container => {
+            container.querySelectorAll('.star').forEach(star => {
+                star.addEventListener('click', function() {
+                    const value = parseInt(this.dataset.value);
+                    const starsContainer = this.closest('.stars');
+                    const animeId = starsContainer.dataset.animeId;
+                    
+                    starsContainer.querySelectorAll('.star').forEach(s => {
+                        s.classList.toggle('active', parseInt(s.dataset.value) <= value);
+                    });
+                    
+                    rateAnime(animeId, value);
+                });
+            });
+        });
+
+        // ===== ОБРАБОТЧИКИ ДЛЯ УВЕЛИЧЕНИЯ =====
         const posterImg = document.querySelector('.anime-detail .poster img');
         if (posterImg) {
             posterImg.style.cursor = 'pointer';
@@ -833,6 +921,46 @@ async function loadAnimeById(animeId) {
             `;
         }
         if (playerIframe) playerIframe.src = 'about:blank';
+    }
+}
+
+// ===== ОЦЕНКА АНИМЕ =====
+async function rateAnime(animeId, score) {
+    const token = localStorage.getItem('shikimori_token');
+    if (!token) {
+        alert('Войдите через Shikimori, чтобы оценивать аниме.');
+        return;
+    }
+    
+    try {
+        const response = await fetch('https://shikimori.one/api/v2/user_rates', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                user_rate: {
+                    target_id: animeId,
+                    target_type: 'Anime',
+                    status: 'planned',
+                    score: score
+                }
+            })
+        });
+        
+        if (!response.ok) throw new Error('Ошибка при сохранении оценки');
+        const data = await response.json();
+        console.log('Оценка сохранена:', data);
+        
+        const ratingText = document.querySelector('.rating-text');
+        if (ratingText) {
+            ratingText.textContent = `⭐ ${score}/5`;
+            ratingText.style.color = '#f7dc6f';
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Не удалось сохранить оценку. Попробуйте позже.');
     }
 }
 
@@ -930,10 +1058,16 @@ document.addEventListener('visibilitychange', () => {
 // =========================================
 // СТАРТ
 // =========================================
-console.log('🚀 Запуск Quarwatch...');
-if (window.location.hash) {
-    handleHashChange();
-} else {
-    showSection(listSection);
-    fetchAnimeList();
-            }
+document.addEventListener('DOMContentLoaded', () => {
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) loginBtn.addEventListener('click', login);
+    loadUser();
+    
+    console.log('🚀 Запуск Quarwatch...');
+    if (window.location.hash) {
+        handleHashChange();
+    } else {
+        showSection(listSection);
+        fetchAnimeList();
+    }
+});
