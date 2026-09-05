@@ -14,7 +14,7 @@ const CLIENT_SECRET = 'qlLNtimt90rKiFmoAf2iJPNS5pmZ3BPhv4w9ocQM4H4';
 const REDIRECT_URI = 'https://quarwatch.c6t.ru/oauth/callback.html';
 const AUTH_URL = 'https://shikimori.one/oauth/authorize';
 const TOKEN_URL = 'https://shikimori.one/oauth/token';
-const API_URL = 'https://shikimori.one/api';
+const API_URL = 'https://shikimori.io/api/doc';
 
 let currentUser = null;
 
