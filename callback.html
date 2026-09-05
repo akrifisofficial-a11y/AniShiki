@@ -68,82 +68,84 @@
   <div class="progress-bar"><div class="fill"></div></div>
 
   <script>
-    // ===== КОНФИГУРАЦИЯ =====
-    const CLIENT_ID = '_7QqZ-kZdFcxAVNWVnO9NLPTec6QcLRRzKscR7Ex_kw';
-    const CLIENT_SECRET = 'qlLNtimt90rKiFmoAf2iJPNS5pmZ3BPhv4w9ocQM4H4';
-    const REDIRECT_URI = 'https://quarwatch.c6t.ru/oauth/callback';
-    const TOKEN_URL = 'https://shikimori.one/oauth/token';
-    const API_URL = 'https://shikimori.one/api';
+    (async function() {
+      // ===== КОНФИГУРАЦИЯ =====
+      const CLIENT_ID = '_7QqZ-kZdFcxAVNWVnO9NLPTec6QcLRRzKscR7Ex_kw';
+      const CLIENT_SECRET = 'qlLNtimt90rKiFmoAf2iJPNS5pmZ3BPhv4w9ocQM4H4';
+      const REDIRECT_URI = 'https://quarwatch.c6t.ru/oauth/callback.html';
+      const TOKEN_URL = 'https://shikimori.one/oauth/token';
+      const API_URL = 'https://shikimori.one/api';
 
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const statusEl = document.getElementById('status');
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const statusEl = document.getElementById('status');
 
-    if (!code) {
-      statusEl.textContent = '❌ Код авторизации не получен. Попробуйте снова.';
-      statusEl.className = 'message error';
-    } else {
-      (async function() {
-        try {
-          statusEl.textContent = '⏳ Обмен кода на токен...';
+      if (!code) {
+        statusEl.textContent = '❌ Код авторизации не получен. Попробуйте снова.';
+        statusEl.className = 'message error';
+        return;
+      }
 
-          // 1. Получаем токен
-          const response = await fetch(TOKEN_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              client_id: CLIENT_ID,
-              client_secret: CLIENT_SECRET,
-              code: code,
-              grant_type: 'authorization_code',
-              redirect_uri: REDIRECT_URI
-            })
-          });
+      try {
+        statusEl.textContent = '⏳ Обмен кода на токен...';
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error_description || 'Ошибка получения токена');
-          }
+        // ===== СПОСОБ 1: Через бесплатный прокси (рекомендуется) =====
+        const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
+        
+        const response = await fetch(CORS_PROXY + TOKEN_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            client_id: CLIENT_ID,
+            client_secret: CLIENT_SECRET,
+            code: code,
+            grant_type: 'authorization_code',
+            redirect_uri: REDIRECT_URI
+          })
+        });
 
-          const data = await response.json();
-          const { access_token } = data;
-
-          statusEl.textContent = '⏳ Получение данных пользователя...';
-
-          // 2. Получаем данные пользователя
-          const userResponse = await fetch(`${API_URL}/users/whoami`, {
-            headers: {
-              'Authorization': `Bearer ${access_token}`
-            }
-          });
-
-          if (!userResponse.ok) {
-            throw new Error('Ошибка получения данных пользователя');
-          }
-
-          const user = await userResponse.json();
-
-          // 3. Сохраняем токен и данные
-          localStorage.setItem('shikimori_token', access_token);
-          localStorage.setItem('shikimori_user', JSON.stringify(user));
-
-          statusEl.textContent = '✅ Авторизация успешна! Перенаправление...';
-          statusEl.className = 'message success';
-
-          // 4. Перенаправляем на главную
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 1500);
-
-        } catch (err) {
-          console.error('❌ Ошибка:', err);
-          statusEl.textContent = `❌ ${err.message}`;
-          statusEl.className = 'message error';
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error_description || 'Ошибка получения токена');
         }
-      })();
-    }
+
+        const data = await response.json();
+        const { access_token } = data;
+
+        statusEl.textContent = '⏳ Получение данных пользователя...';
+
+        // Получаем данные пользователя (без прокси, с токеном)
+        const userResponse = await fetch(`${API_URL}/users/whoami`, {
+          headers: {
+            'Authorization': `Bearer ${access_token}`
+          }
+        });
+
+        if (!userResponse.ok) {
+          throw new Error('Ошибка получения данных пользователя');
+        }
+
+        const user = await userResponse.json();
+
+        // Сохраняем токен и данные
+        localStorage.setItem('shikimori_token', access_token);
+        localStorage.setItem('shikimori_user', JSON.stringify(user));
+
+        statusEl.textContent = '✅ Авторизация успешна! Перенаправление...';
+        statusEl.className = 'message success';
+
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1500);
+
+      } catch (err) {
+        console.error('❌ Ошибка:', err);
+        statusEl.textContent = `❌ Ошибка: ${err.message}`;
+        statusEl.className = 'message error';
+      }
+    })();
   </script>
 </body>
 </html>
