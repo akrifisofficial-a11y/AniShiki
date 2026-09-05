@@ -1,7 +1,7 @@
 // ===== КОНФИГУРАЦИЯ =====
 const KODIK_API_KEY = 'd99ff2ab48b0d9c42ace4901bee833ff';
 const KODIK_API_URL = 'https://kodik-api.com';
-const API_URL = 'https://shikimori.one/api'; // для Shikimori
+const API_URL = 'https://shikimori.io/api/doc'; // для Shikimori
 
 // ===== ТОЛЬКО ЭТИ ТИПЫ РАЗРЕШЕНЫ (АНИМЕ) =====
 const ALLOWED_TYPES = ['anime-serial', 'anime'];
