@@ -416,7 +416,6 @@ function renderAnimeList(animes, append = false) {
         const year = anime.year || anime.material_data?.year || '';
         const id = anime.id;
         
-        // Количество серий
         const episodes = anime.episodes_count || anime.material_data?.episodes_count || '';
         const episodesText = episodes ? `📺 ${episodes} серий` : '';
 
@@ -444,15 +443,18 @@ function renderAnimeList(animes, append = false) {
     });
 }
 
-// ===== СВЯЗАННЫЕ АНИМЕ =====
+// ===== СВЯЗАННЫЕ АНИМЕ (ПО ОДНОМУ НА СЕЗОН) =====
 async function findRelatedAnime(title, animeId) {
     try {
-        const cleanTitle = title.replace(/\[ТВ-\d+\]|\(ТВ-\d+\)|\[ТВ\]|\(ТВ\)|\[Фильм\]|\(Фильм\)/g, '').trim();
+        const cleanTitle = title
+            .replace(/\[ТВ-\d+\]|\(ТВ-\d+\)|\[ТВ\]|\(ТВ\)|\[Фильм\]|\(Фильм\)|\s*\(?\d+\s*сезон\)?/gi, '')
+            .replace(/\s+/g, ' ')
+            .trim();
         
         const params = new URLSearchParams({
             token: KODIK_API_KEY,
             title: cleanTitle,
-            limit: 20,
+            limit: 30,
             with_material_data: 'true',
             types: 'anime-serial,anime'
         });
@@ -470,13 +472,46 @@ async function findRelatedAnime(title, animeId) {
                 return itemTitle.includes(mainTitle) || mainTitle.includes(itemTitle);
             });
         
-        related.sort((a, b) => {
-            const yearA = parseInt(a.year) || 0;
-            const yearB = parseInt(b.year) || 0;
-            return yearA - yearB;
+        // Группировка по сезонам
+        const seasonsMap = new Map();
+        
+        related.forEach(item => {
+            const itemTitle = item.title || '';
+            let seasonNumber = 1;
+            
+            // Поиск номера сезона в названии
+            let match = itemTitle.match(/\[ТВ-(\d+)\]|\(ТВ-(\d+)\)|(\d+)-й сезон|Season (\d+)/i);
+            if (match) {
+                for (let i = 1; i < match.length; i++) {
+                    if (match[i]) {
+                        seasonNumber = parseInt(match[i]);
+                        break;
+                    }
+                }
+            } else if (/2|второй|second|part\s*2|сезон\s*2/i.test(itemTitle)) {
+                seasonNumber = 2;
+            } else if (/3|третий|third|part\s*3|сезон\s*3/i.test(itemTitle)) {
+                seasonNumber = 3;
+            } else if (/4|четвертый|fourth|part\s*4|сезон\s*4/i.test(itemTitle)) {
+                seasonNumber = 4;
+            }
+            
+            if (!seasonsMap.has(seasonNumber)) {
+                seasonsMap.set(seasonNumber, item);
+            } else {
+                const existing = seasonsMap.get(seasonNumber);
+                const existingYear = parseInt(existing.year) || 0;
+                const itemYear = parseInt(item.year) || 0;
+                if (itemYear > existingYear) {
+                    seasonsMap.set(seasonNumber, item);
+                }
+            }
         });
         
-        return related.slice(0, 6);
+        return Array.from(seasonsMap.entries())
+            .sort((a, b) => a[0] - b[0])
+            .map(([season, anime]) => anime)
+            .slice(0, 6);
     } catch (err) {
         console.warn('⚠️ Ошибка поиска связанных:', err);
         return [];
@@ -832,7 +867,7 @@ async function loadAnimeById(animeId) {
         if (anime.screenshots && anime.screenshots.length > 0) {
             screenshotsHtml = `
                 <div style="margin-top: 15px;">
-                    <p style="color: #9aa3c0; font-size: 0.8rem; margin-bottom: 10px;">📸 Кадры из серии:</p>
+                    <p style="color: #9aa3c0; font-size: 0.8rem; margin-bottom: 10px;">📸 Кадры из аниме:</p>
                     <div class="screenshots-grid">
                         ${anime.screenshots.map(url => `
                             <a class="screenshot-item" data-image="${url}">
