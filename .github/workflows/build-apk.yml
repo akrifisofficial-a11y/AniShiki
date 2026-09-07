@@ -18,58 +18,61 @@ jobs:
       with:
         node-version: '18'
     
-    - name: Install PWA Builder
+    - name: Install PWABuilder
       run: |
-        npm install -g @pwabuilder/cli
         npm install -g pwabuilder
-      continue-on-error: true
-    
-    - name: Prepare files
-      run: |
-        mkdir -p dist
-        cp index.html dist/ 2>/dev/null || true
-        cp style.css dist/ 2>/dev/null || true
-        cp script.js dist/ 2>/dev/null || true
-        cp manifest.json dist/ 2>/dev/null || true
-        cp sw.js dist/ 2>/dev/null || true
-        cp updates.json dist/ 2>/dev/null || true
-        echo "✅ Файлы скопированы"
     
     - name: Build APK
       run: |
+        mkdir -p dist
+        cp *.* dist/ 2>/dev/null || true
         cd dist
-        npx pwabuilder package --platform android --path . --output . || true
-        echo "✅ Сборка завершена"
+        # Создаём APK через PWABuilder
+        npx pwabuilder package --platform android --path . --output .
+        # Проверяем, что создалось
+        ls -la
     
-    - name: Find and upload APK
+    - name: Find APK
+      id: find_apk
       run: |
-        echo "🔍 Ищем APK файлы..."
-        find . -name "*.apk" -type f
-        if [ -f "dist/*.apk" ]; then
-          echo "✅ APK найден"
+        # Ищем APK в разных папках
+        apk_file=$(find . -name "*.apk" -type f | head -n 1)
+        if [ -n "$apk_file" ]; then
+          echo "found=true" >> $GITHUB_OUTPUT
+          echo "apk_path=$apk_file" >> $GITHUB_OUTPUT
+          echo "✅ APK найден: $apk_file"
         else
-          echo "⚠️ APK не найден, проверяем структуру"
-          ls -la dist/
+          echo "found=false" >> $GITHUB_OUTPUT
+          echo "❌ APK не найден"
+          # Показываем структуру папок для отладки
+          find . -type f | head -n 20
         fi
     
     - name: Upload APK
+      if: steps.find_apk.outputs.found == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: quarwatch-apk
-        path: |
-          **/*.apk
-          dist/**/*.apk
-          .pwa/**/*.apk
+        path: ${{ steps.find_apk.outputs.apk_path }}
     
     - name: Create Release
+      if: steps.find_apk.outputs.found == 'true'
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ github.run_number }}
         name: Quarwatch APK v${{ github.run_number }}
-        files: |
-          **/*.apk
-          dist/**/*.apk
-          .pwa/**/*.apk
+        files: ${{ steps.find_apk.outputs.apk_path }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      continue-on-error: true
+    
+    - name: Fallback - Create ZIP
+      if: steps.find_apk.outputs.found == 'false'
+      run: |
+        zip -r quarwatch-source.zip *
+    
+    - name: Upload ZIP (fallback)
+      if: steps.find_apk.outputs.found == 'false'
+      uses: actions/upload-artifact@v4
+      with:
+        name: quarwatch-source
+        path: quarwatch-source.zip
