@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APK with Bubblewrap
 
 on:
   push:
@@ -18,21 +18,37 @@ jobs:
       with:
         node-version: '18'
     
-    - name: Install PWABuilder
-      run: |
-        npm install -g pwabuilder
+    - name: Setup Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+    
+    - name: Install Bubblewrap
+      run: npm install -g @bubblewrap/cli
     
     - name: Build APK
       run: |
+        # Создаём папку для сборки
         mkdir -p dist
         cp *.* dist/ 2>/dev/null || true
+        
+        # Переходим в папку и собираем APK
         cd dist
-        # Создаём APK через PWABuilder
-        npx pwabuilder package --platform android --path . --output .
+        
+        # Инициализируем Bubblewrap
+        npx @bubblewrap/cli init --manifest manifest.json
+        
+        # Собираем APK
+        npx @bubblewrap/cli build
+        
         # Проверяем, что создалось
         ls -la
     
-    - name: Find APK
+    - name: Find and Upload APK
       id: find_apk
       run: |
         # Ищем APK в разных папках
@@ -44,7 +60,7 @@ jobs:
         else
           echo "found=false" >> $GITHUB_OUTPUT
           echo "❌ APK не найден"
-          # Показываем структуру папок для отладки
+          # Показываем структуру папок
           find . -type f | head -n 20
         fi
     
