@@ -743,3 +743,47 @@ footer .footer-sub {
   cursor: not-allowed;
   transform: none;
 }
+/* ===== СВЯЗАННЫЕ АНИМЕ ===== */
+.related-card {
+  cursor: pointer;
+  transition: 0.3s;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  width: 120px;
+  flex-shrink: 0;
+}
+.related-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(108, 92, 231, 0.2);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.related-card img {
+  width: 100%;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  display: block;
+}
+.related-card .related-info {
+  padding: 8px 10px;
+}
+.related-card .related-title {
+  font-size: 0.75rem;
+  color: #e0e0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.related-card .related-meta {
+  font-size: 0.65rem;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* ===== СЕРИИ НА КАРТОЧКЕ ===== */
+.anime-card .episodes {
+  font-size: 0.7rem;
+  color: #6c5ce7;
+  margin-top: 4px;
+}
