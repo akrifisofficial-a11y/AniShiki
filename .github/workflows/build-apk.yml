@@ -1,0 +1,45 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Install PWA Builder
+      run: npm install -g @pwabuilder/cli
+    
+    - name: Build APK
+      run: |
+        mkdir -p dist
+        cp -r * dist/ 2>/dev/null || true
+        cd dist
+        npx @pwabuilder/cli build --platform android --path . --output .
+    
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: quarwatch-apk
+        path: dist/*.apk
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ github.run_number }}
+        name: Quarwatch APK v${{ github.run_number }}
+        files: |
+          dist/*.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
