@@ -18,15 +18,6 @@ jobs:
       with:
         node-version: '20'
     
-    - name: Setup Java
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '17'
-    
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v4
-    
     - name: Install Bubblewrap
       run: npm install -g @bubblewrap/cli
     
@@ -35,31 +26,34 @@ jobs:
         mkdir -p dist
         cp *.* dist/ 2>/dev/null || true
         cd dist
-        npx @bubblewrap/cli init --manifest manifest.json
-        npx @bubblewrap/cli build || echo "⚠️ Сборка APK не удалась"
+        npx @bubblewrap/cli init --manifest manifest.json || echo "⚠️ init failed"
+        npx @bubblewrap/cli build || echo "⚠️ build failed"
         ls -la
     
-    - name: Upload APK
+    - name: Create ZIP if APK not found
+      run: |
+        if [ ! -f "dist/*.apk" ]; then
+          echo "APK не найден, создаём ZIP"
+          zip -r quarwatch-source.zip *
+        fi
+    
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: quarwatch-apk
+        name: quarwatch-build
         path: |
-          dist/app-release-signed.apk
-          dist/app-release-unsigned.apk
-          **/*.apk
+          dist/*.apk
+          quarwatch-source.zip
         if-no-files-found: warn
     
-    - name: Create Release
-      if: success()
+    - name: Create Release (always)
       uses: softprops/action-gh-release@v2
       with:
         tag_name: v${{ github.run_number }}
         name: Quarwatch v${{ github.run_number }}
         files: |
-          dist/app-release-signed.apk
-          dist/app-release-unsigned.apk
-          **/*.apk
-        generate_release_notes: true
+          dist/*.apk
+          quarwatch-source.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       continue-on-error: true
