@@ -721,3 +721,25 @@ footer .footer-sub {
     height: 34px;
   }
                    }
+/* ===== СЛУЧАЙНОЕ АНИМЕ ===== */
+.random-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 30px;
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+  color: #fff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: 0.3s;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+}
+.random-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(108, 92, 231, 0.3);
+}
+.random-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
