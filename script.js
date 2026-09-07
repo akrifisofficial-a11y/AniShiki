@@ -443,10 +443,9 @@ function renderAnimeList(animes, append = false) {
     });
 }
 
-// ===== СВЯЗАННЫЕ АНИМЕ (ВСЕ СЕЗОНЫ БЕЗ ОГРАНИЧЕНИЙ) =====
+// ===== СВЯЗАННЫЕ АНИМЕ (ПО ГОДАМ С НОМЕРОМ СЕЗОНА) =====
 async function findRelatedAnime(title, animeId) {
     try {
-        // Очищаем название от маркеров сезона
         const cleanTitle = title
             .replace(/\[ТВ-\d+\]|\(ТВ-\d+\)|\[ТВ\]|\(ТВ\)|\[Фильм\]|\(Фильм\)|\s*\(?\d+\s*сезон\)?/gi, '')
             .replace(/\s+/g, ' ')
@@ -473,60 +472,35 @@ async function findRelatedAnime(title, animeId) {
                 return itemTitle.includes(mainTitle) || mainTitle.includes(itemTitle);
             });
         
-        // Группировка по сезонам (без ограничений)
-        const seasonsMap = new Map();
+        // Сортируем по году (от старых к новым)
+        related.sort((a, b) => {
+            const yearA = parseInt(a.year) || 0;
+            const yearB = parseInt(b.year) || 0;
+            return yearA - yearB;
+        });
+        
+        // Группировка по году (один тайтл на год)
+        const yearMap = new Map();
         
         related.forEach(item => {
-            const itemTitle = item.title || '';
-            let seasonNumber = 1;
+            const year = parseInt(item.year) || 0;
+            if (year === 0) return;
             
-            // Поиск номера сезона в названии
-            let match = itemTitle.match(/\[ТВ-(\d+)\]|\(ТВ-(\d+)\)|(\d+)-й сезон|Season (\d+)|Part (\d+)/i);
-            if (match) {
-                for (let i = 1; i < match.length; i++) {
-                    if (match[i]) {
-                        seasonNumber = parseInt(match[i]);
-                        break;
-                    }
-                }
-            } else if (/2|второй|second|part\s*2|сезон\s*2/i.test(itemTitle)) {
-                seasonNumber = 2;
-            } else if (/3|третий|third|part\s*3|сезон\s*3/i.test(itemTitle)) {
-                seasonNumber = 3;
-            } else if (/4|четвертый|fourth|part\s*4|сезон\s*4/i.test(itemTitle)) {
-                seasonNumber = 4;
-            } else if (/5|пятый|fifth|part\s*5|сезон\s*5/i.test(itemTitle)) {
-                seasonNumber = 5;
-            } else if (/6|шестой|sixth|part\s*6|сезон\s*6/i.test(itemTitle)) {
-                seasonNumber = 6;
-            } else if (/7|седьмой|seventh|part\s*7|сезон\s*7/i.test(itemTitle)) {
-                seasonNumber = 7;
-            } else if (/8|восьмой|eighth|part\s*8|сезон\s*8/i.test(itemTitle)) {
-                seasonNumber = 8;
-            } else if (/9|девятый|ninth|part\s*9|сезон\s*9/i.test(itemTitle)) {
-                seasonNumber = 9;
-            } else if (/10|десятый|tenth|part\s*10|сезон\s*10/i.test(itemTitle)) {
-                seasonNumber = 10;
-            }
-            
-            if (!seasonsMap.has(seasonNumber)) {
-                seasonsMap.set(seasonNumber, item);
+            if (!yearMap.has(year)) {
+                yearMap.set(year, item);
             } else {
-                const existing = seasonsMap.get(seasonNumber);
-                const existingYear = parseInt(existing.year) || 0;
-                const itemYear = parseInt(item.year) || 0;
+                const existing = yearMap.get(year);
                 const existingRating = existing.rating?.imdb || existing.material_data?.rating || 0;
                 const itemRating = item.rating?.imdb || item.material_data?.rating || 0;
-                
-                if (itemYear > existingYear || (itemYear === existingYear && itemRating > existingRating)) {
-                    seasonsMap.set(seasonNumber, item);
+                if (itemRating > existingRating) {
+                    yearMap.set(year, item);
                 }
             }
         });
         
-        return Array.from(seasonsMap.entries())
+        return Array.from(yearMap.entries())
             .sort((a, b) => a[0] - b[0])
-            .map(([season, anime]) => anime);
+            .map(([year, anime]) => anime);
     } catch (err) {
         console.warn('⚠️ Ошибка поиска связанных:', err);
         return [];
@@ -541,7 +515,7 @@ async function showRelatedAnime(title, animeId) {
     
     let html = `
         <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05);">
-            <h3 style="color: #e0e0e0; font-size: 1rem; margin-bottom: 12px;">🔗 Все сезоны (${related.length})</h3>
+            <h3 style="color: #e0e0e0; font-size: 1rem; margin-bottom: 12px;">🔗 Связанные аниме (${related.length})</h3>
             <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: flex-start;">
     `;
     
@@ -551,16 +525,20 @@ async function showRelatedAnime(title, animeId) {
         const year = anime.year || '';
         const episodes = anime.episodes_count || '';
         const seasonNumber = index + 1;
+        const type = anime.type === 'anime-serial' ? 'Сериал' : 'Фильм';
         
         html += `
             <div class="related-card" data-id="${anime.id}">
                 <div style="position: relative;">
                     <img src="${poster}" alt="${title}" loading="lazy" />
-                    <div style="position: absolute; top: 8px; right: 8px; background: rgba(108, 92, 231, 0.8); color: #fff; font-size: 0.6rem; padding: 2px 8px; border-radius: 12px; font-weight: 600;">Сезон ${seasonNumber}</div>
+                    <div style="position: absolute; top: 8px; right: 8px; background: rgba(108, 92, 231, 0.85); color: #fff; font-size: 0.6rem; padding: 2px 10px; border-radius: 12px; font-weight: 600; backdrop-filter: blur(4px);">
+                        ${type} ${seasonNumber}
+                    </div>
+                    ${year ? `<div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.6); color: #fff; font-size: 0.6rem; padding: 2px 10px; border-radius: 12px; backdrop-filter: blur(4px);">${year}</div>` : ''}
                 </div>
                 <div class="related-info">
                     <div class="related-title">${title}</div>
-                    <div class="related-meta">${year} ${episodes ? `• ${episodes} серий` : ''}</div>
+                    <div class="related-meta">${episodes ? `📺 ${episodes} серий` : ''}</div>
                 </div>
             </div>
         `;
@@ -943,7 +921,7 @@ async function loadAnimeById(animeId) {
         // ===== ПОКАЗЫВАЕМ СВЯЗАННЫЕ АНИМЕ =====
         showRelatedAnime(title, animeId);
 
-        // =====  ОБРАБОТЧИКИ ДЛЯ УВЕЛИЧЕНИЯ =====
+        // ===== ОБРАБОТЧИКИ ДЛЯ УВЕЛИЧЕНИЯ =====
         const posterImg = document.querySelector('.anime-detail .poster img');
         if (posterImg) {
             posterImg.style.cursor = 'pointer';
@@ -1078,4 +1056,4 @@ if (window.location.hash) {
 } else {
     showSection(listSection);
     fetchAnimeList();
-}
+    }
