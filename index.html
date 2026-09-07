@@ -18,6 +18,12 @@
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Quarwatch" />
   
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#6c5ce7" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -30,10 +36,13 @@
         </a>
         <div class="subtitle">смотреть онлайн</div>
       </div>
-      <div class="hamburger" id="hamburger">
-        <span></span>
-        <span></span>
-        <span></span>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button id="install-btn" class="auth-btn" style="display:none;">📱 Установить</button>
+        <div class="hamburger" id="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
       </div>
     </div>
 
@@ -112,4 +121,4 @@
 
   <script src="script.js"></script>
 </body>
-        </html>
+          </html>
