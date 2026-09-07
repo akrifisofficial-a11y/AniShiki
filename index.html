@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quarwatch – смотреть аниме онлайн</title>
   
-  <!-- SEO — РАЗРЕШАЕМ ИНДЕКСАЦИЮ -->
+  <!-- SEO -->
   <meta name="robots" content="index, follow" />
   <meta name="description" content="Quarwatch – смотри аниме онлайн бесплатно. Большой каталог аниме сериалов и фильмов." />
   <meta name="keywords" content="аниме, смотреть аниме, аниме онлайн, Quarwatch" />
@@ -38,6 +38,7 @@
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
         <button id="install-btn" class="auth-btn" style="display:none;">📱 Установить</button>
+        <button id="download-apk-btn" class="auth-btn" style="display:none;">📲 APK</button>
         <div class="hamburger" id="hamburger">
           <span></span>
           <span></span>
@@ -50,6 +51,7 @@
       <ul>
         <li><a href="#" id="menu-developer">👨‍💻 Разработчик</a></li>
         <li><a href="#" id="menu-updates">🔄 Обновления</a></li>
+        <li><a href="#" id="menu-download-apk">📲 Скачать APK</a></li>
       </ul>
     </nav>
 
@@ -61,7 +63,6 @@
   </header>
 
   <main>
-    <!-- Каталог -->
     <section id="anime-list" class="active">
       <div class="search-bar">
         <input type="text" id="search-input" placeholder="Поиск..." />
@@ -72,7 +73,6 @@
       <div id="loader" class="loader">Загрузка...</div>
     </section>
 
-    <!-- Плеер -->
     <section id="player-section">
       <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
         <button id="back-btn" class="back-btn">← Назад</button>
@@ -84,7 +84,6 @@
       </div>
     </section>
 
-    <!-- Страница обновлений -->
     <section id="updates-section">
       <button id="updates-back-btn" class="back-btn">← Назад</button>
       <div id="updates-content" class="updates-content">
@@ -93,7 +92,6 @@
     </section>
   </main>
 
-  <!-- Модальное окно -->
   <div id="modal-overlay" class="modal-overlay">
     <div class="modal-content">
       <button id="modal-close" class="modal-close">✕</button>
@@ -101,13 +99,11 @@
     </div>
   </div>
 
-  <!-- Увеличенное изображение -->
   <div id="modal-image-overlay" class="modal-image-overlay">
     <button class="close-btn" id="modal-image-close">✕</button>
     <img id="modal-image" src="" alt="Увеличенное изображение" />
   </div>
 
-  <!-- Футер -->
   <footer id="site-footer">
     <p>
       © <span id="current-year">2026</span> Quarwatch
@@ -121,4 +117,4 @@
 
   <script src="script.js"></script>
 </body>
-          </html>
+</html>
