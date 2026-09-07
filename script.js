@@ -985,10 +985,10 @@ window.addEventListener('appinstalled', () => {
 // ===== СКАЧИВАНИЕ APK =====
 function downloadAPK() {
   // Ссылка на APK (замените на ваш URL)
-  const apkUrl = 'https://github.com/ваш-username/ваш-репозиторий/releases/latest/download/quarwatch.apk';
+  const apkUrl = 'https://github.com/akrifisofficial-a11y/AniShiki/releases';
   
   // Пробуем скачать через GitHub API
-  fetch('https://api.github.com/repos/ваш-username/ваш-репозиторий/releases/latest')
+  fetch('https://api.github.com/akrifisofficial-a11y/AniShiki//releases/latest')
     .then(response => response.json())
     .then(data => {
       if (data.assets && data.assets.length > 0) {
