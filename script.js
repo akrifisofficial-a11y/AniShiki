@@ -180,7 +180,7 @@ if (menuDeveloper) {
             </div>
             <div class="info-item">
                 <span>Сайт</span>
-                <span><a href="#" style="color:#b8a0d0; text-decoration:none;">quarwatch.c6t.ru</a></span>
+                <span><a href="#" style="color:#b8a0d0; text-decoration:none;">quarwatch.ck6.ru</a></span>
             </div>
             <p style="margin-top:15px; text-align:center; color:#7a8aaa; font-size:0.8rem;">
                 🌙 Сделано с любовью к аниме
@@ -381,7 +381,7 @@ function buildAnimeUrl(query = '', loadMore = false) {
     return `${KODIK_API_URL}${endpoint}?${new URLSearchParams(params)}`;
 }
 
-// ===== ОТРИСОВКА КАРТОЧЕК =====
+// ===== ОТРИСОВКА КАРТОЧЕК (С КОЛИЧЕСТВОМ СЕРИЙ) =====
 function renderAnimeList(animes, append = false) {
     if (!catalogEl) return;
     
@@ -415,12 +415,17 @@ function renderAnimeList(animes, append = false) {
         const title = anime.title || anime.material_data?.title || 'Без названия';
         const year = anime.year || anime.material_data?.year || '';
         const id = anime.id;
+        
+        // Количество серий
+        const episodes = anime.episodes_count || anime.material_data?.episodes_count || '';
+        const episodesText = episodes ? `📺 ${episodes} серий` : '';
 
         card.innerHTML = `
             <img src="${poster}" alt="${title}" loading="lazy" />
             <div class="info">
                 <div class="title">${title}</div>
                 <div class="year">${year}</div>
+                ${episodesText ? `<div class="episodes">${episodesText}</div>` : ''}
             </div>
         `;
         
@@ -436,6 +441,85 @@ function renderAnimeList(animes, append = false) {
         });
         
         catalogEl.appendChild(card);
+    });
+}
+
+// ===== СВЯЗАННЫЕ АНИМЕ =====
+async function findRelatedAnime(title, animeId) {
+    try {
+        const cleanTitle = title.replace(/\[ТВ-\d+\]|\(ТВ-\d+\)|\[ТВ\]|\(ТВ\)|\[Фильм\]|\(Фильм\)/g, '').trim();
+        
+        const params = new URLSearchParams({
+            token: KODIK_API_KEY,
+            title: cleanTitle,
+            limit: 20,
+            with_material_data: 'true',
+            types: 'anime-serial,anime'
+        });
+        const url = `${KODIK_API_URL}/search?${params}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (!data.results || data.results.length === 0) return [];
+        
+        const related = data.results
+            .filter(item => item.id !== animeId && isAnime(item))
+            .filter(item => {
+                const itemTitle = item.title?.toLowerCase() || '';
+                const mainTitle = cleanTitle.toLowerCase();
+                return itemTitle.includes(mainTitle) || mainTitle.includes(itemTitle);
+            });
+        
+        related.sort((a, b) => {
+            const yearA = parseInt(a.year) || 0;
+            const yearB = parseInt(b.year) || 0;
+            return yearA - yearB;
+        });
+        
+        return related.slice(0, 6);
+    } catch (err) {
+        console.warn('⚠️ Ошибка поиска связанных:', err);
+        return [];
+    }
+}
+
+async function showRelatedAnime(title, animeId) {
+    const related = await findRelatedAnime(title, animeId);
+    const container = document.querySelector('.anime-detail .info');
+    
+    if (!container || related.length === 0) return;
+    
+    let html = `
+        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05);">
+            <h3 style="color: #e0e0e0; font-size: 1rem; margin-bottom: 12px;">🔗 Связанные аниме</h3>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: flex-start;">
+    `;
+    
+    related.forEach(anime => {
+        const poster = anime.material_data?.poster_url || anime.poster_url || 'https://via.placeholder.com/120x170?text=No+Image';
+        const title = anime.title || 'Без названия';
+        const year = anime.year || '';
+        const episodes = anime.episodes_count || '';
+        
+        html += `
+            <div class="related-card" data-id="${anime.id}">
+                <img src="${poster}" alt="${title}" loading="lazy" />
+                <div class="related-info">
+                    <div class="related-title">${title}</div>
+                    <div class="related-meta">${year} ${episodes ? `• ${episodes} серий` : ''}</div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += `</div></div>`;
+    container.insertAdjacentHTML('beforeend', html);
+    
+    container.querySelectorAll('.related-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const id = this.dataset.id;
+            if (id) window.location.hash = `anime/${id}`;
+        });
     });
 }
 
@@ -672,7 +756,6 @@ async function loadAnimeById(animeId) {
 
         if (playerIframe) playerIframe.src = playerSrc || 'about:blank';
 
-        // ===== ДАННЫЕ =====
         const title = anime.title || 'Без названия';
         const poster = anime.material_data?.poster_url || anime.poster_url || 'https://via.placeholder.com/300x450?text=No+Image';
         const description = anime.description || anime.material_data?.description || 'Описание отсутствует.';
@@ -749,7 +832,7 @@ async function loadAnimeById(animeId) {
         if (anime.screenshots && anime.screenshots.length > 0) {
             screenshotsHtml = `
                 <div style="margin-top: 15px;">
-                    <p style="color: #9aa3c0; font-size: 0.8rem; margin-bottom: 10px;">📸 Кадры из аниме:</p>
+                    <p style="color: #9aa3c0; font-size: 0.8rem; margin-bottom: 10px;">📸 Кадры из серии:</p>
                     <div class="screenshots-grid">
                         ${anime.screenshots.map(url => `
                             <a class="screenshot-item" data-image="${url}">
@@ -802,6 +885,9 @@ async function loadAnimeById(animeId) {
             `;
         }
         document.title = `${title} — Quarwatch`;
+
+        // ===== ПОКАЗЫВАЕМ СВЯЗАННЫЕ АНИМЕ =====
+        showRelatedAnime(title, animeId);
 
         // ===== ОБРАБОТЧИКИ ДЛЯ УВЕЛИЧЕНИЯ =====
         const posterImg = document.querySelector('.anime-detail .poster img');
@@ -939,137 +1025,3 @@ if (window.location.hash) {
     showSection(listSection);
     fetchAnimeList();
     }
-// ===== РЕГИСТРАЦИЯ SERVICE WORKER =====
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('✅ Service Worker зарегистрирован');
-        console.log('📱 Приложение можно установить!');
-      })
-      .catch(error => {
-        console.log('❌ Ошибка регистрации Service Worker:', error);
-      });
-  });
-}
-
-// ===== КНОПКА УСТАНОВКИ PWA =====
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  console.log('📱 Приложение можно установить!');
-  
-  const installBtn = document.getElementById('install-btn');
-  if (installBtn) {
-    installBtn.style.display = 'block';
-    installBtn.addEventListener('click', () => {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('✅ Приложение установлено');
-        } else {
-          console.log('❌ Установка отменена');
-        }
-        deferredPrompt = null;
-        installBtn.style.display = 'none';
-      });
-    });
-  }
-});
-
-window.addEventListener('appinstalled', () => {
-  console.log('✅ Приложение успешно установлено!');
-});
-
-// ===== СКАЧИВАНИЕ APK =====
-function downloadAPK() {
-  // Ссылка на APK (замените на ваш URL)
-  const apkUrl = 'https://github.com/akrifisofficial-a11y/AniShiki/releases/latest/download/quarwatch.apk';
-  
-  // Пробуем скачать через GitHub API
-  fetch('https://api.github.com/akrifisofficial-a11y/AniShiki//releases/latest')
-    .then(response => response.json())
-    .then(data => {
-      if (data.assets && data.assets.length > 0) {
-        const apkAsset = data.assets.find(asset => asset.name.endsWith('.apk'));
-        if (apkAsset) {
-          window.open(apkAsset.browser_download_url, '_blank');
-          showCopyNotification('📲 Скачивание APK началось...');
-          return;
-        }
-      }
-      // Если не нашли через API — используем прямую ссылку
-      window.open(apkUrl, '_blank');
-      showCopyNotification('📲 Скачивание APK началось...');
-    })
-    .catch(() => {
-      window.open(apkUrl, '_blank');
-      showCopyNotification('📲 Скачивание APK началось...');
-    });
-}
-
-// Обработчики для кнопок APK
-document.getElementById('download-apk-btn')?.addEventListener('click', downloadAPK);
-document.getElementById('menu-download-apk')?.addEventListener('click', (e) => {
-  e.preventDefault();
-  if (hamburger) hamburger.classList.remove('active');
-  if (navMenu) navMenu.classList.remove('open');
-  downloadAPK();
-});
-// ===== СЛУЧАЙНОЕ АНИМЕ =====
-document.getElementById('random-btn').addEventListener('click', async function() {
-  this.textContent = '⏳ Ищем...';
-  this.disabled = true;
-  
-  try {
-    // Получаем список аниме
-    const params = new URLSearchParams({
-      token: KODIK_API_KEY,
-      limit: 50,
-      with_material_data: 'true',
-      types: 'anime-serial,anime'
-    });
-    const url = `${KODIK_API_URL}/list?${params}`;
-    const response = await fetch(url);
-    const data = await response.json();
-    
-    if (data.results && data.results.length > 0) {
-      // Фильтруем только аниме
-      const animes = data.results.filter(item => isAnime(item));
-      if (animes.length === 0) {
-        showCopyNotification('❌ Аниме не найдены');
-        return;
-      }
-      
-      // Выбираем случайное
-      const random = animes[Math.floor(Math.random() * animes.length)];
-      
-      // Анимация перехода
-      document.querySelectorAll('.anime-card').forEach(card => {
-        card.style.transition = 'opacity 0.3s, transform 0.3s';
-        card.style.opacity = '0.3';
-        card.style.transform = 'scale(0.95)';
-      });
-      
-      setTimeout(() => {
-        window.location.hash = `anime/${random.id}`;
-        // Восстанавливаем карточки
-        setTimeout(() => {
-          document.querySelectorAll('.anime-card').forEach(card => {
-            card.style.opacity = '1';
-            card.style.transform = 'scale(1)';
-          });
-        }, 200);
-      }, 300);
-    } else {
-      showCopyNotification('❌ Аниме не найдены');
-    }
-  } catch (err) {
-    console.error(err);
-    showCopyNotification('❌ Ошибка загрузки');
-  } finally {
-    this.textContent = '🎲 Мне повезёт';
-    this.disabled = false;
-  }
-});
