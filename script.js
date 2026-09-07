@@ -944,9 +944,8 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then(registration => {
-        console.log('✅ Service Worker зарегистрирован:', registration);
+        console.log('✅ Service Worker зарегистрирован');
         console.log('📱 Приложение можно установить!');
-        console.log('🌐 Работает офлайн после первого посещения');
       })
       .catch(error => {
         console.log('❌ Ошибка регистрации Service Worker:', error);
@@ -954,7 +953,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// ===== КНОПКА УСТАНОВКИ =====
+// ===== КНОПКА УСТАНОВКИ PWA =====
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
@@ -981,4 +980,40 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 window.addEventListener('appinstalled', () => {
   console.log('✅ Приложение успешно установлено!');
+});
+
+// ===== СКАЧИВАНИЕ APK =====
+function downloadAPK() {
+  // Ссылка на APK (замените на ваш URL)
+  const apkUrl = 'https://github.com/ваш-username/ваш-репозиторий/releases/latest/download/quarwatch.apk';
+  
+  // Пробуем скачать через GitHub API
+  fetch('https://api.github.com/repos/ваш-username/ваш-репозиторий/releases/latest')
+    .then(response => response.json())
+    .then(data => {
+      if (data.assets && data.assets.length > 0) {
+        const apkAsset = data.assets.find(asset => asset.name.endsWith('.apk'));
+        if (apkAsset) {
+          window.open(apkAsset.browser_download_url, '_blank');
+          showCopyNotification('📲 Скачивание APK началось...');
+          return;
+        }
+      }
+      // Если не нашли через API — используем прямую ссылку
+      window.open(apkUrl, '_blank');
+      showCopyNotification('📲 Скачивание APK началось...');
+    })
+    .catch(() => {
+      window.open(apkUrl, '_blank');
+      showCopyNotification('📲 Скачивание APK началось...');
+    });
+}
+
+// Обработчики для кнопок APK
+document.getElementById('download-apk-btn')?.addEventListener('click', downloadAPK);
+document.getElementById('menu-download-apk')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  if (hamburger) hamburger.classList.remove('active');
+  if (navMenu) navMenu.classList.remove('open');
+  downloadAPK();
 });
