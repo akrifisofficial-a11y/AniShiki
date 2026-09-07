@@ -939,3 +939,46 @@ if (window.location.hash) {
     showSection(listSection);
     fetchAnimeList();
     }
+// ===== РЕГИСТРАЦИЯ SERVICE WORKER =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('✅ Service Worker зарегистрирован:', registration);
+        console.log('📱 Приложение можно установить!');
+        console.log('🌐 Работает офлайн после первого посещения');
+      })
+      .catch(error => {
+        console.log('❌ Ошибка регистрации Service Worker:', error);
+      });
+  });
+}
+
+// ===== КНОПКА УСТАНОВКИ =====
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  console.log('📱 Приложение можно установить!');
+  
+  const installBtn = document.getElementById('install-btn');
+  if (installBtn) {
+    installBtn.style.display = 'block';
+    installBtn.addEventListener('click', () => {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('✅ Приложение установлено');
+        } else {
+          console.log('❌ Установка отменена');
+        }
+        deferredPrompt = null;
+        installBtn.style.display = 'none';
+      });
+    });
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  console.log('✅ Приложение успешно установлено!');
+});
