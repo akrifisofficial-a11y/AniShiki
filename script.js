@@ -1017,3 +1017,59 @@ document.getElementById('menu-download-apk')?.addEventListener('click', (e) => {
   if (navMenu) navMenu.classList.remove('open');
   downloadAPK();
 });
+// ===== СЛУЧАЙНОЕ АНИМЕ =====
+document.getElementById('random-btn').addEventListener('click', async function() {
+  this.textContent = '⏳ Ищем...';
+  this.disabled = true;
+  
+  try {
+    // Получаем список аниме
+    const params = new URLSearchParams({
+      token: KODIK_API_KEY,
+      limit: 50,
+      with_material_data: 'true',
+      types: 'anime-serial,anime'
+    });
+    const url = `${KODIK_API_URL}/list?${params}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.results && data.results.length > 0) {
+      // Фильтруем только аниме
+      const animes = data.results.filter(item => isAnime(item));
+      if (animes.length === 0) {
+        showCopyNotification('❌ Аниме не найдены');
+        return;
+      }
+      
+      // Выбираем случайное
+      const random = animes[Math.floor(Math.random() * animes.length)];
+      
+      // Анимация перехода
+      document.querySelectorAll('.anime-card').forEach(card => {
+        card.style.transition = 'opacity 0.3s, transform 0.3s';
+        card.style.opacity = '0.3';
+        card.style.transform = 'scale(0.95)';
+      });
+      
+      setTimeout(() => {
+        window.location.hash = `anime/${random.id}`;
+        // Восстанавливаем карточки
+        setTimeout(() => {
+          document.querySelectorAll('.anime-card').forEach(card => {
+            card.style.opacity = '1';
+            card.style.transform = 'scale(1)';
+          });
+        }, 200);
+      }, 300);
+    } else {
+      showCopyNotification('❌ Аниме не найдены');
+    }
+  } catch (err) {
+    console.error(err);
+    showCopyNotification('❌ Ошибка загрузки');
+  } finally {
+    this.textContent = '🎲 Мне повезёт';
+    this.disabled = false;
+  }
+});
