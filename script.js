@@ -347,7 +347,7 @@ async function loadUpdates() {
     }
 }
 
-// ===== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ (С АНОНСАМИ) =====
+// ===== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ =====
 function buildAnimeUrl(query = '', loadMore = false) {
     if (loadMore && nextPageUrl) {
         return nextPageUrl;
@@ -365,20 +365,12 @@ function buildAnimeUrl(query = '', loadMore = false) {
         params.types = 'anime-serial';
     } else if (currentCategory === 'movie') {
         params.types = 'anime';
-    } else if (currentCategory === 'anons') {
-        params.types = 'anime-serial,anime';
-        params.anime_status = 'anons';
-        params.sort = 'created_at';
-        params.order = 'desc';
     }
 
     if (query.trim()) {
         endpoint = '/search';
         params.title = query.trim();
         params.types = 'anime-serial,anime';
-        if (currentCategory === 'anons') {
-            params.anime_status = 'anons';
-        }
         delete params.sort;
         delete params.order;
     }
@@ -448,7 +440,7 @@ function renderAnimeList(animes, append = false) {
     });
 }
 
-// ===== СВЯЗАННЫЕ АНИМЕ (ПО ГОДАМ С НОМЕРОМ СЕЗОНА) =====
+// ===== СВЯЗАННЫЕ АНИМЕ (ПО ГОДАМ) =====
 async function findRelatedAnime(title, animeId) {
     try {
         const cleanTitle = title
@@ -477,14 +469,12 @@ async function findRelatedAnime(title, animeId) {
                 return itemTitle.includes(mainTitle) || mainTitle.includes(itemTitle);
             });
         
-        // Сортируем по году
         related.sort((a, b) => {
             const yearA = parseInt(a.year) || 0;
             const yearB = parseInt(b.year) || 0;
             return yearA - yearB;
         });
         
-        // Группировка по году
         const yearMap = new Map();
         
         related.forEach(item => {
@@ -560,7 +550,7 @@ async function showRelatedAnime(title, animeId) {
     });
 }
 
-// ===== ЗАГРУЗКА КАТАЛОГА (С ПОДДЕРЖКОЙ АНОНСОВ) =====
+// ===== ЗАГРУЗКА КАТАЛОГА =====
 async function fetchAnimeList(query = '', loadMore = false) {
     if (isLoading) return;
     isLoading = true;
@@ -602,17 +592,7 @@ async function fetchAnimeList(query = '', loadMore = false) {
 
         if (newUniqueResults.length === 0) {
             if (!loadMore && catalogEl) {
-                if (currentCategory === 'anons') {
-                    catalogEl.innerHTML = `
-                        <div style="text-align:center; padding:60px 20px; color:#555;">
-                            <div style="font-size:3rem; margin-bottom:10px;">📅</div>
-                            <h3 style="color:#888; margin-bottom:8px;">Анонсов пока нет</h3>
-                            <p style="color:#444; font-size:0.9rem;">Следите за обновлениями — новые аниме появятся скоро!</p>
-                        </div>
-                    `;
-                } else {
-                    catalogEl.innerHTML = '<p style="text-align:center;color:#7a8aaa;">Аниме не найдено</p>';
-                }
+                catalogEl.innerHTML = '<p style="text-align:center;color:#7a8aaa;">Аниме не найдено</p>';
             }
             if (loadMoreBtn) loadMoreBtn.style.display = 'none';
             return;
@@ -782,7 +762,6 @@ async function loadAnimeById(animeId) {
             return;
         }
 
-        // ===== ПЛЕЕР =====
         let playerSrc = null;
         if (anime.link) {
             playerSrc = anime.link.startsWith('//') ? `https:${anime.link}` : anime.link;
@@ -879,7 +858,7 @@ async function loadAnimeById(animeId) {
         if (anime.screenshots && anime.screenshots.length > 0) {
             screenshotsHtml = `
                 <div style="margin-top: 15px;">
-                    <p style="color: #9aa3c0; font-size: 0.8rem; margin-bottom: 10px;">📸 Кадры из аниме:</p>
+                    <p style="color: #9aa3c0; font-size: 0.8rem; margin-bottom: 10px;">📸 Кадры из серии:</p>
                     <div class="screenshots-grid">
                         ${anime.screenshots.map(url => `
                             <a class="screenshot-item" data-image="${url}">
@@ -933,10 +912,8 @@ async function loadAnimeById(animeId) {
         }
         document.title = `${title} — Quarwatch`;
 
-        // ===== ПОКАЗЫВАЕМ СВЯЗАННЫЕ АНИМЕ =====
         showRelatedAnime(title, animeId);
 
-        // ===== ОБРАБОТЧИКИ ДЛЯ УВЕЛИЧЕНИЯ =====
         const posterImg = document.querySelector('.anime-detail .poster img');
         if (posterImg) {
             posterImg.style.cursor = 'pointer';
@@ -1071,4 +1048,4 @@ if (window.location.hash) {
 } else {
     showSection(listSection);
     fetchAnimeList();
-    } 
+            }
