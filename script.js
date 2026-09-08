@@ -1,7 +1,6 @@
 // ===== КОНФИГУРАЦИЯ =====
 const KODIK_API_KEY = 'd99ff2ab48b0d9c42ace4901bee833ff';
 const KODIK_API_URL = 'https://kodik-api.com';
-const SHIKIMORI_API_URL = 'https://shikimori.one/api';
 
 // ===== ТОЛЬКО ЭТИ ТИПЫ РАЗРЕШЕНЫ (АНИМЕ) =====
 const ALLOWED_TYPES = ['anime-serial', 'anime'];
@@ -81,7 +80,6 @@ let nextPageUrl = null;
 let isLoading = false;
 let isFetchingMore = false;
 let currentQuery = '';
-let isShikimoriMode = false;
 
 // =========================================
 // ГАМБУРГЕР
@@ -215,7 +213,7 @@ if (menuDeveloper) {
             </div>
             <div class="info-item">
                 <span>Технологии</span>
-                <span>HTML, CSS, JS, Kodik API, Shikimori API</span>
+                <span>HTML, CSS, JS, Kodik API</span>
             </div>
             <div class="info-item">
                 <span>Сайт</span>
@@ -241,7 +239,7 @@ if (menuUpdates) {
 }
 
 // =========================================
-// КАТЕГОРИИ (С ПОДДЕРЖКОЙ SHIKIMORI)
+// КАТЕГОРИИ
 // =========================================
 function setCategory(type) {
     allLoadedIds.clear();
@@ -261,13 +259,7 @@ function setCategory(type) {
         window.location.hash = '';
     }
 
-    if (type === 'anons-shikimori') {
-        isShikimoriMode = true;
-        fetchShikimoriAnons();
-    } else {
-        isShikimoriMode = false;
-        fetchAnimeList();
-    }
+    fetchAnimeList();
 }
 
 categoryBtns.forEach(btn => {
@@ -276,67 +268,6 @@ categoryBtns.forEach(btn => {
         setCategory(btn.dataset.type);
     });
 });
-
-// =========================================
-// ЗАГРУЗКА АНОНСОВ С SHIKIMORI
-// =========================================
-async function fetchShikimoriAnons() {
-    if (isLoading) return;
-    isLoading = true;
-
-    if (catalogEl) catalogEl.innerHTML = '';
-    if (loaderEl) loaderEl.style.display = 'block';
-    if (loadMoreBtn) loadMoreBtn.style.display = 'none';
-
-    try {
-        const url = `${SHIKIMORI_API_URL}/animes?status=anons&limit=50&order=popularity`;
-        console.log('📡 Запрос анонсов Shikimori:', url);
-
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-
-        const anons = data.map(item => ({
-            id: `shikimori-${item.id}`,
-            title: item.russian || item.name || 'Без названия',
-            poster_url: item.image?.original || item.image?.preview || 'https://via.placeholder.com/200x280?text=No+Image',
-            year: item.aired_on ? new Date(item.aired_on).getFullYear() : null,
-            description: item.description || item.description_html || 'Описание отсутствует.',
-            rating: item.score || null,
-            genres: item.genres ? item.genres.map(g => g.name).join(', ') : '',
-            episodes_count: item.episodes || null,
-            kind: item.kind || 'tv',
-            link: `https://shikimori.one/animes/${item.id}`,
-            isShikimori: true
-        }));
-
-        if (anons.length === 0) {
-            catalogEl.innerHTML = `
-                <div style="text-align:center; padding:60px 20px; color:#555;">
-                    <div style="font-size:3rem; margin-bottom:10px;">📅</div>
-                    <h3 style="color:#888; margin-bottom:8px;">Анонсов пока нет</h3>
-                    <p style="color:#444; font-size:0.9rem;">Следите за обновлениями — новые аниме появятся скоро!</p>
-                </div>
-            `;
-            return;
-        }
-
-        renderAnimeList(anons);
-    } catch (err) {
-        console.error('❌ Ошибка загрузки анонсов Shikimori:', err);
-        catalogEl.innerHTML = `
-            <p style="text-align:center;color:#ff7a7a; margin-top:20px;">
-                ⚠️ Не удалось загрузить анонсы с Shikimori
-            </p>
-            <p style="text-align:center;color:#5a6a8a; font-size:0.85rem; margin-top:10px;">
-                Проверьте подключение или попробуйте позже.
-            </p>
-        `;
-    } finally {
-        if (loaderEl) loaderEl.style.display = 'none';
-        isLoading = false;
-    }
-}
 
 // =========================================
 // ЛОГОТИП → ГЛАВНАЯ
@@ -452,7 +383,7 @@ function buildAnimeUrl(query = '', loadMore = false) {
     return `${KODIK_API_URL}${endpoint}?${new URLSearchParams(params)}`;
 }
 
-// ===== ОТРИСОВКА КАРТОЧЕК (С ПОДДЕРЖКОЙ SHIKIMORI) =====
+// ===== ОТРИСОВКА КАРТОЧЕК =====
 function renderAnimeList(animes, append = false) {
     if (!catalogEl) return;
     
@@ -482,26 +413,13 @@ function renderAnimeList(animes, append = false) {
         const card = document.createElement('div');
         card.className = 'anime-card';
 
-        const poster = anime.poster_url || 'https://via.placeholder.com/200x280?text=No+Image';
-        const title = anime.title || 'Без названия';
-        const year = anime.year || '';
+        const poster = anime.material_data?.poster_url || anime.poster_url || 'https://via.placeholder.com/200x280?text=No+Image';
+        const title = anime.title || anime.material_data?.title || 'Без названия';
+        const year = anime.year || anime.material_data?.year || '';
         const id = anime.id;
-        const episodes = anime.episodes_count || '';
+        
+        const episodes = anime.episodes_count || anime.material_data?.episodes_count || '';
         const episodesText = episodes ? `📺 ${episodes} серий` : '';
-        const genres = anime.genres || '';
-
-        // Для анонсов Shikimori — показываем жанры
-        const genresHtml = anime.isShikimori && genres ? `
-            <div style="font-size:0.7rem; color:#666; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                ${genres}
-            </div>
-        ` : '';
-
-        const shikimoriBtn = anime.isShikimori ? `
-            <div style="margin-top:6px;">
-                <a href="${anime.link}" target="_blank" style="color:#6c5ce7; font-size:0.65rem; text-decoration:none; border:1px solid rgba(108,92,231,0.2); padding:2px 10px; border-radius:12px; display:inline-block;">На Shikimori</a>
-            </div>
-        ` : '';
 
         card.innerHTML = `
             <img src="${poster}" alt="${title}" loading="lazy" />
@@ -509,8 +427,6 @@ function renderAnimeList(animes, append = false) {
                 <div class="title">${title}</div>
                 <div class="year">${year}</div>
                 ${episodesText ? `<div class="episodes">${episodesText}</div>` : ''}
-                ${genresHtml}
-                ${shikimoriBtn}
             </div>
         `;
         
@@ -721,7 +637,6 @@ async function fetchAnimeList(query = '', loadMore = false) {
 function setupInfiniteScroll() {
     window.addEventListener('scroll', () => {
         if (isLoading || isFetchingMore || !nextPageUrl) return;
-        if (isShikimoriMode) return;
         
         const scrollPosition = window.innerHeight + window.scrollY;
         const pageHeight = document.documentElement.scrollHeight;
@@ -819,27 +734,6 @@ async function loadAnimeById(animeId) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     try {
-        // Проверяем, является ли ID анонсом с Shikimori
-        if (animeId.startsWith('shikimori-')) {
-            const shikimoriId = animeId.replace('shikimori-', '');
-            // Показываем страницу анонса
-            animeInfoEl.innerHTML = `
-                <div class="anime-detail" id="anime-detail">
-                    <div class="info" style="text-align:center; padding:40px 20px;">
-                        <h2 style="color:#b8a0d0;">ℹ️ Анонс с Shikimori</h2>
-                        <p style="color:#9aa3c0; margin:20px 0;">
-                            Этот анонс пока недоступен для просмотра.<br>
-                            Следите за выходом серий!
-                        </p>
-                        <a href="https://shikimori.one/animes/${shikimoriId}" target="_blank" class="back-btn" style="display:inline-block; text-decoration:none;">Перейти на Shikimori</a>
-                    </div>
-                </div>
-            `;
-            document.title = `Анонс — Quarwatch`;
-            return;
-        }
-
-        // Стандартная загрузка с Kodik
         const params = new URLSearchParams({
             token: KODIK_API_KEY,
             id: animeId,
@@ -1096,19 +990,9 @@ if (searchBtn && searchInput) {
         const query = searchInput.value.trim();
         if (window.location.hash) {
             window.location.hash = '';
-            setTimeout(() => {
-                if (isShikimoriMode) {
-                    fetchShikimoriAnons();
-                } else {
-                    fetchAnimeList(query);
-                }
-            }, 50);
+            setTimeout(() => fetchAnimeList(query), 50);
         } else {
-            if (isShikimoriMode) {
-                fetchShikimoriAnons();
-            } else {
-                fetchAnimeList(query);
-            }
+            fetchAnimeList(query);
         }
     });
 
@@ -1127,9 +1011,7 @@ if (shareBtn) {
 
 if (loadMoreBtn) {
     loadMoreBtn.addEventListener('click', () => {
-        if (!isShikimoriMode) {
-            fetchAnimeList(currentQuery, true);
-        }
+        fetchAnimeList(currentQuery, true);
     });
 }
 
@@ -1148,7 +1030,7 @@ setupInfiniteScroll();
 // АВТООБНОВЛЕНИЕ КАЖДЫЕ 30 СЕКУНД
 // =========================================
 setInterval(() => {
-    if (!window.location.hash && !isLoading && !isShikimoriMode) {
+    if (!window.location.hash && !isLoading) {
         console.log('🔄 Автообновление каталога...');
         fetchAnimeList(currentQuery);
     }
@@ -1158,7 +1040,7 @@ setInterval(() => {
 // ОБНОВЛЕНИЕ ПРИ АКТИВАЦИИ ВКЛАДКИ
 // =========================================
 document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && !window.location.hash && !isLoading && !isShikimoriMode) {
+    if (!document.hidden && !window.location.hash && !isLoading) {
         console.log('🔄 Обновление при возвращении...');
         fetchAnimeList(currentQuery);
     }
@@ -1173,4 +1055,4 @@ if (window.location.hash) {
 } else {
     showSection(listSection);
     fetchAnimeList();
-}
+    }
