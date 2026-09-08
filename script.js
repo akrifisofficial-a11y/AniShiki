@@ -99,7 +99,7 @@ if (hamburger) {
 }
 
 // =========================================
-// ПУНКТ МЕНЮ "ВАЖНО" (перенесён из категорий)
+// ПУНКТ МЕНЮ "ВАЖНО"
 // =========================================
 if (menuImportant) {
     menuImportant.addEventListener('click', (e) => {
@@ -383,7 +383,7 @@ function buildAnimeUrl(query = '', loadMore = false) {
     return `${KODIK_API_URL}${endpoint}?${new URLSearchParams(params)}`;
 }
 
-// ===== ОТРИСОВКА КАРТОЧЕК =====
+// ===== ОТРИСОВКА КАРТОЧЕК (БЕЗ ЖАНРОВ) =====
 function renderAnimeList(animes, append = false) {
     if (!catalogEl) return;
     
@@ -719,7 +719,7 @@ function showCopyNotification(message) {
     }, 3000);
 }
 
-// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА =====
+// ===== ЗАГРУЗКА СТРАНИЦЫ ТАЙТЛА (С ЖАНРАМИ) =====
 async function loadAnimeById(animeId) {
     if (currentAnimeId === animeId) {
         console.log('⏭️ Аниме уже открыто, пропускаем загрузку');
@@ -767,6 +767,7 @@ async function loadAnimeById(animeId) {
             return;
         }
 
+        // ===== ПЛЕЕР =====
         let playerSrc = null;
         if (anime.link) {
             playerSrc = anime.link.startsWith('//') ? `https:${anime.link}` : anime.link;
@@ -792,7 +793,13 @@ async function loadAnimeById(animeId) {
         const description = anime.description || anime.material_data?.description || 'Описание отсутствует.';
         const year = anime.year || anime.material_data?.year || '—';
         const rating = anime.rating?.imdb || anime.material_data?.rating || '—';
-        const genres = anime.genres ? anime.genres.join(', ') : (anime.material_data?.genres?.join(', ') || '—');
+
+        // ===== ЖАНРЫ (только на странице аниме) =====
+        let genresList = anime.genres || anime.material_data?.genres || [];
+        if (typeof genresList === 'string') {
+            genresList = genresList.split(',').map(g => g.trim());
+        }
+        const genresText = genresList.length > 0 ? genresList.join(', ') : '—';
 
         // ===== ВНЕШНИЕ ССЫЛКИ =====
         let externalLinksHtml = '';
@@ -893,7 +900,7 @@ async function loadAnimeById(animeId) {
             `;
         }
 
-        // ===== СБОРКА СТРАНИЦЫ =====
+        // ===== СБОРКА СТРАНИЦЫ (С ЖАНРАМИ) =====
         if (animeInfoEl) {
             animeInfoEl.innerHTML = `
                 <div class="anime-detail" id="anime-detail">
@@ -905,7 +912,7 @@ async function loadAnimeById(animeId) {
                         <div class="meta">
                             <span>📅 ${year}</span>
                             <span>⭐ ${rating}</span>
-                            <span>🎭 ${genres}</span>
+                            <span>🎭 ${genresText}</span>
                         </div>
                         <div class="description">${description}</div>
                         ${externalLinksBlock}
@@ -1055,4 +1062,4 @@ if (window.location.hash) {
 } else {
     showSection(listSection);
     fetchAnimeList();
-    }
+                                             }
