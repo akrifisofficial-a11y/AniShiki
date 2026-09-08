@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Страница не найдена — Quarwatch</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      background: #0a0b0e;
+      color: #e0e0e0;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+      margin: 0;
+    }
+    .error-container {
+      max-width: 500px;
+      padding: 20px;
+    }
+    .error-code {
+      font-size: 6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .error-title {
+      font-size: 1.5rem;
+      margin: 20px 0 10px;
+    }
+    .error-text {
+      color: #888;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+    .error-btn {
+      background: #6c5ce7;
+      color: #fff;
+      padding: 12px 30px;
+      border-radius: 30px;
+      text-decoration: none;
+      transition: 0.3s;
+      display: inline-block;
+    }
+    .error-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(108, 92, 231, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="error-container">
+    <div class="error-code">404</div>
+    <div class="error-title">Страница не найдена</div>
+    <div class="error-text">
+      Извините, запрошенная страница не существует.<br />
+      Возможно, она была удалена или вы перешли по неверной ссылке.
+    </div>
+    <a href="/" class="error-btn">🌙 На главную</a>
+  </div>
+</body>
+</html>
