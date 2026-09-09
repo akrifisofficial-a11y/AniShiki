@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>👨‍💻 Панель разработчика — Quarwatch</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    
+    <style>
+        /* ===== ГЛОБАЛЬНЫЕ СТИЛИ ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: #0a0b0e;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        /* ===== СКРОЛЛБАР ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0b0e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a3a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3a3a5a;
+        }
+        
+        /* ===== КОНТЕЙНЕР ===== */
+        .developer-wrapper {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        /* ===== ШАПКА ===== */
+        .developer-header-bar {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .developer-header-bar .back-link {
+            color: #888;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            transition: 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+        .developer-header-bar .back-link:hover {
+            background: rgba(255,255,255,0.03);
+            color: #e0e0e0;
+        }
+        
+        .developer-header-bar h1 {
+            color: #e0e0e0;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        
+        /* ===== ФОРМА ВХОДА ===== */
+        .developer-login {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 16px;
+            padding: 40px 30px;
+            text-align: center;
+            max-width: 400px;
+            margin: 40px auto;
+        }
+        
+        .developer-lock {
+            margin-bottom: 20px;
+        }
+        .developer-lock span {
+            font-size: 3rem;
+        }
+        .developer-lock h3 {
+            color: #e0e0e0;
+            margin: 10px 0 5px;
+        }
+        .developer-lock p {
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+        
+        .developer-login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .developer-password-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.03);
+            color: #e0e0e0;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: 0.3s;
+            text-align: center;
+        }
+        .developer-password-input:focus {
+            border-color: rgba(108, 92, 231, 0.3);
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .developer-login-submit {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+        .developer-login-submit:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(108, 92, 231, 0.2);
+        }
+        
+        .developer-error {
+            color: #ff7a7a;
+            font-size: 0.85rem;
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: rgba(255,70,70,0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255,70,70,0.1);
+            display: none;
+        }
+        .developer-error.show {
+            display: block;
+        }
+        
+        /* ===== ПАНЕЛЬ РАЗРАБОТЧИКА ===== */
+        .developer-panel {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 16px;
+            padding: 24px;
+            display: none;
+        }
+        .developer-panel.show {
+            display: block;
+        }
+        
+        .developer-panel-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .developer-panel-header h2 {
+            flex: 1;
+            color: #e0e0e0;
+            font-size: 1.2rem;
+        }
+        .developer-panel-header .logout-btn {
+            padding: 6px 18px;
+            border: 1px solid rgba(255,70,70,0.2);
+            border-radius: 8px;
+            background: rgba(255,70,70,0.05);
+            color: #ff7a7a;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            transition: 0.3s;
+        }
+        .developer-panel-header .logout-btn:hover {
+            background: rgba(255,70,70,0.1);
+        }
+        
+        /* ===== СЕТКА КАРТОЧЕК ===== */
+        .developer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .developer-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 12px;
+            padding: 18px 20px;
+        }
+        .developer-card h4 {
+            color: #a29bfe;
+            font-size: 0.9rem;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        
+        /* ===== СТАТИСТИКА ===== */
+        .developer-stats .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.85rem;
+        }
+        .stat-value {
+            color: #e0e0e0;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        /* ===== ДЕЙСТВИЯ ===== */
+        .developer-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .dev-action-btn {
+            padding: 8px 14px;
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.02);
+            color: #aaa;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            transition: 0.3s;
+            text-align: left;
+        }
+        .dev-action-btn:hover {
+            background: rgba(255,255,255,0.04);
+            border-color: rgba(108, 92, 231, 0.1);
+            color: #e0e0e0;
+        }
+        
+        /* ===== ИНФОРМАЦИЯ ===== */
+        .developer-info .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+        }
+        .developer-info .info-item span:first-child {
+            color: #666;
+            font-size: 0.85rem;
+        }
+        .developer-info .info-item span:last-child {
+            color: #e0e0e0;
+            font-size: 0.85rem;
+        }
+        
+        /* ===== ЛОГИ ===== */
+        .developer-logs {
+            max-height: 150px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-family: monospace;
+            font-size: 0.75rem;
+        }
+        .developer-logs .log-entry {
+            color: #666;
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+        }
+        .developer-logs .log-entry:last-child {
+            border-bottom: none;
+        }
+        
+        /* ===== АДАПТИВ ===== */
+        @media (max-width: 600px) {
+            .developer-grid {
+                grid-template-columns: 1fr;
+            }
+            .developer-login {
+                padding: 30px 20px;
+                margin: 20px auto;
+            }
+            .developer-panel {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="developer-wrapper">
+        <!-- ШАПКА -->
+        <div class="developer-header-bar">
+            <a href="/" class="back-link">← На главную</a>
+            <h1>👨‍💻 Панель разработчика</h1>
+        </div>
+        
+        <!-- ФОРМА ВХОДА -->
+        <div id="developer-login" class="developer-login">
+            <div class="developer-lock">
+                <span>🔐</span>
+                <h3>Доступ ограничен</h3>
+                <p>Введите пароль для доступа к панели разработчика</p>
+            </div>
+            <div class="developer-login-form">
+                <input type="password" id="developer-password" placeholder="Введите пароль..." class="developer-password-input" />
+                <button id="developer-login-btn" class="developer-login-submit">🔓 Войти</button>
+            </div>
+            <div id="developer-error" class="developer-error">❌ Неверный пароль</div>
+        </div>
+        
+        <!-- ПАНЕЛЬ РАЗРАБОТЧИКА -->
+        <div id="developer-panel" class="developer-panel">
+            <div class="developer-panel-header">
+                <h2>👨‍💻 Панель разработчика</h2>
+                <button id="developer-logout-btn" class="logout-btn">🚪 Выйти</button>
+            </div>
+            
+            <div class="developer-grid">
+                <!-- Карточка 1: Статистика -->
+                <div class="developer-card">
+                    <h4>📊 Статистика</h4>
+                    <div class="developer-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Всего аниме в каталоге</span>
+                            <span class="stat-value" id="dev-total-anime">—</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Пользователей онлайн</span>
+                            <span class="stat-value" id="dev-online-users">1</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Просмотров сегодня</span>
+                            <span class="stat-value" id="dev-today-views">—</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Время работы</span>
+                            <span class="stat-value" id="dev-uptime">—</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Карточка 2: Управление -->
+                <div class="developer-card">
+                    <h4>⚙️ Управление</h4>
+                    <div class="developer-actions">
+                        <button class="dev-action-btn" id="dev-clear-cache">🗑️ Очистить кэш</button>
+                        <button class="dev-action-btn" id="dev-refresh-data">🔄 Обновить данные</button>
+                        <button class="dev-action-btn" id="dev-export-data">📤 Экспорт данных</button>
+                        <button class="dev-action-btn" id="dev-import-data">📥 Импорт данных</button>
+                    </div>
+                </div>
+                
+                <!-- Карточка 3: Система -->
+                <div class="developer-card">
+                    <h4>🖥️ Система</h4>
+                    <div class="developer-info">
+                        <div class="info-item">
+                            <span>Версия сайта</span>
+                            <span><strong>v3.0</strong></span>
+                        </div>
+                        <div class="info-item">
+                            <span>Kodik API</span>
+                            <span><strong id="dev-api-status">✅ Подключено</strong></span>
+                        </div>
+                        <div class="info-item">
+                            <span>Хранилище</span>
+                            <span><strong id="dev-storage-status">✅ Работает</strong></span>
+                        </div>
+                        <div class="info-item">
+                            <span>Последнее обновление</span>
+                            <span><strong id="dev-last-update">—</strong></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Карточка 4: Логи -->
+                <div class="developer-card">
+                    <h4>📋 Логи</h4>
+                    <div class="developer-logs" id="dev-logs">
+                        <div class="log-entry">📌 Система запущена</div>
+                        <div class="log-entry">📌 Ожидание входа</div>
+                    </div>
+                    <button class="dev-action-btn" id="dev-clear-logs" style="margin-top:10px;">🗑️ Очистить логи</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ============================================
+        // 🔐 ПАНЕЛЬ РАЗРАБОТЧИКА
+        // ============================================
+        
+        const DEVELOPER_PASSWORD = 'quarwatch2026';
+        
+        // DOM элементы
+        const loginContainer = document.getElementById('developer-login');
+        const panelContainer = document.getElementById('developer-panel');
+        const passwordInput = document.getElementById('developer-password');
+        const loginBtn = document.getElementById('developer-login-btn');
+        const logoutBtn = document.getElementById('developer-logout-btn');
+        const errorEl = document.getElementById('developer-error');
+        const logsContainer = document.getElementById('dev-logs');
+        
+        // ===== ВХОД =====
+        function loginDeveloper(password) {
+            if (password === DEVELOPER_PASSWORD) {
+                localStorage.setItem('quarwatch_dev_session', 'true');
+                showPanel();
+                errorEl.classList.remove('show');
+                addLog('✅ Вход выполнен успешно');
+            } else {
+                errorEl.classList.add('show');
+                addLog('❌ Неудачная попытка входа');
+                setTimeout(() => {
+                    errorEl.classList.remove('show');
+                }, 3000);
+            }
+        }
+        
+        // ===== ВЫХОД =====
+        function logoutDeveloper() {
+            localStorage.removeItem('quarwatch_dev_session');
+            showLogin();
+            addLog('🚪 Выход из панели');
+        }
+        
+        // ===== ПОКАЗАТЬ ПАНЕЛЬ =====
+        function showPanel() {
+            if (loginContainer) loginContainer.style.display = 'none';
+            if (panelContainer) panelContainer.classList.add('show');
+            updateStats();
+            addLog('👨‍💻 Панель разработчика открыта');
+        }
+        
+        // ===== ПОКАЗАТЬ ФОРМУ ВХОДА =====
+        function showLogin() {
+            if (loginContainer) loginContainer.style.display = 'block';
+            if (panelContainer) panelContainer.classList.remove('show');
+            if (passwordInput) passwordInput.value = '';
+        }
+        
+        // ===== ДОБАВИТЬ ЛОГ =====
+        function addLog(message) {
+            if (!logsContainer) return;
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const time = new Date().toLocaleTimeString('ru-RU');
+            entry.textContent = `[${time}] ${message}`;
+            logsContainer.appendChild(entry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+        
+        // ===== ОБНОВИТЬ СТАТИСТИКУ =====
+        function updateStats() {
+            // Время работы
+            const uptime = document.getElementById('dev-uptime');
+            if (uptime) {
+                const startTime = localStorage.getItem('quarwatch_start_time');
+                if (startTime) {
+                    const diff = Date.now() - parseInt(startTime);
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    uptime.textContent = `${hours}ч ${minutes}м`;
+                }
+            }
+            
+            // Дата последнего обновления
+            const lastUpdate = document.getElementById('dev-last-update');
+            if (lastUpdate) {
+                const now = new Date();
+                lastUpdate.textContent = now.toLocaleString('ru-RU');
+            }
+            
+            // Всего аниме (если есть доступ к главной странице)
+            try {
+                const total = localStorage.getItem('quarwatch_total_anime') || '—';
+                document.getElementById('dev-total-anime').textContent = total;
+            } catch (e) {
+                // Игнорируем
+            }
+        }
+        
+        // ===== ОБРАБОТЧИКИ =====
+        
+        // Кнопка входа
+        loginBtn?.addEventListener('click', () => {
+            if (passwordInput) loginDeveloper(passwordInput.value);
+        });
+        
+        // Enter в поле пароля
+        passwordInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                loginDeveloper(passwordInput.value);
+            }
+        });
+        
+        // Кнопка выхода
+        logoutBtn?.addEventListener('click', logoutDeveloper);
+        
+        // ===== ДЕЙСТВИЯ =====
+        
+        // Очистка кэша
+        document.getElementById('dev-clear-cache')?.addEventListener('click', () => {
+            if (confirm('Очистить весь кэш и локальное хранилище?')) {
+                localStorage.clear();
+                addLog('🗑️ Кэш и хранилище очищены');
+                alert('✅ Кэш очищен! Страница будет перезагружена.');
+                location.reload();
+            }
+        });
+        
+        // Обновление данных
+        document.getElementById('dev-refresh-data')?.addEventListener('click', () => {
+            addLog('🔄 Обновление данных...');
+            // Попытка обновить данные с главной страницы
+            try {
+                // Сохраняем отметку об обновлении
+                localStorage.setItem('quarwatch_last_refresh', Date.now().toString());
+                addLog('✅ Данные обновлены');
+                updateStats();
+            } catch (e) {
+                addLog('❌ Ошибка обновления');
+            }
+        });
+        
+        // Экспорт данных
+        document.getElementById('dev-export-data')?.addEventListener('click', () => {
+            try {
+                const data = {
+                    history: JSON.parse(localStorage.getItem('quarwatch_history') || '[]'),
+                    favorites: JSON.parse(localStorage.getItem('quarwatch_favorites') || '[]'),
+                    notes: JSON.parse(localStorage.getItem('quarwatch_notes') || '{}'),
+                    stats: {
+                        totalViews: localStorage.getItem('quarwatch_total_views') || '0',
+                        theme: localStorage.getItem('quarwatch_theme') || 'dark'
+                    },
+                    exportDate: new Date().toISOString(),
+                    version: '3.0'
+                };
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `quarwatch_backup_${new Date().toISOString().slice(0,10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                addLog('📤 Данные экспортированы');
+            } catch (err) {
+                addLog('❌ Ошибка экспорта: ' + err.message);
+                alert('❌ Ошибка экспорта данных');
+            }
+        });
+        
+        // Импорт данных
+        document.getElementById('dev-import-data')?.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        
+                        if (data.history) localStorage.setItem('quarwatch_history', JSON.stringify(data.history));
+                        if (data.favorites) localStorage.setItem('quarwatch_favorites', JSON.stringify(data.favorites));
+                        if (data.notes) localStorage.setItem('quarwatch_notes', JSON.stringify(data.notes));
+                        if (data.stats?.totalViews) localStorage.setItem('quarwatch_total_views', data.stats.totalViews);
+                        if (data.stats?.theme) localStorage.setItem('quarwatch_theme', data.stats.theme);
+                        
+                        addLog('📥 Данные импортированы из ' + file.name);
+                        alert('✅ Данные импортированы! Страница будет перезагружена.');
+                        location.reload();
+                    } catch (err) {
+                        addLog('❌ Ошибка импорта: ' + err.message);
+                        alert('❌ Ошибка импорта данных');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        });
+        
+        // Очистка логов
+        document.getElementById('dev-clear-logs')?.addEventListener('click', () => {
+            if (logsContainer) {
+                logsContainer.innerHTML = '';
+                addLog('🗑️ Логи очищены');
+            }
+        });
+        
+        // ===== ПРОВЕРКА СЕССИИ ПРИ ЗАГРУЗКЕ =====
+        (function init() {
+            // Сохраняем время запуска
+            if (!localStorage.getItem('quarwatch_start_time')) {
+                localStorage.setItem('quarwatch_start_time', Date.now().toString());
+            }
+            
+            // Проверяем сессию
+            const session = localStorage.getItem('quarwatch_dev_session');
+            if (session === 'true') {
+                showPanel();
+                addLog('🚀 Сессия восстановлена');
+            } else {
+                showLogin();
+            }
+            
+            // Обновляем статистику каждые 30 секунд
+            setInterval(updateStats, 30000);
+        })();
+    </script>
+</body>
+</html>
