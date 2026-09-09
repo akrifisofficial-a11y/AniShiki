@@ -787,3 +787,203 @@ footer .footer-sub {
   color: #6c5ce7;
   margin-top: 4px;
 }
+/* ===== СТРАНИЦА ПОИСКА ПО ID ===== */
+.search-id-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.search-id-form {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+.search-id-input-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.search-id-input-group select {
+    min-width: 140px;
+    flex: 0 0 auto;
+}
+
+.search-id-input {
+    flex: 1;
+    min-width: 180px;
+    padding: 10px 16px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    color: #e0e0e0;
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: 0.3s;
+}
+.search-id-input::placeholder {
+    color: #444;
+}
+.search-id-input:focus {
+    border-color: rgba(108, 92, 231, 0.3);
+    background: rgba(255,255,255,0.05);
+}
+
+.search-id-submit {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+    color: #fff;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: 0.3s;
+    font-family: 'Inter', sans-serif;
+    white-space: nowrap;
+}
+.search-id-submit:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 30px rgba(108, 92, 231, 0.2);
+}
+.search-id-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.search-id-hint {
+    color: #555;
+    font-size: 0.75rem;
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 6px;
+    border-left: 2px solid rgba(108, 92, 231, 0.2);
+}
+
+.search-id-results {
+    min-height: 200px;
+}
+
+.search-id-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #444;
+    text-align: center;
+}
+.search-id-empty p {
+    margin-top: 12px;
+    color: #555;
+}
+
+/* Результаты поиска */
+.search-id-result-item {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.search-id-result-item:hover {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(108, 92, 231, 0.15);
+    transform: translateX(4px);
+}
+
+.search-id-result-item img {
+    width: 80px;
+    height: 112px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.search-id-result-info {
+    flex: 1;
+}
+.search-id-result-info h3 {
+    color: #e0e0e0;
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+.search-id-result-info .meta {
+    color: #666;
+    font-size: 0.8rem;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+.search-id-result-info .description {
+    color: #888;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.search-id-result-info .external-ids {
+    margin-top: 6px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.search-id-result-info .external-ids span {
+    background: rgba(255,255,255,0.03);
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.6rem;
+    color: #555;
+    border: 1px solid rgba(255,255,255,0.03);
+}
+
+.search-id-not-found {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+.search-id-not-found .icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 12px;
+}
+.search-id-not-found .error-text {
+    color: #ff7a7a;
+    font-size: 0.9rem;
+    margin-top: 4px;
+}
+
+/* Адаптив */
+@media (max-width: 600px) {
+    .search-id-input-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .search-id-input-group select {
+        min-width: unset;
+    }
+    .search-id-result-item {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .search-id-result-item img {
+        width: 120px;
+        height: 168px;
+    }
+    .search-id-result-info .meta {
+        justify-content: center;
+    }
+      }
