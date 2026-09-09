@@ -987,3 +987,17 @@ footer .footer-sub {
         justify-content: center;
     }
       }
+/* ===== КНОПКА АНОНСЫ ===== */
+.category-btn.anons-btn {
+    background: rgba(108, 92, 231, 0.08);
+    border-color: rgba(108, 92, 231, 0.1);
+    color: #a29bfe;
+}
+.category-btn.anons-btn:hover {
+    background: rgba(108, 92, 231, 0.15);
+}
+.category-btn.anons-btn.active {
+    background: rgba(108, 92, 231, 0.2);
+    border-color: rgba(108, 92, 231, 0.3);
+    color: #a29bfe;
+}
