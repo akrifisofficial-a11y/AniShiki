@@ -1062,4 +1062,24 @@ if (window.location.hash) {
 } else {
     showSection(listSection);
     fetchAnimeList();
-                                             }
+}
+
+// =========================================
+// 🚀 ЭКСПОРТ ГЛОБАЛЬНЫХ ФУНКЦИЙ
+// =========================================
+window.loadAnimeById = loadAnimeById;
+window.showSection = showSection;
+window.fetchAnimeList = fetchAnimeList;
+window.openModal = openModal;
+window.closeModalGlobal = closeModalGlobal;
+window.showNotificationGlobal = showNotificationGlobal;
+window.openImageModal = openImageModal;
+window.closeImageModal = closeImageModal;
+window.goBack = goBack;
+window.escapeHtml = function(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+};
+
+console.log('✅ Quarwatch (основной) готов!');                                             }
