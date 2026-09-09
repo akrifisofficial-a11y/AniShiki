@@ -1063,3 +1063,313 @@ if (window.location.hash) {
     showSection(listSection);
     fetchAnimeList();
                                              }
+}
+
+// ===== ПОИСК ПО ID =====
+
+// Обработчики для меню
+const menuSearchId = document.getElementById('menu-search-id');
+if (menuSearchId) {
+    menuSearchId.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (hamburger) hamburger.classList.remove('active');
+        if (navMenu) navMenu.classList.remove('open');
+        showSearchIdSection();
+    });
+}
+
+// Показать страницу поиска
+function showSearchIdSection() {
+    const section = document.getElementById('search-id-section');
+    if (!section) return;
+    
+    // Скрываем все секции
+    document.querySelectorAll('main section').forEach(s => s.classList.remove('active'));
+    section.classList.add('active');
+    
+    // Очищаем результаты
+    const results = document.getElementById('search-id-results');
+    if (results) {
+        results.innerHTML = `
+            <div class="search-id-empty">
+                <span style="font-size:2rem;">🔎</span>
+                <p>Введите ID для поиска аниме</p>
+            </div>
+        `;
+    }
+    
+    // Очищаем поле ввода
+    const input = document.getElementById('search-id-input');
+    if (input) input.value = '';
+    
+    // Фокус на поле
+    setTimeout(() => input?.focus(), 100);
+}
+
+// Кнопка "Назад" на странице поиска
+const searchIdBackBtn = document.getElementById('search-id-back-btn');
+if (searchIdBackBtn) {
+    searchIdBackBtn.addEventListener('click', () => {
+        document.querySelectorAll('main section').forEach(s => s.classList.remove('active'));
+        const listSection = document.getElementById('anime-list');
+        if (listSection) listSection.classList.add('active');
+    });
+}
+
+// ===== ОСНОВНАЯ ЛОГИКА ПОИСКА =====
+
+// Маппинг типов ID в параметры API
+const ID_TYPES_MAP = {
+    'shikimori': 'shikimori_id',
+    'kinopoisk': 'kinopoisk_id',
+    'imdb': 'imdb_id',
+    'worldart': 'worldart_id',
+    'anime': 'id',
+    'mal': 'mal_id'
+};
+
+// Функция поиска по ID
+async function searchAnimeById(id, type) {
+    const paramName = ID_TYPES_MAP[type] || 'id';
+    
+    // Специальная обработка для IMDb (формат tt1234567)
+    if (type === 'imdb' && !id.startsWith('tt')) {
+        id = `tt${id}`;
+    }
+    
+    const params = new URLSearchParams({
+        token: KODIK_API_KEY,
+        [paramName]: id,
+        with_material_data: 'true',
+        limit: 1
+    });
+    
+    const url = `${KODIK_API_URL}/search?${params}`;
+    console.log(`🔍 Поиск по ${type} ID: ${id}`, url);
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.results || [];
+}
+
+// Отображение результатов поиска
+function renderSearchResults(results, searchType, searchId) {
+    const container = document.getElementById('search-id-results');
+    if (!container) return;
+    
+    if (!results || results.length === 0) {
+        container.innerHTML = `
+            <div class="search-id-not-found">
+                <span class="icon">😕</span>
+                <p>Аниме не найдено</p>
+                <p class="error-text">ID: ${searchId} (${searchType})</p>
+                <p style="color:#444; font-size:0.8rem; margin-top:8px;">
+                    Проверьте правильность ID или попробуйте другой тип
+                </p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Фильтруем только аниме
+    const animeResults = results.filter(item => isAnime(item));
+    
+    if (animeResults.length === 0) {
+        container.innerHTML = `
+            <div class="search-id-not-found">
+                <span class="icon">⛔</span>
+                <p>Найденный тайтл не является аниме</p>
+                <p class="error-text">Тип: ${results[0]?.type || 'неизвестен'}</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    animeResults.forEach(anime => {
+        const poster = anime.material_data?.poster_url || anime.poster_url || 'https://via.placeholder.com/80x112?text=No+Image';
+        const title = anime.title || anime.material_data?.title || 'Без названия';
+        const year = anime.year || anime.material_data?.year || '—';
+        const rating = anime.rating?.imdb || anime.material_data?.rating || '—';
+        const description = anime.description || anime.material_data?.description || 'Описание отсутствует';
+        const episodes = anime.episodes_count || anime.material_data?.episodes_count || '—';
+        const genres = anime.genres || anime.material_data?.genres || [];
+        const type = anime.type === 'anime-serial' ? 'Сериал' : 'Фильм';
+        
+        // Собираем все внешние ID
+        const externalIds = [];
+        if (anime.shikimori_id) externalIds.push(`Shiki: ${anime.shikimori_id}`);
+        if (anime.kinopoisk_id) externalIds.push(`КП: ${anime.kinopoisk_id}`);
+        if (anime.imdb_id) externalIds.push(`IMDb: ${anime.imdb_id}`);
+        if (anime.worldart_id) externalIds.push(`WA: ${anime.worldart_id}`);
+        if (anime.mal_id) externalIds.push(`MAL: ${anime.mal_id}`);
+        
+        html += `
+            <div class="search-id-result-item" data-id="${anime.id}">
+                <img src="${poster}" alt="${title}" loading="lazy" />
+                <div class="search-id-result-info">
+                    <h3>${title}</h3>
+                    <div class="meta">
+                        <span>📅 ${year}</span>
+                        <span>⭐ ${rating}</span>
+                        <span>📺 ${episodes} серий</span>
+                        <span>🎬 ${type}</span>
+                        ${genres.length > 0 ? `<span>🎭 ${genres.slice(0, 3).join(', ')}</span>` : ''}
+                    </div>
+                    <div class="description">${description}</div>
+                    ${externalIds.length > 0 ? `
+                        <div class="external-ids">
+                            ${externalIds.map(id => `<span>🔗 ${id}</span>`).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    
+    // Клик по результату → открываем аниме
+    container.querySelectorAll('.search-id-result-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const animeId = this.dataset.id;
+            if (animeId) {
+                window.location.hash = `anime/${animeId}`;
+            }
+        });
+    });
+}
+
+// ===== ОБРАБОТЧИК ПОИСКА =====
+
+const searchIdBtn = document.getElementById('search-id-btn');
+const searchIdInput = document.getElementById('search-id-input');
+const searchIdType = document.getElementById('search-id-type');
+const searchIdLoader = document.getElementById('search-id-loader');
+
+async function performSearchById() {
+    if (!searchIdInput || !searchIdType) return;
+    
+    const id = searchIdInput.value.trim();
+    if (!id) {
+        showCopyNotification('⚠️ Введите ID для поиска');
+        return;
+    }
+    
+    const type = searchIdType.value;
+    const typeLabel = searchIdType.options[searchIdType.selectedIndex]?.text || type;
+    
+    // Показываем загрузку
+    if (searchIdLoader) searchIdLoader.style.display = 'block';
+    if (searchIdBtn) searchIdBtn.disabled = true;
+    searchIdBtn.textContent = '⏳ Поиск...';
+    
+    const container = document.getElementById('search-id-results');
+    if (container) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#555;">🔍 Ищем...</div>';
+    }
+    
+    try {
+        const results = await searchAnimeById(id, type);
+        renderSearchResults(results, typeLabel, id);
+    } catch (err) {
+        console.error('❌ Ошибка поиска:', err);
+        if (container) {
+            container.innerHTML = `
+                <div class="search-id-not-found">
+                    <span class="icon">⚠️</span>
+                    <p>Ошибка при поиске</p>
+                    <p class="error-text">${err.message}</p>
+                </div>
+            `;
+        }
+    } finally {
+        if (searchIdLoader) searchIdLoader.style.display = 'none';
+        if (searchIdBtn) {
+            searchIdBtn.disabled = false;
+            searchIdBtn.textContent = '🔍 Найти';
+        }
+    }
+}
+
+// Обработчики
+if (searchIdBtn) {
+    searchIdBtn.addEventListener('click', performSearchById);
+}
+
+if (searchIdInput) {
+    searchIdInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            performSearchById();
+        }
+    });
+}
+
+// ===== ПРИМЕРЫ ID ДЛЯ ТЕСТА =====
+const SEARCH_EXAMPLES = {
+    'shikimori': '25537',    // Наруто
+    'kinopoisk': '4433632',   // Атака титанов
+    'imdb': 'tt0389860',      // Сейлор Мун
+    'worldart': '12345',      // Пример
+    'anime': '123456',        // Kodik ID
+    'mal': '21'               // One Piece MAL
+};
+
+// Добавляем подсказки с примерами
+document.addEventListener('DOMContentLoaded', () => {
+    const hint = document.querySelector('.search-id-hint');
+    if (hint) {
+        hint.innerHTML = `
+            💡 Примеры ID: 
+            <span style="color:#6c5ce7; cursor:pointer;" data-example="shikimori:25537">Shikimori: 25537</span> | 
+            <span style="color:#6c5ce7; cursor:pointer;" data-example="kinopoisk:4433632">Кинопоиск: 4433632</span> | 
+            <span style="color:#6c5ce7; cursor:pointer;" data-example="imdb:tt0389860">IMDb: tt0389860</span>
+        `;
+        
+        // Клик по примеру → автозаполнение
+        hint.querySelectorAll('[data-example]').forEach(el => {
+            el.addEventListener('click', function() {
+                const [type, id] = this.dataset.example.split(':');
+                const select = document.getElementById('search-id-type');
+                const input = document.getElementById('search-id-input');
+                if (select && input) {
+                    const option = select.querySelector(`option[value="${type}"]`);
+                    if (option) select.value = type;
+                    input.value = id;
+                    performSearchById();
+                }
+            });
+        });
+    }// ===== ПАРСИНГ URL ДЛЯ ПОИСКА =====
+function parseSearchUrl() {
+    const path = window.location.pathname;
+    const match = path.match(/\/search\/id\/(\w+)\/(.+)/);
+    if (match) {
+        const type = match[1];
+        const id = match[2];
+        
+        // Открываем страницу поиска
+        showSearchIdSection();
+        
+        // Заполняем поля
+        const select = document.getElementById('search-id-type');
+        const input = document.getElementById('search-id-input');
+        if (select && input) {
+            const option = select.querySelector(`option[value="${type}"]`);
+            if (option) select.value = type;
+            input.value = decodeURIComponent(id);
+            
+            // Автоматический поиск
+            setTimeout(performSearchById, 300);
+        }
+    }
+}
+
+// Вызываем при загрузке
+document.addEventListener('DOMContentLoaded', parseSearchUrl);
+});
