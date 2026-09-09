@@ -332,6 +332,40 @@
                 padding: 16px;
             }
         }
+        /* ===== ЛОГИ С УВЕДОМЛЕНИЯМИ ===== */
+.developer-logs .log-entry.success {
+    color: #4caf50;
+    border-left: 2px solid #4caf50;
+    padding-left: 8px;
+}
+.developer-logs .log-entry.error {
+    color: #f44336;
+    border-left: 2px solid #f44336;
+    padding-left: 8px;
+}
+.developer-logs .log-entry.info {
+    color: #64b5f6;
+    border-left: 2px solid #64b5f6;
+    padding-left: 8px;
+}
+.developer-logs .log-entry.warning {
+    color: #ffd700;
+    border-left: 2px solid #ffd700;
+    padding-left: 8px;
+}
+.developer-logs .log-entry.new-episode {
+    color: #ff6b6b;
+    border-left: 2px solid #ff6b6b;
+    padding-left: 8px;
+    background: rgba(255, 107, 107, 0.05);
+    animation: pulse-log 2s ease-in-out;
+}
+@keyframes pulse-log {
+    0% { background: rgba(255, 107, 107, 0.2); }
+    50% { background: rgba(255, 107, 107, 0.05); }
+    100% { background: rgba(255, 107, 107, 0.2); }
+}
+
     </style>
 </head>
 <body>
@@ -795,6 +829,186 @@
             // Обновляем статистику каждые 30 секунд
             setInterval(updateStats, 30000);
         })();
+        // ============================================
+// 🆕 ОТСЛЕЖИВАНИЕ НОВЫХ СЕРИЙ
+// ============================================
+
+// Хранилище для отслеживания новых серий
+let watchedAnime = JSON.parse(localStorage.getItem('quarwatch_watched') || '{}');
+let lastCheckTime = localStorage.getItem('quarwatch_last_check') || null;
+
+// Функция проверки новых серий
+async function checkNewEpisodes() {
+    if (!isLoggedIn) return; // Проверяем, что пользователь в панели
+    
+    addLog('🔄 Проверка новых серий...', 'info');
+    
+    try {
+        // Получаем список аниме, которые пользователь смотрит (из истории)
+        const history = JSON.parse(localStorage.getItem('quarwatch_history') || '[]');
+        if (history.length === 0) {
+            addLog('ℹ️ Нет аниме в истории для проверки', 'info');
+            return;
+        }
+        
+        // Берём последние 10 аниме из истории
+        const recentAnime = history.slice(0, 10);
+        let newEpisodesFound = 0;
+        
+        for (const item of recentAnime) {
+            // Получаем актуальные данные о сериях из Kodik
+            const animeData = await fetchAnimeEpisodes(item.id);
+            if (!animeData) continue;
+            
+            const currentEpisodes = animeData.episodes_count || 0;
+            const lastKnownEpisodes = watchedAnime[item.id] || 0;
+            
+            // Если количество серий увеличилось
+            if (currentEpisodes > lastKnownEpisodes) {
+                const newCount = currentEpisodes - lastKnownEpisodes;
+                newEpisodesFound += newCount;
+                
+                addLog(
+                    `🆕 Новая серия у "${item.title}"! (${lastKnownEpisodes} → ${currentEpisodes}, +${newCount})`,
+                    'success'
+                );
+                
+                // Обновляем сохранённое количество
+                watchedAnime[item.id] = currentEpisodes;
+                
+                // Показываем уведомление
+                showDesktopNotification(`🆕 Новая серия!`, `${item.title} - ${currentEpisodes} серия`);
+            }
+        }
+        
+        // Сохраняем обновлённые данные
+        localStorage.setItem('quarwatch_watched', JSON.stringify(watchedAnime));
+        localStorage.setItem('quarwatch_last_check', new Date().toISOString());
+        
+        if (newEpisodesFound === 0) {
+            addLog('✅ Новых серий не обнаружено', 'info');
+        } else {
+            addLog(`🎉 Найдено ${newEpisodesFound} новых серий!`, 'success');
+        }
+        
+    } catch (err) {
+        addLog(`❌ Ошибка проверки новых серий: ${err.message}`, 'error');
+    }
+}
+
+// Функция получения данных о сериях из Kodik
+async function fetchAnimeEpisodes(animeId) {
+    try {
+        const params = new URLSearchParams({
+            token: KODIK_API_KEY,
+            id: animeId,
+            with_material_data: 'true'
+        });
+        const url = `${KODIK_API_URL}/search?${params}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        
+        if (data.results && data.results.length > 0) {
+            const anime = data.results[0];
+            return {
+                episodes_count: anime.episodes_count || anime.material_data?.episodes_count || 0,
+                title: anime.title || 'Без названия',
+                updated_at: anime.updated_at || null
+            };
+        }
+        return null;
+    } catch (err) {
+        console.warn('⚠️ Ошибка получения данных о сериях:', err);
+        return null;
+    }
+}
+
+// Уведомление на рабочем столе
+function showDesktopNotification(title, message) {
+    if (!('Notification' in window)) return;
+    
+    if (Notification.permission === 'granted') {
+        new Notification(title, {
+            body: message,
+            icon: 'https://quarwatch.c6t.ru/favicon.ico'
+        });
+    } else if (Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+}
+
+// Ручная проверка новых серий (кнопка в панели)
+function addCheckEpisodesButton() {
+    const actionsCard = document.querySelector('.developer-card h4:contains("⚙️ Управление")');
+    if (!actionsCard) return;
+    
+    const parent = actionsCard.closest('.developer-card');
+    if (!parent) return;
+    
+    const actionsDiv = parent.querySelector('.developer-actions');
+    if (!actionsDiv) return;
+    
+    // Добавляем кнопку, если её ещё нет
+    if (!document.getElementById('dev-check-episodes')) {
+        const btn = document.createElement('button');
+        btn.id = 'dev-check-episodes';
+        btn.className = 'dev-action-btn';
+        btn.textContent = '🆕 Проверить новые серии';
+        btn.style.borderColor = 'rgba(108, 92, 231, 0.2)';
+        btn.style.color = '#a29bfe';
+        
+        btn.addEventListener('click', () => {
+            btn.disabled = true;
+            btn.textContent = '⏳ Проверка...';
+            checkNewEpisodes().finally(() => {
+                btn.disabled = false;
+                btn.textContent = '🆕 Проверить новые серии';
+            });
+        });
+        
+        actionsDiv.appendChild(btn);
+    }
+}
+
+// Автоматическая проверка каждые 30 минут
+function startAutoCheckEpisodes() {
+    // Первая проверка через 30 секунд после входа
+    setTimeout(() => {
+        checkNewEpisodes();
+    }, 30000);
+    
+    // Затем каждые 30 минут
+    setInterval(() => {
+        checkNewEpisodes();
+    }, 1800000); // 30 минут
+}
+
+// ===== МОДИФИЦИРУЕМ ФУНКЦИЮ ВХОДА =====
+// Добавляем запуск проверки при входе в панель
+
+// Сохраняем оригинальную функцию showPanel
+const originalShowPanel = window.showPanel || showPanel;
+
+// Переопределяем showPanel
+showPanel = function() {
+    originalShowPanel();
+    
+    // Добавляем кнопку проверки серий
+    setTimeout(addCheckEpisodesButton, 500);
+    
+    // Запускаем автоматическую проверку
+    startAutoCheckEpisodes();
+    
+    // Добавляем информацию о последней проверке
+    addLog('🔄 Автоматическая проверка новых серий запущена (каждые 30 мин)', 'info');
+    
+    const lastCheck = localStorage.getItem('quarwatch_last_check');
+    if (lastCheck) {
+        const date = new Date(lastCheck);
+        addLog(`📅 Последняя проверка: ${date.toLocaleString('ru-RU')}`, 'info');
+    }
+};
     </script>
 </body>
 </html>
