@@ -46,16 +46,17 @@
       </div>
     </div>
 
-    <!-- ГАМБУРГЕР-МЕНЮ (с "Важно") -->
+    <!-- ГАМБУРГЕР-МЕНЮ -->
     <nav class="nav-menu" id="nav-menu">
       <ul>
         <li><a href="#" id="menu-developer">👨‍💻 Разработчик</a></li>
         <li><a href="#" id="menu-updates">🔄 Обновления</a></li>
         <li><a href="#" id="menu-important">❓ Важно</a></li>
+        <li><a href="#" id="menu-search-id">🔍 Поиск по ID</a></li>
       </ul>
     </nav>
 
-    <!-- КАТЕГОРИИ (без "Важно") -->
+    <!-- КАТЕГОРИИ -->
     <nav class="categories">
       <button class="category-btn active" data-type="series">📺 Сериалы</button>
       <button class="category-btn" data-type="movie">🎬 Фильмы</button>
@@ -93,6 +94,46 @@
         <div class="loader">Загрузка обновлений...</div>
       </div>
     </section>
+
+    <!-- СТРАНИЦА ПОИСКА ПО ID -->
+    <section id="search-id-section">
+      <div style="display:flex; align-items:center; gap:15px; margin-bottom:20px; flex-wrap:wrap;">
+        <button id="search-id-back-btn" class="back-btn">← Назад</button>
+        <h2 style="color:#e0e0e0; font-size:1.2rem;">🔍 Поиск по ID</h2>
+      </div>
+      
+      <div class="search-id-container">
+        <div class="search-id-form">
+          <div class="search-id-input-group">
+            <select id="search-id-type" class="filter-select">
+              <option value="shikimori">Shikimori ID</option>
+              <option value="kinopoisk">Kinopoisk ID</option>
+              <option value="imdb">IMDb ID</option>
+              <option value="worldart">World-Art ID</option>
+              <option value="anime">Kodik ID</option>
+              <option value="mal">MyAnimeList ID</option>
+            </select>
+            <input type="text" id="search-id-input" placeholder="Введите ID..." class="search-id-input" />
+            <button id="search-id-btn" class="search-id-submit">🔍 Найти</button>
+          </div>
+          <p class="search-id-hint">
+            💡 Примеры ID: 
+            <span style="color:#6c5ce7; cursor:pointer;" data-example="shikimori:25537">Shikimori: 25537</span> | 
+            <span style="color:#6c5ce7; cursor:pointer;" data-example="kinopoisk:4433632">Кинопоиск: 4433632</span> | 
+            <span style="color:#6c5ce7; cursor:pointer;" data-example="imdb:tt0389860">IMDb: tt0389860</span>
+          </p>
+        </div>
+        
+        <div id="search-id-results" class="search-id-results">
+          <div class="search-id-empty">
+            <span style="font-size:2rem;">🔎</span>
+            <p>Введите ID для поиска аниме</p>
+          </div>
+        </div>
+        
+        <div id="search-id-loader" class="loader" style="display:none;">Поиск...</div>
+      </div>
+    </section>
   </main>
 
   <!-- Модальное окно -->
@@ -123,4 +164,4 @@
 
   <script src="script.js"></script>
 </body>
-                                                              </html>
+        </html>
