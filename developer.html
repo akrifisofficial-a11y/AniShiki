@@ -240,6 +240,12 @@
             font-weight: 600;
             font-size: 0.9rem;
         }
+        .stat-value.success {
+            color: #4caf50;
+        }
+        .stat-value.error {
+            color: #f44336;
+        }
         
         /* ===== ДЕЙСТВИЯ ===== */
         .developer-actions {
@@ -263,6 +269,10 @@
             background: rgba(255,255,255,0.04);
             border-color: rgba(108, 92, 231, 0.1);
             color: #e0e0e0;
+        }
+        .dev-action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         
         /* ===== ИНФОРМАЦИЯ ===== */
@@ -298,6 +308,15 @@
         }
         .developer-logs .log-entry:last-child {
             border-bottom: none;
+        }
+        .developer-logs .log-entry.success {
+            color: #4caf50;
+        }
+        .developer-logs .log-entry.error {
+            color: #f44336;
+        }
+        .developer-logs .log-entry.info {
+            color: #64b5f6;
         }
         
         /* ===== АДАПТИВ ===== */
@@ -368,7 +387,33 @@
                     </div>
                 </div>
                 
-                <!-- Карточка 2: Управление -->
+                <!-- Карточка 2: Kodik API -->
+                <div class="developer-card">
+                    <h4>🔗 Kodik API</h4>
+                    <div class="developer-info">
+                        <div class="info-item">
+                            <span>Статус API</span>
+                            <span><strong id="dev-api-status" class="stat-value">⏳ Проверка...</strong></span>
+                        </div>
+                        <div class="info-item">
+                            <span>Ключ API</span>
+                            <span><strong id="dev-api-key">••••••••••••</strong></span>
+                        </div>
+                        <div class="info-item">
+                            <span>Последний запрос</span>
+                            <span><strong id="dev-api-last-request">—</strong></span>
+                        </div>
+                        <div class="info-item">
+                            <span>Всего запросов</span>
+                            <span><strong id="dev-api-total-requests">0</strong></span>
+                        </div>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <button class="dev-action-btn" id="dev-test-api">🔄 Проверить API</button>
+                    </div>
+                </div>
+                
+                <!-- Карточка 3: Управление -->
                 <div class="developer-card">
                     <h4>⚙️ Управление</h4>
                     <div class="developer-actions">
@@ -379,17 +424,13 @@
                     </div>
                 </div>
                 
-                <!-- Карточка 3: Система -->
+                <!-- Карточка 4: Система -->
                 <div class="developer-card">
                     <h4>🖥️ Система</h4>
                     <div class="developer-info">
                         <div class="info-item">
                             <span>Версия сайта</span>
                             <span><strong>v3.0</strong></span>
-                        </div>
-                        <div class="info-item">
-                            <span>Kodik API</span>
-                            <span><strong id="dev-api-status">✅ Подключено</strong></span>
                         </div>
                         <div class="info-item">
                             <span>Хранилище</span>
@@ -399,11 +440,15 @@
                             <span>Последнее обновление</span>
                             <span><strong id="dev-last-update">—</strong></span>
                         </div>
+                        <div class="info-item">
+                            <span>Браузер</span>
+                            <span><strong id="dev-browser">—</strong></span>
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Карточка 4: Логи -->
-                <div class="developer-card">
+                <!-- Карточка 5: Логи -->
+                <div class="developer-card" style="grid-column: 1 / -1;">
                     <h4>📋 Логи</h4>
                     <div class="developer-logs" id="dev-logs">
                         <div class="log-entry">📌 Система запущена</div>
@@ -417,10 +462,15 @@
     
     <script>
         // ============================================
-        // 🔐 ПАНЕЛЬ РАЗРАБОТЧИКА
+        // 🔐 ПАНЕЛЬ РАЗРАБОТЧИКА С KODIK API
         // ============================================
         
         const DEVELOPER_PASSWORD = 'quarwatch2026';
+        const KODIK_API_KEY = 'd99ff2ab48b0d9c42ace4901bee833ff';
+        const KODIK_API_URL = 'https://kodik-api.com';
+        
+        // Счётчик запросов к API
+        let apiRequestCount = parseInt(localStorage.getItem('quarwatch_api_requests') || '0');
         
         // DOM элементы
         const loginContainer = document.getElementById('developer-login');
@@ -437,10 +487,12 @@
                 localStorage.setItem('quarwatch_dev_session', 'true');
                 showPanel();
                 errorEl.classList.remove('show');
-                addLog('✅ Вход выполнен успешно');
+                addLog('✅ Вход выполнен успешно', 'success');
+                // Проверяем API при входе
+                testKodikAPI();
             } else {
                 errorEl.classList.add('show');
-                addLog('❌ Неудачная попытка входа');
+                addLog('❌ Неудачная попытка входа', 'error');
                 setTimeout(() => {
                     errorEl.classList.remove('show');
                 }, 3000);
@@ -451,7 +503,7 @@
         function logoutDeveloper() {
             localStorage.removeItem('quarwatch_dev_session');
             showLogin();
-            addLog('🚪 Выход из панели');
+            addLog('🚪 Выход из панели', 'info');
         }
         
         // ===== ПОКАЗАТЬ ПАНЕЛЬ =====
@@ -459,7 +511,8 @@
             if (loginContainer) loginContainer.style.display = 'none';
             if (panelContainer) panelContainer.classList.add('show');
             updateStats();
-            addLog('👨‍💻 Панель разработчика открыта');
+            updateApiInfo();
+            addLog('👨‍💻 Панель разработчика открыта', 'info');
         }
         
         // ===== ПОКАЗАТЬ ФОРМУ ВХОДА =====
@@ -470,14 +523,88 @@
         }
         
         // ===== ДОБАВИТЬ ЛОГ =====
-        function addLog(message) {
+        function addLog(message, type = '') {
             if (!logsContainer) return;
             const entry = document.createElement('div');
-            entry.className = 'log-entry';
+            entry.className = `log-entry ${type}`;
             const time = new Date().toLocaleTimeString('ru-RU');
             entry.textContent = `[${time}] ${message}`;
             logsContainer.appendChild(entry);
             logsContainer.scrollTop = logsContainer.scrollHeight;
+            
+            // Ограничиваем количество логов
+            while (logsContainer.children.length > 100) {
+                logsContainer.removeChild(logsContainer.firstChild);
+            }
+        }
+        
+        // ===== ТЕСТ KODIK API =====
+        async function testKodikAPI() {
+            const statusEl = document.getElementById('dev-api-status');
+            if (!statusEl) return;
+            
+            statusEl.textContent = '⏳ Проверка...';
+            statusEl.className = 'stat-value';
+            addLog('🔄 Проверка Kodik API...', 'info');
+            
+            try {
+                const params = new URLSearchParams({
+                    token: KODIK_API_KEY,
+                    limit: 1,
+                    with_material_data: 'true',
+                    types: 'anime-serial,anime'
+                });
+                const url = `${KODIK_API_URL}/list?${params}`;
+                
+                const startTime = Date.now();
+                const response = await fetch(url);
+                const endTime = Date.now();
+                
+                // Обновляем счётчик запросов
+                apiRequestCount++;
+                localStorage.setItem('quarwatch_api_requests', apiRequestCount.toString());
+                document.getElementById('dev-api-total-requests').textContent = apiRequestCount;
+                document.getElementById('dev-api-last-request').textContent = new Date().toLocaleString('ru-RU');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const total = data.results?.length || 0;
+                    statusEl.textContent = `✅ Подключено (${total} тайтлов, ${endTime - startTime}ms)`;
+                    statusEl.className = 'stat-value success';
+                    addLog(`✅ Kodik API работает (${total} тайтлов, ${endTime - startTime}ms)`, 'success');
+                    
+                    // Сохраняем количество тайтлов
+                    if (data.total) {
+                        localStorage.setItem('quarwatch_total_anime', data.total.toString());
+                        document.getElementById('dev-total-anime').textContent = data.total;
+                    }
+                } else {
+                    statusEl.textContent = `❌ Ошибка: ${response.status}`;
+                    statusEl.className = 'stat-value error';
+                    addLog(`❌ Ошибка Kodik API: ${response.status}`, 'error');
+                }
+            } catch (err) {
+                statusEl.textContent = `❌ Ошибка: ${err.message}`;
+                statusEl.className = 'stat-value error';
+                addLog(`❌ Ошибка Kodik API: ${err.message}`, 'error');
+            }
+        }
+        
+        // ===== ОБНОВИТЬ ИНФОРМАЦИЮ О API =====
+        function updateApiInfo() {
+            const keyEl = document.getElementById('dev-api-key');
+            if (keyEl) {
+                const masked = KODIK_API_KEY.slice(0, 4) + '••••••••' + KODIK_API_KEY.slice(-4);
+                keyEl.textContent = masked;
+            }
+            
+            document.getElementById('dev-api-total-requests').textContent = apiRequestCount;
+            
+            const lastRequest = document.getElementById('dev-api-last-request');
+            if (lastRequest) {
+                const saved = localStorage.getItem('quarwatch_api_last_request');
+                lastRequest.textContent = saved || '—';
+            }
         }
         
         // ===== ОБНОВИТЬ СТАТИСТИКУ =====
@@ -501,12 +628,30 @@
                 lastUpdate.textContent = now.toLocaleString('ru-RU');
             }
             
-            // Всего аниме (если есть доступ к главной странице)
-            try {
-                const total = localStorage.getItem('quarwatch_total_anime') || '—';
-                document.getElementById('dev-total-anime').textContent = total;
-            } catch (e) {
-                // Игнорируем
+            // Браузер
+            const browserEl = document.getElementById('dev-browser');
+            if (browserEl) {
+                const ua = navigator.userAgent;
+                let browser = 'Unknown';
+                if (ua.includes('Chrome')) browser = 'Chrome';
+                else if (ua.includes('Firefox')) browser = 'Firefox';
+                else if (ua.includes('Safari')) browser = 'Safari';
+                else if (ua.includes('Edge')) browser = 'Edge';
+                browserEl.textContent = browser;
+            }
+            
+            // Статус хранилища
+            const storageEl = document.getElementById('dev-storage-status');
+            if (storageEl) {
+                try {
+                    localStorage.setItem('test', 'test');
+                    localStorage.removeItem('test');
+                    storageEl.textContent = '✅ Работает';
+                    storageEl.className = 'stat-value success';
+                } catch (e) {
+                    storageEl.textContent = '❌ Ошибка';
+                    storageEl.className = 'stat-value error';
+                }
             }
         }
         
@@ -529,11 +674,15 @@
         
         // ===== ДЕЙСТВИЯ =====
         
+        // Тест API
+        document.getElementById('dev-test-api')?.addEventListener('click', testKodikAPI);
+        
         // Очистка кэша
         document.getElementById('dev-clear-cache')?.addEventListener('click', () => {
             if (confirm('Очистить весь кэш и локальное хранилище?')) {
                 localStorage.clear();
-                addLog('🗑️ Кэш и хранилище очищены');
+                apiRequestCount = 0;
+                addLog('🗑️ Кэш и хранилище очищены', 'info');
                 alert('✅ Кэш очищен! Страница будет перезагружена.');
                 location.reload();
             }
@@ -541,16 +690,11 @@
         
         // Обновление данных
         document.getElementById('dev-refresh-data')?.addEventListener('click', () => {
-            addLog('🔄 Обновление данных...');
-            // Попытка обновить данные с главной страницы
-            try {
-                // Сохраняем отметку об обновлении
-                localStorage.setItem('quarwatch_last_refresh', Date.now().toString());
-                addLog('✅ Данные обновлены');
-                updateStats();
-            } catch (e) {
-                addLog('❌ Ошибка обновления');
-            }
+            addLog('🔄 Обновление данных...', 'info');
+            localStorage.setItem('quarwatch_last_refresh', Date.now().toString());
+            updateStats();
+            testKodikAPI();
+            addLog('✅ Данные обновлены', 'success');
         });
         
         // Экспорт данных
@@ -562,7 +706,8 @@
                     notes: JSON.parse(localStorage.getItem('quarwatch_notes') || '{}'),
                     stats: {
                         totalViews: localStorage.getItem('quarwatch_total_views') || '0',
-                        theme: localStorage.getItem('quarwatch_theme') || 'dark'
+                        theme: localStorage.getItem('quarwatch_theme') || 'dark',
+                        apiRequests: localStorage.getItem('quarwatch_api_requests') || '0'
                     },
                     exportDate: new Date().toISOString(),
                     version: '3.0'
@@ -576,9 +721,9 @@
                 a.click();
                 URL.revokeObjectURL(url);
                 
-                addLog('📤 Данные экспортированы');
+                addLog('📤 Данные экспортированы', 'success');
             } catch (err) {
-                addLog('❌ Ошибка экспорта: ' + err.message);
+                addLog(`❌ Ошибка экспорта: ${err.message}`, 'error');
                 alert('❌ Ошибка экспорта данных');
             }
         });
@@ -602,12 +747,14 @@
                         if (data.notes) localStorage.setItem('quarwatch_notes', JSON.stringify(data.notes));
                         if (data.stats?.totalViews) localStorage.setItem('quarwatch_total_views', data.stats.totalViews);
                         if (data.stats?.theme) localStorage.setItem('quarwatch_theme', data.stats.theme);
+                        if (data.stats?.apiRequests) localStorage.setItem('quarwatch_api_requests', data.stats.apiRequests);
                         
-                        addLog('📥 Данные импортированы из ' + file.name);
+                        apiRequestCount = parseInt(data.stats?.apiRequests || '0');
+                        addLog(`📥 Данные импортированы из ${file.name}`, 'success');
                         alert('✅ Данные импортированы! Страница будет перезагружена.');
                         location.reload();
                     } catch (err) {
-                        addLog('❌ Ошибка импорта: ' + err.message);
+                        addLog(`❌ Ошибка импорта: ${err.message}`, 'error');
                         alert('❌ Ошибка импорта данных');
                     }
                 };
@@ -620,7 +767,7 @@
         document.getElementById('dev-clear-logs')?.addEventListener('click', () => {
             if (logsContainer) {
                 logsContainer.innerHTML = '';
-                addLog('🗑️ Логи очищены');
+                addLog('🗑️ Логи очищены', 'info');
             }
         });
         
@@ -631,11 +778,16 @@
                 localStorage.setItem('quarwatch_start_time', Date.now().toString());
             }
             
+            // Восстанавливаем счётчик запросов
+            apiRequestCount = parseInt(localStorage.getItem('quarwatch_api_requests') || '0');
+            
             // Проверяем сессию
             const session = localStorage.getItem('quarwatch_dev_session');
             if (session === 'true') {
                 showPanel();
-                addLog('🚀 Сессия восстановлена');
+                addLog('🚀 Сессия восстановлена', 'info');
+                // Проверяем API при загрузке
+                setTimeout(testKodikAPI, 500);
             } else {
                 showLogin();
             }
