@@ -37,7 +37,7 @@
         <div class="subtitle">смотреть онлайн</div>
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
-        <button id="install-btn" class="auth-btn" style="display:none;">📱 Установить</button>
+        <button id="auth-btn" class="auth-btn">👤 Войти</button>
         <div class="hamburger" id="hamburger">
           <span></span>
           <span></span>
@@ -46,7 +46,7 @@
       </div>
     </div>
 
-    <!-- ГАМБУРГЕР-МЕНЮ (с "Важно") -->
+    <!-- ГАМБУРГЕР-МЕНЮ -->
     <nav class="nav-menu" id="nav-menu">
       <ul>
         <li><a href="#" id="menu-developer">👨‍💻 Разработчик</a></li>
@@ -55,7 +55,7 @@
       </ul>
     </nav>
 
-    <!-- КАТЕГОРИИ (без "Важно") -->
+    <!-- КАТЕГОРИИ -->
     <nav class="categories">
       <button class="category-btn active" data-type="series">📺 Сериалы</button>
       <button class="category-btn" data-type="movie">🎬 Фильмы</button>
@@ -95,7 +95,61 @@
     </section>
   </main>
 
-  <!-- Модальное окно -->
+  <!-- ===== МОДАЛКА РЕГИСТРАЦИИ ===== -->
+  <div id="register-modal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 420px;">
+      <button class="modal-close" id="register-modal-close">✕</button>
+      <h2 style="text-align:center; margin-bottom:10px;">📝 Регистрация</h2>
+      <p style="text-align:center; color:#888; font-size:0.9rem; margin-bottom:20px;">
+        Создайте аккаунт, чтобы комментировать
+      </p>
+      
+      <div class="form-group">
+        <label>👤 Никнейм</label>
+        <input type="text" id="reg-username" class="form-input" placeholder="Введите никнейм" minlength="3" required>
+      </div>
+      
+      <div class="form-group">
+        <label>🔑 Пароль</label>
+        <input type="password" id="reg-password" class="form-input" placeholder="Минимум 4 символа" minlength="4" required>
+      </div>
+      
+      <button id="register-btn" class="save-profile-btn">🚀 Зарегистрироваться</button>
+      
+      <p style="text-align:center; margin-top:15px; color:#666; font-size:0.85rem;">
+        Уже есть аккаунт? <a href="#" id="switch-to-login" style="color:#a29bfe; text-decoration:none;">Войти</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- ===== МОДАЛКА ВХОДА ===== -->
+  <div id="login-modal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 420px;">
+      <button class="modal-close" id="login-modal-close">✕</button>
+      <h2 style="text-align:center; margin-bottom:10px;">🔐 Вход</h2>
+      <p style="text-align:center; color:#888; font-size:0.9rem; margin-bottom:20px;">
+        Войдите, чтобы комментировать
+      </p>
+      
+      <div class="form-group">
+        <label>👤 Никнейм</label>
+        <input type="text" id="login-username" class="form-input" placeholder="Ваш никнейм" required>
+      </div>
+      
+      <div class="form-group">
+        <label>🔑 Пароль</label>
+        <input type="password" id="login-password" class="form-input" placeholder="Пароль" required>
+      </div>
+      
+      <button id="login-btn" class="save-profile-btn">🔓 Войти</button>
+      
+      <p style="text-align:center; margin-top:15px; color:#666; font-size:0.85rem;">
+        Нет аккаунта? <a href="#" id="switch-to-register" style="color:#a29bfe; text-decoration:none;">Зарегистрироваться</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- Модальное окно (для разработчика и пр.) -->
   <div id="modal-overlay" class="modal-overlay">
     <div class="modal-content">
       <button id="modal-close" class="modal-close">✕</button>
@@ -122,5 +176,6 @@
   </footer>
 
   <script src="script.js"></script>
+  <script src="script-auth.js"></script>
 </body>
-                                                              </html>
+  </html>
