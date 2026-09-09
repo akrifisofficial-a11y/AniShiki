@@ -1071,8 +1071,8 @@ if (window.location.hash) {
 
 // ===== КОНФИГУРАЦИЯ GITHUB =====
 const GITHUB_CONFIG = {
-    token: 'ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', // 🔥 ВСТАВЬ СВОЙ ТОКЕН
-    owner: 'YOUR_USERNAME',                            // 🔥 ТВОЙ НИК
+    token: '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', // 🔥 ВСТАВЬ СВОЙ ТОКЕН
+    owner: 'akrifisofficial-a11y',                            // 🔥 ТВОЙ НИК
     repo: 'quarwatch-data',
     branch: 'main'
 };
