@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📅 Календарь релизов — Quarwatch</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Основные стили сайта -->
+  <link rel="stylesheet" href="js/style.css" />
+  <!-- Стили только для календаря -->
+  <link rel="stylesheet" href="js/calendar.css" />
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <div class="header-left">
+        <a href="index.html" class="logo-link">
+          <div class="logo">🌙 Quarwatch</div>
+        </a>
+        <div class="subtitle">календарь</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <a href="index.html" class="back-btn">← На главную</a>
+      </div>
+    </div>
+  </header>
+
+  <main style="padding-top:110px;">
+    <section class="active">
+      <div class="calendar-header">
+        <h2>📅 Календарь релизов</h2>
+        <p class="calendar-subtitle">Что выходит на этой неделе</p>
+      </div>
+
+      <!-- Кнопки дней -->
+      <div id="days-nav" class="days-nav"></div>
+
+      <!-- Список релизов -->
+      <div id="calendar-content" class="calendar-content">
+        <div class="loader">Загрузка релизов...</div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer">
+    <p>© <span id="current-year">2026</span> Quarwatch <span>|</span> Создатель: <span>quartess</span></p>
+    <p class="footer-sub">🌙 Сделано с любовью к аниме</p>
+  </footer>
+
+  <!-- Только скрипт календаря -->
+  <script src="js/calendar.js"></script>
+</body>
+</html>
