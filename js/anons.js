@@ -1,145 +1,162 @@
 // ============================================
-// 🕒 ANONS.JS — Анонсы через Simkl + русские названия из Kodik
+// 🕒 ANILIST.JS — Анонсы через AniList GraphQL
 // ============================================
 
-const SIMKL_CLIENT_ID = '33d74ff1646b1ba67a8abfd4c4b268e368305fa44b271f09acdb6fd7caf77ca8';
-const SIMKL_APP_NAME = 'quarwatch';
-const SIMKL_APP_VERSION = '1.0';
-const SIMKL_API = 'https://api.simkl.com';
-
+const ANILIST_API = 'https://graphql.anilist.co';
 const KODIK_API_KEY = 'd99ff2ab48b0d9c42ace4901bee833ff';
 const KODIK_API_URL = 'https://kodik-api.com';
 
 // ===== DOM =====
-const gridEl = document.getElementById('anons-grid') || document.getElementById('mal-anons-grid');
-const searchInput = document.getElementById('anons-search') || document.getElementById('mal-anons-search-input');
-const searchBtn = document.getElementById('anons-search-btn') || document.getElementById('mal-anons-search-btn');
-const loaderEl = document.getElementById('anons-loader') || document.getElementById('mal-anons-loader');
-const refreshBtn = document.getElementById('refresh-anons') || document.getElementById('mal-refresh-btn');
+const gridEl = document.getElementById('al-grid');
+const searchInput = document.getElementById('al-search-input');
+const searchBtn = document.getElementById('al-search-btn');
+const loaderEl = document.getElementById('al-loader');
+const refreshBtn = document.getElementById('al-refresh-btn');
 
 let allAnons = [];
 let isLoading = false;
 
-// ===== ЗАГРУЗКА АНОНСОВ С SIMKL =====
+// ===== ЗАГРУЗКА АНОНСОВ С ANILIST =====
 async function fetchAnons() {
   try {
-    const url = `${SIMKL_API}/anime/premieres/soon?client_id=${SIMKL_CLIENT_ID}&app-name=${SIMKL_APP_NAME}&app-version=${SIMKL_APP_VERSION}&limit=60`;
-
-    console.log('📡 Запрос анонсов (Simkl premieres/soon):', url);
-
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': `${SIMKL_APP_NAME}/${SIMKL_APP_VERSION}`
+    const query = `
+      query {
+        Page(page: 1, perPage: 50) {
+          media(
+            type: ANIME,
+            status: NOT_YET_RELEASED,
+            sort: [START_DATE],
+            isAdult: false
+          ) {
+            id
+            idMal
+            title { romaji english native }
+            description
+            startDate { year month day }
+            format
+            episodes
+            coverImage { large medium }
+            averageScore
+            genres
+          }
+        }
       }
+    `;
+
+    const response = await fetch(ANILIST_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ query })
     });
 
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const data = await response.json();
-    console.log(`✅ Получено ${data.length || 0} анонсов с Simkl`);
+    const media = data.data?.Page?.media || [];
 
+    console.log(`✅ Загружено ${media.length} анонсов с AniList`);
+
+    // Фильтруем: только те, у кого есть дата и она в будущем
     const now = new Date();
-    const futureAnons = data.filter(item => {
-      if (!item.date) return false;
-      const airDate = new Date(item.date);
+    const futureAnons = media.filter(item => {
+      if (!item.startDate?.year) return false;
+      
+      // Собираем дату
+      const year = item.startDate.year;
+      const month = (item.startDate.month || 1) - 1;
+      const day = item.startDate.day || 1;
+      const airDate = new Date(year, month, day);
+      
       return airDate > now;
     });
 
+    console.log(`📊 Будущих анонсов: ${futureAnons.length}`);
     return futureAnons;
+
   } catch (err) {
-    console.error('❌ Ошибка загрузки анонсов:', err);
+    console.error('❌ Ошибка загрузки AniList:', err);
     return [];
   }
 }
 
-// ============================================
-// 🇷🇺 ПОЛУЧЕНИЕ РУССКОГО НАЗВАНИЯ ИЗ KODIK
-// ============================================
-
+// ===== ПОЛУЧЕНИЕ РУССКОГО НАЗВАНИЯ ИЗ KODIK =====
 async function getRussianTitleFromKodik(anime) {
-  const ids = anime.ids || {};
-  
-  // Пробуем найти в Kodik по разным ID
-  const idTypes = [
-    { type: 'mal_id', value: ids.mal },
-    { type: 'shikimori_id', value: ids.shikimori },
-    { type: 'kinopoisk_id', value: ids.kinopoisk },
-    { type: 'imdb_id', value: ids.imdb },
-    { type: 'worldart_id', value: ids.worldart }
-  ];
+  const malId = anime.idMal;
 
-  for (const { type, value } of idTypes) {
-    if (!value) continue;
+  if (!malId) return { title: null, kodikId: null };
 
-    try {
-      const params = new URLSearchParams({
-        token: KODIK_API_KEY,
-        [type]: value,
-        with_material_data: 'true',
-        limit: 1
-      });
+  try {
+    const params = new URLSearchParams({
+      token: KODIK_API_KEY,
+      mal_id: malId,
+      with_material_data: 'true',
+      limit: 1
+    });
 
-      const url = `${KODIK_API_URL}/search?${params}`;
-      const response = await fetch(url);
-      
-      if (!response.ok) continue;
+    const url = `${KODIK_API_URL}/search?${params}`;
+    const response = await fetch(url);
 
-      const data = await response.json();
-      
-      if (data.results && data.results.length > 0) {
-        const kodikAnime = data.results[0];
-        
-        // 🔑 Берём русское название из Kodik
-        const russianTitle = kodikAnime.title || kodikAnime.material_data?.title;
-        
-        if (russianTitle) {
-          console.log(`🇷🇺 Найдено русское название для "${anime.title}": ${russianTitle}`);
-          return {
-            title: russianTitle,
-            kodikId: kodikAnime.id,
-            found: true
-          };
-        }
-      }
-    } catch (err) {
-      // Продолжаем поиск по другим ID
-      continue;
+    if (!response.ok) return { title: null, kodikId: null };
+
+    const data = await response.json();
+
+    if (data.results && data.results.length > 0) {
+      const kodikAnime = data.results[0];
+      return {
+        title: kodikAnime.title || kodikAnime.material_data?.title || null,
+        kodikId: kodikAnime.id || null
+      };
     }
-  }
 
-  // Если не нашли в Kodik — возвращаем оригинальное
-  console.log(`⚠️ Русское название не найдено для "${anime.title}"`);
-  return {
-    title: anime.title || anime.en_title || 'Без названия',
-    kodikId: null,
-    found: false
-  };
+    return { title: null, kodikId: null };
+  } catch (err) {
+    return { title: null, kodikId: null };
+  }
 }
 
-// ===== ОБОГАЩЕНИЕ АНОНСОВ РУССКИМИ НАЗВАНИЯМИ =====
-async function enrichAnonsWithRussianTitles(anons) {
-  console.log('🇷🇺 Поиск русских названий в Kodik...');
-  
-  const enriched = [];
-  
-  for (const anime of anons) {
-    const result = await getRussianTitleFromKodik(anime);
-    
-    enriched.push({
-      ...anime,
-      russianTitle: result.title,
-      kodikId: result.kodikId,
-      hasRussianTitle: result.found
+// ===== ФОРМАТИРОВАНИЕ ДАТЫ =====
+function formatStartDate(startDate) {
+  if (!startDate?.year) return 'Дата неизвестна';
+
+  const year = startDate.year;
+  const month = startDate.month;
+  const day = startDate.day;
+
+  if (month && day) {
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
     });
-    
-    // Небольшая задержка, чтобы не перегружать Kodik API
-    await new Promise(r => setTimeout(r, 150));
   }
-  
-  const foundCount = enriched.filter(a => a.hasRussianTitle).length;
-  console.log(`✅ Найдено русских названий: ${foundCount} из ${anons.length}`);
-  
-  return enriched;
+
+  if (month) {
+    const date = new Date(year, month - 1, 1);
+    return date.toLocaleDateString('ru-RU', {
+      month: 'long',
+      year: 'numeric'
+    });
+  }
+
+  return String(year);
+}
+
+// ===== ФОРМАТИРОВАНИЕ ТИПА =====
+function formatType(format) {
+  const types = {
+    TV: 'ТВ-сериал',
+    TV_SHORT: 'Короткометражка',
+    MOVIE: 'Фильм',
+    SPECIAL: 'Спешл',
+    OVA: 'OVA',
+    ONA: 'ONA',
+    MUSIC: 'Клип'
+  };
+  return types[format] || format || 'Аниме';
 }
 
 // ===== РЕНДЕР =====
@@ -148,9 +165,10 @@ function renderAnons(animes) {
 
   if (animes.length === 0) {
     gridEl.innerHTML = `
-      <div class="anons-empty" style="grid-column: 1/-1; text-align:center; padding:60px 20px; color:#555;">
-        <span style="font-size:3rem; display:block; margin-bottom:12px;">🕒</span>
+      <div class="al-empty">
+        <span class="icon">🕒</span>
         <p>Анонсы не найдены</p>
+        <p style="font-size:0.8rem; color:#444; margin-top:8px;">Попробуйте обновить позже</p>
       </div>
     `;
     return;
@@ -159,49 +177,30 @@ function renderAnons(animes) {
   let html = '';
 
   animes.forEach((anime, index) => {
-    const poster = anime.poster 
-      ? `https://simkl.in/posters/${anime.poster}_m.jpg` 
-      : 'https://via.placeholder.com/200x280?text=No+Image';
+    const poster = anime.coverImage?.large || anime.coverImage?.medium || 'https://via.placeholder.com/200x280?text=No+Image';
 
-    // 🇷🇺 Используем русское название, если найдено
-    const title = anime.russianTitle || anime.title || anime.en_title || 'Без названия';
-    const titleOrig = anime.title || '';
-    
-    // Показываем оригинальное название, если оно отличается от русского
-    const showOriginal = anime.hasRussianTitle && titleOrig && titleOrig !== title;
+    // Русское название (если нашли в Kodik), иначе — английское
+    const title = anime.russianTitle || anime.title.english || anime.title.romaji || 'Без названия';
+    const titleOrig = anime.title.romaji || '';
 
-    let dateStr = 'Дата неизвестна';
-    if (anime.date) {
-      const date = new Date(anime.date);
-      dateStr = date.toLocaleDateString('ru-RU', {
-        day: 'numeric', month: 'long', year: 'numeric'
-      });
-    }
-
-    const animeType = anime.anime_type || 'anime';
-    const typeLabels = {
-      tv: 'ТВ-сериал',
-      movie: 'Фильм',
-      ova: 'OVA',
-      ona: 'ONA',
-      special: 'Спешл'
-    };
-    const typeLabel = typeLabels[animeType] || animeType;
+    const dateStr = formatStartDate(anime.startDate);
+    const typeLabel = formatType(anime.format);
+    const episodes = anime.episodes || '—';
+    const score = anime.averageScore ? (anime.averageScore / 10).toFixed(1) : '—';
 
     html += `
       <div class="anime-card" 
-           data-mal-id="${anime.ids?.mal || ''}" 
-           data-simkl-id="${anime.ids?.simkl || ''}"
+           data-anilist-id="${anime.id}"
+           data-mal-id="${anime.idMal || ''}"
            data-kodik-id="${anime.kodikId || ''}"
            style="animation-delay:${index * 0.03}s;">
         <img src="${poster}" alt="${title}" loading="lazy" 
              onerror="this.src='https://via.placeholder.com/200x280?text=No+Image'" />
         <div class="info">
           <div class="title">${title}</div>
-          ${showOriginal ? `<div style="font-size:0.7rem;color:#666;">${titleOrig}</div>` : ''}
+          ${titleOrig && titleOrig !== title ? `<div style="font-size:0.7rem;color:#666;">${titleOrig}</div>` : ''}
           <div class="year">📅 ${dateStr}</div>
-          <div class="episodes">🎬 ${typeLabel}</div>
-          ${anime.hasRussianTitle ? `<div style="font-size:0.65rem;color:#6c5ce7;">🇷🇺 Перевод найден</div>` : ''}
+          <div class="episodes">🎬 ${typeLabel} · 📺 ${episodes} эп.</div>
         </div>
       </div>
     `;
@@ -214,9 +213,9 @@ function renderAnons(animes) {
     card.addEventListener('click', async () => {
       const kodikId = card.dataset.kodikId;
       const malId = card.dataset.malId;
-      const simklId = card.dataset.simklId;
+      const anilistId = card.dataset.anilistId;
 
-      // Если есть Kodik ID — сразу открываем
+      // Если есть Kodik ID — сразу открываем плеер
       if (kodikId) {
         window.location.href = `index.html#anime/${kodikId}`;
         return;
@@ -242,12 +241,43 @@ function renderAnons(animes) {
         }
       }
 
-      // Fallback — открываем Simkl
-      if (simklId) {
-        window.open(`https://simkl.com/anime/${simklId}`, '_blank');
+      // Fallback — открываем AniList
+      if (anilistId) {
+        window.open(`https://anilist.co/anime/${anilistId}`, '_blank');
       }
     });
   });
+}
+
+// ===== ОБОГАЩЕНИЕ РУССКИМИ НАЗВАНИЯМИ =====
+async function enrichWithRussianTitles(anons) {
+  console.log('🇷🇺 Поиск русских названий в Kodik...');
+
+  const enriched = [];
+
+  for (let i = 0; i < anons.length; i++) {
+    const anime = anons[i];
+
+    if (gridEl) {
+      gridEl.innerHTML = `<div class="loader">🇷🇺 Поиск названий... (${i + 1}/${anons.length})</div>`;
+    }
+
+    const result = await getRussianTitleFromKodik(anime);
+
+    enriched.push({
+      ...anime,
+      russianTitle: result.title,
+      kodikId: result.kodikId
+    });
+
+    // Задержка между запросами
+    await new Promise(r => setTimeout(r, 150));
+  }
+
+  const foundCount = enriched.filter(a => a.russianTitle).length;
+  console.log(`✅ Найдено русских названий: ${foundCount} из ${anons.length}`);
+
+  return enriched;
 }
 
 // ===== ЗАГРУЗКА =====
@@ -257,30 +287,34 @@ async function loadAnons() {
 
   if (loaderEl) loaderEl.style.display = 'block';
   if (refreshBtn) refreshBtn.disabled = true;
-  if (gridEl) gridEl.innerHTML = '<div class="loader">Загрузка анонсов...</div>';
+  if (gridEl) gridEl.innerHTML = '<div class="loader">Загрузка анонсов с AniList...</div>';
 
   try {
-    // 1. Загружаем анонсы с Simkl
+    // 1. Загружаем анонсы
     const anons = await fetchAnons();
-    
+
     if (anons.length === 0) {
       allAnons = [];
       renderAnons([]);
       return;
     }
 
-    // 2. 🇷🇺 Обогащаем русскими названиями из Kodik
-    if (gridEl) {
-      gridEl.innerHTML = `<div class="loader">🇷🇺 Поиск русских названий... (0/${anons.length})</div>`;
-    }
-    
-    const enriched = await enrichAnonsWithRussianTitles(anons);
-    
+    // 2. Обогащаем русскими названиями
+    const enriched = await enrichWithRussianTitles(anons);
+
     allAnons = enriched;
     renderAnons(enriched);
-    
+
   } catch (err) {
     console.error('❌ Ошибка:', err);
+    if (gridEl) {
+      gridEl.innerHTML = `
+        <div class="al-empty">
+          <span class="icon">😔</span>
+          <p>Не удалось загрузить анонсы</p>
+        </div>
+      `;
+    }
   } finally {
     isLoading = false;
     if (loaderEl) loaderEl.style.display = 'none';
@@ -291,35 +325,41 @@ async function loadAnons() {
 // ===== ПОИСК =====
 function filterAnons(query) {
   const q = query.toLowerCase().trim();
-  if (!q) { renderAnons(allAnons); return; }
+  if (!q) {
+    renderAnons(allAnons);
+    return;
+  }
 
   const filtered = allAnons.filter(anime => {
     const ru = (anime.russianTitle || '').toLowerCase();
-    const en = (anime.title || '').toLowerCase();
-    const enTitle = (anime.en_title || '').toLowerCase();
-    return ru.includes(q) || en.includes(q) || enTitle.includes(q);
+    const en = (anime.title.english || '').toLowerCase();
+    const romaji = (anime.title.romaji || '').toLowerCase();
+    const native = (anime.title.native || '').toLowerCase();
+    return ru.includes(q) || en.includes(q) || romaji.includes(q) || native.includes(q);
   });
 
   renderAnons(filtered);
 }
 
-// ============================================
-// 🗑️ АВТОМАТИЧЕСКОЕ УДАЛЕНИЕ ВЫШЕДШИХ
-// ============================================
-
+// ===== АВТОУДАЛЕНИЕ ВЫШЕДШИХ =====
 function removeAiredAnons() {
   const now = new Date();
   const beforeCount = allAnons.length;
 
   allAnons = allAnons.filter(anime => {
-    if (!anime.date) return true;
-    const airDate = new Date(anime.date);
+    if (!anime.startDate?.year) return true;
+
+    const year = anime.startDate.year;
+    const month = (anime.startDate.month || 1) - 1;
+    const day = anime.startDate.day || 1;
+    const airDate = new Date(year, month, day);
+
     return airDate > now;
   });
 
-  const removedCount = beforeCount - allAnons.length;
-  if (removedCount > 0) {
-    console.log(`🗑️ Удалено ${removedCount} вышедших анонсов`);
+  const removed = beforeCount - allAnons.length;
+  if (removed > 0) {
+    console.log(`🗑️ Удалено вышедших: ${removed}`);
     renderAnons(allAnons);
   }
 }
@@ -338,10 +378,13 @@ if (refreshBtn) {
 
 // ===== СТАРТ =====
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🕒 Страница анонсов (Simkl + Kodik) загружена');
+  console.log('🕒 Страница анонсов AniList загружена');
   loadAnons();
 
+  // Проверка вышедших каждые 5 минут
   setInterval(removeAiredAnons, 300000);
+
+  // Автообновление каждые 30 минут
   setInterval(loadAnons, 1800000);
 });
 
