@@ -1,40 +1,84 @@
 // ============================================
-// 🕒 MAL-ANONS.JS — Исправленный
+// 🕒 ANONS.JS — Рабочая версия с MAL API
 // ============================================
 
 const MAL_CLIENT_ID = 'b60e162b23102d8a77a9569380e5d57b';
 const MAL_API_URL = 'https://api.myanimelist.net/v2';
 
 // ===== DOM =====
-const gridEl = document.getElementById('mal-anons-grid');
-const searchInput = document.getElementById('mal-anons-search-input');
-const searchBtn = document.getElementById('mal-anons-search-btn');
-const refreshBtn = document.getElementById('mal-refresh-btn');
-const loaderEl = document.getElementById('mal-anons-loader');
+const gridEl = document.getElementById('anons-grid') || document.getElementById('mal-anons-grid');
+const searchInput = document.getElementById('anons-search') || document.getElementById('mal-anons-search-input');
+const searchBtn = document.getElementById('anons-search-btn') || document.getElementById('mal-anons-search-btn');
+const loaderEl = document.getElementById('anons-loader') || document.getElementById('mal-anons-loader');
 
 let allAnons = [];
 let isLoading = false;
 
-// ✅ ИСПРАВЛЕНИЕ: русское название
+// ===== УТИЛИТЫ =====
+
+// Русское название
 function getRussianTitle(anime) {
-  if (anime.alternative_titles?.ru) {
-    return anime.alternative_titles.ru;
-  }
-  
+  if (anime.alternative_titles?.ru) return anime.alternative_titles.ru;
   if (anime.alternative_titles?.synonyms) {
-    const ruSynonym = anime.alternative_titles.synonyms.find(s => /[а-яё]/i.test(s));
-    if (ruSynonym) return ruSynonym;
+    const ru = anime.alternative_titles.synonyms.find(s => /[а-яё]/i.test(s));
+    if (ru) return ru;
   }
-  
   return anime.title || 'Без названия';
 }
 
-// ✅ ИСПРАВЛЕНИЕ: правильная загрузка
+// ===== ЗАГРУЗКА АНОНСОВ =====
 async function fetchMALAnons() {
   try {
-    const url = `${MAL_API_URL}/anime?q=&limit=50&status=not_yet_aired&fields=id,title,main_picture,alternative_titles,start_date,synopsis,mean,num_episodes,media_type,status`;
+    // ⚠️ ВАЖНО: используем сезонный эндпоинт для анонсов
+    // Он работает без поискового запроса
+    const currentYear = new Date().getFullYear();
+    const nextYear = currentYear + 1;
+    
+    // Запрашиваем аниме за текущий и следующий год
+    // и фильтруем по статусу на клиенте
+    const url = `${MAL_API_URL}/anime/season/${nextYear}/winter?limit=100&fields=id,title,main_picture,alternative_titles,start_date,synopsis,mean,num_episodes,media_type,status`;
+    
+    console.log('📡 Запрос анонсов (сезон):', url);
 
-    console.log('📡 Запрос анонсов MAL:', url);
+    const response = await fetch(url, {
+      headers: {
+        'X-MAL-CLIENT-ID': MAL_CLIENT_ID
+      }
+    });
+
+    if (!response.ok) {
+      console.error('❌ HTTP ошибка:', response.status);
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('📦 Ответ API:', data);
+
+    if (!data.data || data.data.length === 0) {
+      console.warn('⚠️ API вернул пустой массив');
+      return [];
+    }
+
+    // Разворачиваем node и фильтруем только анонсы
+    const animes = data.data
+      .map(item => item.node || item)
+      .filter(anime => anime.status === 'not_yet_aired');
+
+    console.log(`✅ Загружено ${animes.length} анонсов (из ${data.data.length})`);
+    return animes;
+
+  } catch (err) {
+    console.error('❌ Ошибка загрузки:', err);
+    return [];
+  }
+}
+
+// ===== АЛЬТЕРНАТИВНЫЙ СПОСОБ: через поиск =====
+async function fetchMALAnonsBySearch() {
+  try {
+    // Ищем аниме с пустым запросом, но с фильтром
+    // Используем поиск по популярным жанрам для анонсов
+    const url = `${MAL_API_URL}/anime?q=a&limit=100&fields=id,title,main_picture,alternative_titles,start_date,mean,num_episodes,media_type,status`;
 
     const response = await fetch(url, {
       headers: {
@@ -46,26 +90,35 @@ async function fetchMALAnons() {
 
     const data = await response.json();
     
-    // ✅ ИСПРАВЛЕНИЕ: разворачиваем node
-    const animes = (data.data || []).map(item => item.node || item);
-    
-    console.log(`✅ Загружено ${animes.length} анонсов`);
+    // Фильтруем только анонсы
+    const animes = (data.data || [])
+      .map(item => item.node || item)
+      .filter(anime => anime.status === 'not_yet_aired');
+
+    console.log(`✅ Поиск: найдено ${animes.length} анонсов`);
     return animes;
+
   } catch (err) {
-    console.error('❌ Ошибка:', err);
+    console.error('❌ Ошибка поиска:', err);
     return [];
   }
 }
 
 // ===== РЕНДЕР =====
 function renderAnons(animes) {
-  if (!gridEl) return;
+  if (!gridEl) {
+    console.error('❌ gridEl не найден!');
+    return;
+  }
 
   if (animes.length === 0) {
     gridEl.innerHTML = `
-      <div class="mal-anons-empty">
-        <span class="icon">🕒</span>
+      <div class="anons-empty" style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #555;">
+        <span style="font-size:3rem; display:block; margin-bottom:12px;">🕒</span>
         <p>Анонсы не найдены</p>
+        <p style="font-size:0.8rem; color:#444; margin-top:8px;">
+          API не вернул анонсы. Попробуйте позже.
+        </p>
       </div>
     `;
     return;
@@ -75,15 +128,11 @@ function renderAnons(animes) {
 
   animes.forEach((anime, index) => {
     let poster = 'https://via.placeholder.com/200x280?text=No+Image';
-    if (anime.main_picture?.medium) {
-      poster = anime.main_picture.medium;
-    } else if (anime.main_picture?.large) {
-      poster = anime.main_picture.large;
-    }
+    if (anime.main_picture?.medium) poster = anime.main_picture.medium;
+    else if (anime.main_picture?.large) poster = anime.main_picture.large;
 
-    // ✅ ИСПРАВЛЕНИЕ: русское название
     const title = getRussianTitle(anime);
-    const titleOriginal = anime.title || '';
+    const titleOrig = anime.title || '';
 
     let dateStr = 'Дата неизвестна';
     if (anime.start_date) {
@@ -104,7 +153,7 @@ function renderAnons(animes) {
              onerror="this.src='https://via.placeholder.com/200x280?text=No+Image'" />
         <div class="info">
           <div class="title">${title}</div>
-          ${titleOriginal && titleOriginal !== title ? `<div class="title-en" style="font-size:0.7rem;color:#666;">${titleOriginal}</div>` : ''}
+          ${titleOrig && titleOrig !== title ? `<div style="font-size:0.7rem;color:#666;">${titleOrig}</div>` : ''}
           <div class="year">📅 ${dateStr}</div>
           <div class="episodes">📺 ${episodes} эп. · ⭐ ${score}</div>
         </div>
@@ -114,6 +163,7 @@ function renderAnons(animes) {
 
   gridEl.innerHTML = html;
 
+  // Клик
   gridEl.querySelectorAll('.anime-card').forEach(card => {
     card.addEventListener('click', async () => {
       const malId = card.dataset.malId;
@@ -146,24 +196,25 @@ async function loadAnons() {
   isLoading = true;
 
   if (loaderEl) loaderEl.style.display = 'block';
-  if (refreshBtn) refreshBtn.disabled = true;
+  if (gridEl) gridEl.innerHTML = '<div class="loader">Загрузка анонсов...</div>';
 
   try {
-    const freshAnons = await fetchMALAnons();
-    allAnons = freshAnons;
-    renderAnons(freshAnons);
+    // Пробуем сначала сезонный эндпоинт
+    let animes = await fetchMALAnons();
+    
+    // Если пусто — пробуем через поиск
+    if (animes.length === 0) {
+      console.log('🔄 Сезонный эндпоинт пуст, пробуем поиск...');
+      animes = await fetchMALAnonsBySearch();
+    }
+
+    allAnons = animes;
+    renderAnons(animes);
   } catch (err) {
     console.error('❌ Ошибка:', err);
-    gridEl.innerHTML = `
-      <div class="mal-anons-empty">
-        <span class="icon">😔</span>
-        <p>Не удалось загрузить анонсы</p>
-      </div>
-    `;
   } finally {
     isLoading = false;
     if (loaderEl) loaderEl.style.display = 'none';
-    if (refreshBtn) refreshBtn.disabled = false;
   }
 }
 
@@ -194,15 +245,10 @@ if (searchBtn && searchInput) {
   });
 }
 
-if (refreshBtn) {
-  refreshBtn.addEventListener('click', loadAnons);
-}
-
 // ===== СТАРТ =====
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🕒 Страница анонсов MAL загружена');
+  console.log('🕒 Страница анонсов загружена');
   loadAnons();
-  setInterval(loadAnons, 1800000);
 });
 
 // Год в футере
