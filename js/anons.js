@@ -1,213 +1,185 @@
 // ============================================
-// 🕒 ANONS.JS — Страница анонсов
+// 🕒 MAL-ANONS.JS — Анонсы с MAL (без localStorage)
 // ============================================
 
-const KODIK_API_KEY = 'd99ff2ab48b0d9c42ace4901bee833ff';
-const KODIK_API_URL = 'https://kodik-api.com';
+const MAL_CLIENT_ID = 'b60e162b23102d8a77a9569380e5d57b';
+const MAL_API_URL = 'https://api.myanimelist.net/v2';
 
 // ===== СОСТОЯНИЕ =====
 const state = {
   anons: [],
-  filtered: [],
-  nextPage: null,
-  isLoading: false,
-  query: ''
+  isLoading: false
 };
 
 // ===== DOM =====
-const gridEl = document.getElementById('anons-grid');
-const searchInput = document.getElementById('anons-search');
-const searchBtn = document.getElementById('anons-search-btn');
-const loadMoreBtn = document.getElementById('load-more-anons');
+const gridEl = document.getElementById('mal-anons-grid');
+const searchInput = document.getElementById('mal-anons-search-input');
+const searchBtn = document.getElementById('mal-anons-search-btn');
+const refreshBtn = document.getElementById('mal-refresh-btn');
+const loaderEl = document.getElementById('mal-anons-loader');
 
-// ===== ЗАГРУЗКА АНОНСОВ С KODIK API =====
-async function fetchAnons(url = null) {
+// ===== ЗАГРУЗКА АНОНСОВ С MAL =====
+async function fetchMALAnons() {
   try {
-    // Если URL не передан — строим новый запрос
-    let requestUrl = url;
+    const url = `${MAL_API_URL}/anime?q=&limit=50&status=not_yet_aired&fields=id,title,main_picture,alternative_titles,start_date,synopsis,mean,num_episodes,media_type,status`;
 
-    if (!requestUrl) {
-      const params = new URLSearchParams({
-        token: KODIK_API_KEY,
-        limit: 30,
-        with_material_data: 'true',
-        types: 'anime-serial,anime',
-        anime_status: 'anons'  // 🔑 Фильтр по статусу "анонс"
-      });
-      requestUrl = `${KODIK_API_URL}/list?${params}`;
-    }
+    console.log('📡 Запрос анонсов с MAL:', url);
 
-    console.log('📡 Запрос анонсов:', requestUrl);
+    const response = await fetch(url, {
+      headers: {
+        'X-MAL-CLIENT-ID': MAL_CLIENT_ID
+      }
+    });
 
-    const response = await fetch(requestUrl);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const data = await response.json();
-    return {
-      results: data.results || [],
-      nextPage: data.next_page || null,
-      total: data.total || 0
-    };
+    console.log(`✅ Получено ${data.data?.length || 0} анонсов с MAL`);
+
+    return data.data || [];
   } catch (err) {
     console.error('❌ Ошибка загрузки анонсов:', err);
-    return { results: [], nextPage: null, total: 0 };
-  }
-}
-
-// ===== ПОИСК АНОНСОВ ПО НАЗВАНИЮ =====
-async function searchAnons(query) {
-  try {
-    const params = new URLSearchParams({
-      token: KODIK_API_KEY,
-      title: query,
-      limit: 30,
-      with_material_data: 'true',
-      types: 'anime-serial,anime',
-      anime_status: 'anons'
-    });
-    const url = `${KODIK_API_URL}/search?${params}`;
-    console.log('🔍 Поиск анонсов:', url);
-
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const data = await response.json();
-    return data.results || [];
-  } catch (err) {
-    console.error('❌ Ошибка поиска:', err);
     return [];
   }
 }
 
-// ===== РЕНДЕР КАРТОЧЕК =====
-function renderAnons(animes, append = false) {
+// ===== РЕНДЕР =====
+function renderAnons(animes) {
   if (!gridEl) return;
 
-  if (!append) {
-    gridEl.innerHTML = '';
-  }
-
   if (animes.length === 0) {
-    if (!append) {
-      gridEl.innerHTML = `
-        <div class="anons-empty">
-          <span class="icon">🕒</span>
-          <p>Анонсы не найдены</p>
-          <p style="font-size:0.8rem; color:#444; margin-top:8px;">Попробуйте обновить позже</p>
-        </div>
-      `;
-    }
+    gridEl.innerHTML = `
+      <div class="mal-anons-empty">
+        <span class="icon">🕒</span>
+        <p>Анонсы не найдены</p>
+      </div>
+    `;
     return;
   }
 
-  animes.forEach(anime => {
-    const card = document.createElement('div');
-    card.className = 'anime-card';
+  let html = '';
 
-    const poster = anime.material_data?.poster_url || anime.poster_url || 'https://via.placeholder.com/200x280?text=No+Image';
-    const title = anime.title || anime.material_data?.title || 'Без названия';
-    const year = anime.year || anime.material_data?.year || '';
-    const episodes = anime.episodes_count || anime.material_data?.episodes_count || '';
+  animes.forEach((item, index) => {
+    const anime = item.node || item; // структура может отличаться
 
-    card.innerHTML = `
-      <img src="${poster}" alt="${title}" loading="lazy" />
-      <div class="info">
-        <div class="title">${title}</div>
-        <div class="year">${year}</div>
-        ${episodes ? `<div class="episodes">📺 ${episodes} серий</div>` : ''}
+    let poster = 'https://via.placeholder.com/200x280?text=No+Image';
+    if (anime.main_picture?.medium) {
+      poster = anime.main_picture.medium;
+    } else if (anime.main_picture?.large) {
+      poster = anime.main_picture.large;
+    }
+
+    const title = anime.title || 'Без названия';
+    let dateStr = 'Дата неизвестна';
+
+    if (anime.start_date) {
+      const date = new Date(anime.start_date);
+      dateStr = date.toLocaleDateString('ru-RU', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    }
+
+    html += `
+      <div class="anime-card" data-mal-id="${anime.id}" style="animation-delay:${index * 0.03}s;">
+        <img src="${poster}" alt="${title}" loading="lazy" 
+             onerror="this.src='https://via.placeholder.com/200x280?text=No+Image'" />
+        <div class="info">
+          <div class="title">${title}</div>
+          <div class="year">📅 ${dateStr}</div>
+        </div>
       </div>
     `;
+  });
 
-    card.dataset.animeId = anime.id;
+  gridEl.innerHTML = html;
 
-    card.addEventListener('click', function() {
-      const id = this.dataset.animeId;
-      if (id) {
-        window.location.href = `index.html#anime/${id}`;
+  // Клик — ищем в Kodik по MAL ID
+  gridEl.querySelectorAll('.anime-card').forEach(card => {
+    card.addEventListener('click', async () => {
+      const malId = card.dataset.malId;
+      if (!malId) return;
+
+      try {
+        const params = new URLSearchParams({
+          token: 'd99ff2ab48b0d9c42ace4901bee833ff',
+          mal_id: malId
+        });
+        const url = `https://kodik-api.com/search?${params}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.results && data.results.length > 0) {
+          window.location.href = `index.html#anime/${data.results[0].id}`;
+        } else {
+          window.open(`https://myanimelist.net/anime/${malId}`, '_blank');
+        }
+      } catch (err) {
+        window.open(`https://myanimelist.net/anime/${malId}`, '_blank');
       }
     });
-
-    gridEl.appendChild(card);
   });
 }
 
 // ===== ЗАГРУЗКА =====
-function showLoader() {
-  if (!gridEl) return;
-  if (state.anons.length === 0) {
-    gridEl.innerHTML = '<div class="loader">Загрузка анонсов...</div>';
-  }
-}
-
-// ===== ИНИЦИАЛИЗАЦИЯ =====
 async function loadAnons() {
   if (state.isLoading) return;
   state.isLoading = true;
 
-  showLoader();
+  if (loaderEl) loaderEl.style.display = 'block';
+  if (refreshBtn) refreshBtn.disabled = true;
 
-  const data = await fetchAnons();
-  state.anons = [...state.anons, ...data.results];
-  state.filtered = [...state.anons];
-  state.nextPage = data.nextPage;
-
-  renderAnons(data.results, state.anons.length > data.results.length);
-
-  if (loadMoreBtn) {
-    loadMoreBtn.style.display = data.nextPage ? 'block' : 'none';
+  try {
+    const freshAnons = await fetchMALAnons();
+    state.anons = freshAnons.map(item => item.node || item);
+    renderAnons(freshAnons);
+  } catch (err) {
+    console.error('❌ Ошибка:', err);
+  } finally {
+    state.isLoading = false;
+    if (loaderEl) loaderEl.style.display = 'none';
+    if (refreshBtn) refreshBtn.disabled = false;
   }
-
-  console.log(`✅ Загружено ${data.results.length} анонсов (всего: ${state.anons.length}, в базе: ${data.total})`);
-  state.isLoading = false;
 }
 
 // ===== ПОИСК =====
-async function handleSearch() {
-  const query = searchInput.value.trim();
-
-  if (!query) {
-    state.filtered = [...state.anons];
-    renderAnons(state.filtered);
+function filterAnons(query) {
+  const q = query.toLowerCase().trim();
+  if (!q) {
+    renderAnons(state.anons);
     return;
   }
 
-  gridEl.innerHTML = '<div class="loader">Поиск...</div>';
-  const results = await searchAnons(query);
-  state.filtered = results;
-  renderAnons(results);
+  const filtered = state.anons.filter(anime => {
+    const t1 = (anime.title || '').toLowerCase();
+    const t2 = (anime.alternative_titles?.en || '').toLowerCase();
+    const t3 = (anime.alternative_titles?.ja || '').toLowerCase();
+    return t1.includes(q) || t2.includes(q) || t3.includes(q);
+  });
+
+  renderAnons(filtered);
 }
 
 // ===== ОБРАБОТЧИКИ =====
 if (searchBtn && searchInput) {
-  searchBtn.addEventListener('click', handleSearch);
+  searchBtn.addEventListener('click', () => filterAnons(searchInput.value));
   searchInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleSearch();
+    if (e.key === 'Enter') filterAnons(searchInput.value);
   });
 }
 
-if (loadMoreBtn) {
-  loadMoreBtn.addEventListener('click', async () => {
-    if (!state.nextPage) return;
-    loadMoreBtn.textContent = '⏳ Загрузка...';
-    loadMoreBtn.disabled = true;
-
-    const data = await fetchAnons(state.nextPage);
-    state.anons = [...state.anons, ...data.results];
-    state.filtered = [...state.anons];
-    state.nextPage = data.nextPage;
-
-    renderAnons(data.results, true);
-
-    loadMoreBtn.textContent = '📥 Загрузить ещё';
-    loadMoreBtn.disabled = false;
-    loadMoreBtn.style.display = data.nextPage ? 'block' : 'none';
-  });
+if (refreshBtn) {
+  refreshBtn.addEventListener('click', loadAnons);
 }
 
 // ===== СТАРТ =====
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🕒 Инициализация страницы анонсов...');
+  console.log('🕒 Анонсы MAL загружены');
   loadAnons();
+
+  // Автообновление каждые 30 минут
+  setInterval(loadAnons, 1800000);
 });
 
 // Год в футере
