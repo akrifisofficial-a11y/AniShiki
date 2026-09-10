@@ -1,5 +1,5 @@
 // ============================================
-// 📅 CALENDAR.JS — Календарь релизов (обновлён)
+// 📅 CALENDAR.JS — Исправленное время + анонсы
 // ============================================
 
 const KODIK_API_KEY = 'd99ff2ab48b0d9c42ace4901bee833ff';
@@ -19,12 +19,48 @@ const calendarContent = document.getElementById('calendar-content');
 
 // ===== УТИЛИТЫ =====
 
-// Форматирование даты в ISO (YYYY-MM-DD)
+// Форматирование даты в ISO (YYYY-MM-DD) — ЛОКАЛЬНОЕ время
 function formatDate(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+// ✅ ИСПРАВЛЕНИЕ: правильное форматирование времени из UTC
+function formatTime(isoString) {
+  if (!isoString) return '';
+  
+  try {
+    // Парсим ISO строку — она в UTC
+    const date = new Date(isoString);
+    
+    // Проверяем, что дата валидна
+    if (isNaN(date.getTime())) return '';
+    
+    // Форматируем в локальное время
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${hours}:${minutes}`;
+  } catch (e) {
+    return '';
+  }
+}
+
+// ✅ ИСПРАВЛЕНИЕ: правильная дата из UTC
+function formatDateFromISO(isoString) {
+  if (!isoString) return null;
+  
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return null;
+    
+    // Возвращаем локальную дату в формате YYYY-MM-DD
+    return formatDate(date);
+  } catch (e) {
+    return null;
+  }
 }
 
 // Название дня недели
@@ -46,8 +82,6 @@ async function fetchReleases() {
     });
 
     const url = `${KODIK_API_URL}/list?${params}`;
-    console.log('📡 Запрос релизов:', url);
-
     const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
@@ -59,64 +93,85 @@ async function fetchReleases() {
   }
 }
 
-// ===== ЗАГРУЗКА АНОНСОВ =====
-async function fetchAnons() {
+// ===== ЗАГРУЗКА АНОНСОВ С MAL =====
+const MAL_CLIENT_ID = 'b60e162b23102d8a77a9569380e5d57b';
+const MAL_API_URL = 'https://api.myanimelist.net/v2';
+
+async function fetchMALAnons() {
   try {
-    const params = new URLSearchParams({
-      token: KODIK_API_KEY,
-      limit: 100,
-      with_material_data: 'true',
-      types: 'anime-serial,anime',
-      anime_status: 'anons'
+    const url = `${MAL_API_URL}/anime?q=&limit=50&status=not_yet_aired&fields=id,title,main_picture,alternative_titles,start_date,synopsis,mean,num_episodes,media_type,status`;
+
+    const response = await fetch(url, {
+      headers: {
+        'X-MAL-CLIENT-ID': MAL_CLIENT_ID
+      }
     });
 
-    const url = `${KODIK_API_URL}/list?${params}`;
-    console.log('📡 Запрос анонсов:', url);
-
-    const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const data = await response.json();
-    return data.results || [];
+    console.log(`✅ Загружено ${data.data?.length || 0} анонсов с MAL`);
+    return data.data || [];
   } catch (err) {
-    console.warn('⚠️ Ошибка загрузки анонсов:', err);
+    console.warn('⚠️ Ошибка загрузки анонсов MAL:', err);
     return [];
   }
 }
 
+// ✅ ИСПРАВЛЕНИЕ: получение русского названия
+function getRussianTitle(malAnime) {
+  // 1. Проверяем alternative_titles.ru
+  if (malAnime.alternative_titles?.ru) {
+    return malAnime.alternative_titles.ru;
+  }
+  
+  // 2. Проверяем synonyms
+  if (malAnime.alternative_titles?.synonyms) {
+    const ruSynonym = malAnime.alternative_titles.synonyms.find(s => 
+      /[а-яё]/i.test(s) // Проверяем наличие кириллицы
+    );
+    if (ruSynonym) return ruSynonym;
+  }
+  
+  // 3. Fallback — английское или оригинальное
+  return malAnime.title || 'Без названия';
+}
+
 // ===== ГРУППИРОВКА ПО ДАТАМ =====
-function groupByDate(releases, anons) {
+function groupByDate(releases, malAnons) {
   const grouped = {};
 
-  // Вышедшие — по дате обновления
+  // Вышедшие релизы — по дате обновления (локальное время!)
   releases.forEach(item => {
-    const dateStr = item.updated_at || item.created_at;
+    const dateStr = formatDateFromISO(item.updated_at || item.created_at);
     if (!dateStr) return;
-    const date = dateStr.split('T')[0];
-    if (!grouped[date]) grouped[date] = [];
-    grouped[date].push({ ...item, isAnons: false });
+
+    if (!grouped[dateStr]) grouped[dateStr] = [];
+    grouped[dateStr].push({
+      ...item,
+      isAnons: false,
+      timeStr: formatTime(item.updated_at)
+    });
   });
 
-  // Анонсы — по предполагаемой дате (если есть) или в отдельную секцию
-  anons.forEach(item => {
-    // Анонсы без точной даты — добавляем в конец списка (сегодня+13)
-    let dateStr = null;
-    
-    if (item.release_date) {
-      dateStr = item.release_date.split('T')[0];
-    } else if (item.material_data?.release_date) {
-      dateStr = item.material_data.release_date.split('T')[0];
-    }
-    
-    if (!dateStr) {
-      // Если нет даты — ставим на "последний день" календаря
-      const future = new Date();
-      future.setDate(future.getDate() + 13);
-      dateStr = formatDate(future);
-    }
-    
+  // Анонсы MAL — по дате выхода
+  malAnons.forEach(item => {
+    const anime = item.node || item;
+    if (!anime.start_date) return;
+
+    const dateStr = anime.start_date; // MAL отдаёт YYYY-MM-DD
+
     if (!grouped[dateStr]) grouped[dateStr] = [];
-    grouped[dateStr].push({ ...item, isAnons: true });
+    grouped[dateStr].push({
+      id: anime.id,
+      title: getRussianTitle(anime),
+      poster: anime.main_picture?.medium || anime.main_picture?.large || '',
+      year: anime.start_date.split('-')[0],
+      episodes: anime.num_episodes || '',
+      mal_id: anime.id,
+      isAnons: true,
+      timeStr: ''
+    });
   });
 
   return grouped;
@@ -131,7 +186,6 @@ function renderDaysNav(grouped) {
 
   let html = '';
 
-  // 14 дней, начиная с СЕГОДНЯ
   for (let i = 0; i < 14; i++) {
     const date = new Date(today);
     date.setDate(today.getDate() + i);
@@ -165,9 +219,9 @@ function renderDaysNav(grouped) {
 function renderContent(grouped) {
   if (!calendarContent) return;
 
-  const releases = grouped[state.selectedDay] || [];
+  const items = grouped[state.selectedDay] || [];
 
-  if (releases.length === 0) {
+  if (items.length === 0) {
     calendarContent.innerHTML = `
       <div class="calendar-empty">
         <span class="icon">📭</span>
@@ -178,28 +232,31 @@ function renderContent(grouped) {
     return;
   }
 
-  // Сортируем: анонсы в конце
-  releases.sort((a, b) => (a.isAnons ? 1 : 0) - (b.isAnons ? 1 : 0));
+  // Сортируем: вышедшие сначала, потом анонсы
+  items.sort((a, b) => (a.isAnons ? 1 : 0) - (b.isAnons ? 1 : 0));
 
   let html = '';
 
-  releases.forEach((anime, index) => {
-    const poster = anime.material_data?.poster_url || anime.poster_url || 'https://via.placeholder.com/90x135?text=No+Image';
-    const title = anime.title || anime.material_data?.title || 'Без названия';
-    const year = anime.year || anime.material_data?.year || '—';
-    const episodes = anime.episodes_count || anime.material_data?.episodes_count || '';
-    const quality = anime.quality || '';
+  items.forEach((item, index) => {
+    const poster = item.isAnons 
+      ? (item.poster || 'https://via.placeholder.com/90x135?text=No+Image')
+      : (item.material_data?.poster_url || item.poster_url || 'https://via.placeholder.com/90x135?text=No+Image');
+    
+    const title = item.title || item.material_data?.title || 'Без названия';
+    const year = item.year || item.material_data?.year || '—';
+    const episodes = item.episodes || item.episodes_count || item.material_data?.episodes_count || '';
+    const quality = item.quality || '';
 
-    let timeStr = '';
-    if (anime.updated_at && !anime.isAnons) {
-      const time = anime.updated_at.split('T')[1]?.slice(0, 5);
-      if (time) timeStr = time;
-    }
+    // ✅ ИСПРАВЛЕНИЕ: показываем время только для вышедших
+    const timeHtml = item.timeStr 
+      ? `<span class="time-badge">🕐 ${item.timeStr}</span>` 
+      : '';
 
     html += `
-      <div class="release-card" data-id="${anime.id}" style="animation-delay:${index * 0.05}s;">
+      <div class="release-card" data-id="${item.id}" data-mal-id="${item.mal_id || ''}" data-is-anons="${item.isAnons}" style="animation-delay:${index * 0.05}s;">
         <div class="poster">
-          <img src="${poster}" alt="${title}" loading="lazy" />
+          <img src="${poster}" alt="${title}" loading="lazy" 
+               onerror="this.src='https://via.placeholder.com/90x135?text=No+Image'" />
         </div>
         <div class="info">
           <div class="title">${title}</div>
@@ -208,9 +265,9 @@ function renderContent(grouped) {
             ${quality ? `<span>💎 ${quality}</span>` : ''}
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
-            ${episodes ? `<span class="episode-badge">📺 ${episodes} серий</span>` : ''}
-            ${timeStr ? `<span class="time-badge">🕐 ${timeStr}</span>` : ''}
-            ${anime.isAnons ? `<span class="episode-badge" style="background:rgba(255,193,7,0.15);border-color:rgba(255,193,7,0.3);color:#ffc107;">🕒 Анонс</span>` : ''}
+            ${episodes ? `<span class="episode-badge">📺 ${episodes} эп.</span>` : ''}
+            ${timeHtml}
+            ${item.isAnons ? `<span class="episode-badge" style="background:rgba(255,193,7,0.15);border-color:rgba(255,193,7,0.3);color:#ffc107;">🕒 Анонс</span>` : ''}
           </div>
         </div>
       </div>
@@ -219,10 +276,34 @@ function renderContent(grouped) {
 
   calendarContent.innerHTML = html;
 
+  // Клик по карточке
   calendarContent.querySelectorAll('.release-card').forEach(card => {
-    card.addEventListener('click', () => {
+    card.addEventListener('click', async () => {
+      const isAnons = card.dataset.isAnons === 'true';
+      const malId = card.dataset.malId;
       const id = card.dataset.id;
-      if (id) {
+
+      if (isAnons && malId) {
+        // Анонс — ищем в Kodik по MAL ID
+        try {
+          const params = new URLSearchParams({
+            token: KODIK_API_KEY,
+            mal_id: malId
+          });
+          const url = `${KODIK_API_URL}/search?${params}`;
+          const response = await fetch(url);
+          const data = await response.json();
+
+          if (data.results && data.results.length > 0) {
+            window.location.href = `index.html#anime/${data.results[0].id}`;
+          } else {
+            window.open(`https://myanimelist.net/anime/${malId}`, '_blank');
+          }
+        } catch (err) {
+          window.open(`https://myanimelist.net/anime/${malId}`, '_blank');
+        }
+      } else if (id) {
+        // Вышедший релиз — открываем в Kodik
         window.location.href = `index.html#anime/${id}`;
       }
     });
@@ -233,56 +314,50 @@ function renderContent(grouped) {
 async function init() {
   console.log('📅 Инициализация календаря...');
 
-  // Устанавливаем СЕГОДНЯ как выбранный день
   state.selectedDay = formatDate(new Date());
 
   if (calendarContent) {
     calendarContent.innerHTML = '<div class="loader">Загрузка релизов...</div>';
   }
 
-  // Загружаем параллельно: релизы + анонсы
-  const [releases, anons] = await Promise.all([
+  // Загружаем параллельно
+  const [releases, malAnons] = await Promise.all([
     fetchReleases(),
-    fetchAnons()
+    fetchMALAnons()
   ]);
 
   state.releases = releases;
-  state.anons = anons;
+  state.anons = malAnons;
 
-  if (releases.length === 0 && anons.length === 0) {
+  if (releases.length === 0 && malAnons.length === 0) {
     if (calendarContent) {
       calendarContent.innerHTML = `
         <div class="calendar-empty">
           <span class="icon">😔</span>
           <p>Не удалось загрузить релизы</p>
-          <p class="hint">Попробуйте обновить страницу позже</p>
         </div>
       `;
     }
     return;
   }
 
-  // Группируем
-  const grouped = groupByDate(releases, anons);
+  const grouped = groupByDate(releases, malAnons);
   state.grouped = grouped;
 
-  // Рендерим
   renderDaysNav(grouped);
   renderContent(grouped);
 
-  console.log(`✅ Календарь загружен: ${releases.length} релизов, ${anons.length} анонсов`);
+  console.log(`✅ Календарь загружен: ${releases.length} релизов, ${malAnons.length} анонсов`);
 }
 
 // ============================================
-// ⏰ АВТООБНОВЛЕНИЕ ДАТЫ И ДАННЫХ
+// ⏰ АВТООБНОВЛЕНИЕ
 // ============================================
 
-// Отслеживаем смену дня
 let currentDayString = new Date().toDateString();
 
 function checkDateChange() {
   const newDayString = new Date().toDateString();
-
   if (newDayString !== currentDayString) {
     currentDayString = newDayString;
     console.log('📅 Новый день! Обновляем календарь...');
@@ -290,10 +365,8 @@ function checkDateChange() {
   }
 }
 
-// Проверка каждую минуту
 setInterval(checkDateChange, 60000);
 
-// Проверка при возврате на вкладку
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) checkDateChange();
 });
@@ -302,7 +375,7 @@ document.addEventListener('visibilitychange', () => {
 setInterval(() => {
   console.log('🔄 Автообновление календаря...');
   init();
-}, 1800000); // 30 минут
+}, 1800000);
 
 // ===== СТАРТ =====
 document.addEventListener('DOMContentLoaded', init);
