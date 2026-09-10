@@ -1,5 +1,5 @@
 // ============================================
-// 📅 CALENDAR.JS — Календарь релизов
+// 📅 CALENDAR.JS — Календарь релизов (обновлён)
 // ============================================
 
 const KODIK_API_KEY = 'd99ff2ab48b0d9c42ace4901bee833ff';
@@ -8,8 +8,9 @@ const KODIK_API_URL = 'https://kodik-api.com';
 // ===== СОСТОЯНИЕ =====
 const state = {
   releases: [],
-  selectedDay: null,
-  weekStart: null
+  anons: [],
+  grouped: {},
+  selectedDay: null
 };
 
 // ===== DOM =====
@@ -20,27 +21,21 @@ const calendarContent = document.getElementById('calendar-content');
 
 // Форматирование даты в ISO (YYYY-MM-DD)
 function formatDate(date) {
-  return date.toISOString().split('T')[0];
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
-// Получение названия дня недели
+// Название дня недели
 function getDayName(date) {
   const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
   return days[date.getDay()];
 }
 
-// Получение начала недели (понедельник)
-function getWeekStart(date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  return new Date(d.setDate(diff));
-}
-
-// ===== ЗАГРУЗКА РЕЛИЗОВ С KODIK API =====
+// ===== ЗАГРУЗКА ВЫШЕДШИХ РЕЛИЗОВ =====
 async function fetchReleases() {
   try {
-    // Запрашиваем аниме, которые вышли за последние 30 дней
     const params = new URLSearchParams({
       token: KODIK_API_KEY,
       limit: 100,
@@ -64,47 +59,91 @@ async function fetchReleases() {
   }
 }
 
-// ===== ГРУППИРОВКА ПО ДНЯМ =====
-function groupByDate(releases) {
+// ===== ЗАГРУЗКА АНОНСОВ =====
+async function fetchAnons() {
+  try {
+    const params = new URLSearchParams({
+      token: KODIK_API_KEY,
+      limit: 100,
+      with_material_data: 'true',
+      types: 'anime-serial,anime',
+      anime_status: 'anons'
+    });
+
+    const url = `${KODIK_API_URL}/list?${params}`;
+    console.log('📡 Запрос анонсов:', url);
+
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+    return data.results || [];
+  } catch (err) {
+    console.warn('⚠️ Ошибка загрузки анонсов:', err);
+    return [];
+  }
+}
+
+// ===== ГРУППИРОВКА ПО ДАТАМ =====
+function groupByDate(releases, anons) {
   const grouped = {};
 
+  // Вышедшие — по дате обновления
   releases.forEach(item => {
-    // Берём дату обновления или год
     const dateStr = item.updated_at || item.created_at;
     if (!dateStr) return;
-
     const date = dateStr.split('T')[0];
+    if (!grouped[date]) grouped[date] = [];
+    grouped[date].push({ ...item, isAnons: false });
+  });
 
-    if (!grouped[date]) {
-      grouped[date] = [];
+  // Анонсы — по предполагаемой дате (если есть) или в отдельную секцию
+  anons.forEach(item => {
+    // Анонсы без точной даты — добавляем в конец списка (сегодня+13)
+    let dateStr = null;
+    
+    if (item.release_date) {
+      dateStr = item.release_date.split('T')[0];
+    } else if (item.material_data?.release_date) {
+      dateStr = item.material_data.release_date.split('T')[0];
     }
-    grouped[date].push(item);
+    
+    if (!dateStr) {
+      // Если нет даты — ставим на "последний день" календаря
+      const future = new Date();
+      future.setDate(future.getDate() + 13);
+      dateStr = formatDate(future);
+    }
+    
+    if (!grouped[dateStr]) grouped[dateStr] = [];
+    grouped[dateStr].push({ ...item, isAnons: true });
   });
 
   return grouped;
 }
 
-// ===== РЕНДЕР НАВИГАЦИИ =====
+// ===== РЕНДЕР НАВИГАЦИИ (14 дней от СЕГОДНЯ) =====
 function renderDaysNav(grouped) {
   if (!daysNav) return;
 
   const today = new Date();
-  const weekStart = getWeekStart(today);
+  today.setHours(0, 0, 0, 0);
 
   let html = '';
 
+  // 14 дней, начиная с СЕГОДНЯ
   for (let i = 0; i < 14; i++) {
-    const date = new Date(weekStart);
-    date.setDate(weekStart.getDate() + i);
+    const date = new Date(today);
+    date.setDate(today.getDate() + i);
 
     const dateStr = formatDate(date);
     const count = grouped[dateStr]?.length || 0;
-    const isToday = formatDate(today) === dateStr;
+    const isToday = i === 0;
     const isActive = state.selectedDay === dateStr;
 
     html += `
       <button class="day-btn ${isActive ? 'active' : ''} ${isToday ? 'today' : ''}" data-date="${dateStr}">
-        <span class="day-name">${getDayName(date)}</span>
+        <span class="day-name">${isToday ? 'Сегодня' : getDayName(date)}</span>
         <span class="day-number">${date.getDate()}</span>
         ${count > 0 ? `<span class="day-count">${count}</span>` : ''}
       </button>
@@ -113,7 +152,6 @@ function renderDaysNav(grouped) {
 
   daysNav.innerHTML = html;
 
-  // Обработчики
   daysNav.querySelectorAll('.day-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       state.selectedDay = btn.dataset.date;
@@ -140,6 +178,9 @@ function renderContent(grouped) {
     return;
   }
 
+  // Сортируем: анонсы в конце
+  releases.sort((a, b) => (a.isAnons ? 1 : 0) - (b.isAnons ? 1 : 0));
+
   let html = '';
 
   releases.forEach((anime, index) => {
@@ -149,9 +190,8 @@ function renderContent(grouped) {
     const episodes = anime.episodes_count || anime.material_data?.episodes_count || '';
     const quality = anime.quality || '';
 
-    // Время обновления
     let timeStr = '';
-    if (anime.updated_at) {
+    if (anime.updated_at && !anime.isAnons) {
       const time = anime.updated_at.split('T')[1]?.slice(0, 5);
       if (time) timeStr = time;
     }
@@ -170,6 +210,7 @@ function renderContent(grouped) {
           <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
             ${episodes ? `<span class="episode-badge">📺 ${episodes} серий</span>` : ''}
             ${timeStr ? `<span class="time-badge">🕐 ${timeStr}</span>` : ''}
+            ${anime.isAnons ? `<span class="episode-badge" style="background:rgba(255,193,7,0.15);border-color:rgba(255,193,7,0.3);color:#ffc107;">🕒 Анонс</span>` : ''}
           </div>
         </div>
       </div>
@@ -178,7 +219,6 @@ function renderContent(grouped) {
 
   calendarContent.innerHTML = html;
 
-  // Клик по карточке → переход на главную с открытием аниме
   calendarContent.querySelectorAll('.release-card').forEach(card => {
     card.addEventListener('click', () => {
       const id = card.dataset.id;
@@ -193,19 +233,23 @@ function renderContent(grouped) {
 async function init() {
   console.log('📅 Инициализация календаря...');
 
-  // Сегодняшняя дата по умолчанию
+  // Устанавливаем СЕГОДНЯ как выбранный день
   state.selectedDay = formatDate(new Date());
 
-  // Показываем загрузку
   if (calendarContent) {
     calendarContent.innerHTML = '<div class="loader">Загрузка релизов...</div>';
   }
 
-  // Загружаем данные
-  const releases = await fetchReleases();
-  state.releases = releases;
+  // Загружаем параллельно: релизы + анонсы
+  const [releases, anons] = await Promise.all([
+    fetchReleases(),
+    fetchAnons()
+  ]);
 
-  if (releases.length === 0) {
+  state.releases = releases;
+  state.anons = anons;
+
+  if (releases.length === 0 && anons.length === 0) {
     if (calendarContent) {
       calendarContent.innerHTML = `
         <div class="calendar-empty">
@@ -218,15 +262,47 @@ async function init() {
     return;
   }
 
-  // Группируем по датам
-  const grouped = groupByDate(releases);
+  // Группируем
+  const grouped = groupByDate(releases, anons);
+  state.grouped = grouped;
 
   // Рендерим
   renderDaysNav(grouped);
   renderContent(grouped);
 
-  console.log('✅ Календарь загружен:', releases.length, 'релизов');
+  console.log(`✅ Календарь загружен: ${releases.length} релизов, ${anons.length} анонсов`);
 }
+
+// ============================================
+// ⏰ АВТООБНОВЛЕНИЕ ДАТЫ И ДАННЫХ
+// ============================================
+
+// Отслеживаем смену дня
+let currentDayString = new Date().toDateString();
+
+function checkDateChange() {
+  const newDayString = new Date().toDateString();
+
+  if (newDayString !== currentDayString) {
+    currentDayString = newDayString;
+    console.log('📅 Новый день! Обновляем календарь...');
+    init();
+  }
+}
+
+// Проверка каждую минуту
+setInterval(checkDateChange, 60000);
+
+// Проверка при возврате на вкладку
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) checkDateChange();
+});
+
+// Автообновление данных каждые 30 минут
+setInterval(() => {
+  console.log('🔄 Автообновление календаря...');
+  init();
+}, 1800000); // 30 минут
 
 // ===== СТАРТ =====
 document.addEventListener('DOMContentLoaded', init);
