@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🕒 Анонсы — Quarwatch</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/anons.css" />
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <div class="header-left">
+        <a href="index.html" class="logo-link">
+          <div class="logo">🌙 Quarwatch</div>
+        </a>
+        <div class="subtitle">анонсы</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <a href="index.html" class="back-btn">← На главную</a>
+      </div>
+    </div>
+  </header>
+
+  <main style="padding-top:110px;">
+    <section class="active">
+      <div class="anons-header">
+        <h2>🕒 Анонсы аниме</h2>
+        <p class="anons-subtitle">Скоро выйдет — следи за новинками</p>
+      </div>
+
+      <div class="anons-search">
+        <input type="text" id="anons-search" placeholder="Поиск анонсов..." />
+        <button id="anons-search-btn">🔍</button>
+      </div>
+
+      <div id="anons-grid" class="catalog-grid">
+        <div class="loader">Загрузка анонсов...</div>
+      </div>
+
+      <button id="load-more-anons" class="back-btn" style="display:none; margin:20px auto; width:fit-content;">
+        📥 Загрузить ещё
+      </button>
+    </section>
+  </main>
+
+  <footer id="site-footer">
+    <p>© <span id="current-year">2026</span> Quarwatch <span>|</span> Создатель: <span>quartess</span></p>
+    <p class="footer-sub">🌙 Сделано с любовью к аниме</p>
+  </footer>
+
+  <script src="js/anons.js"></script>
+</body>
+</html>
