@@ -1,15 +1,9 @@
 // ============================================
-// 🕒 MAL-ANONS.JS — Анонсы с MAL (без localStorage)
+// 🕒 MAL-ANONS.JS — Исправленный
 // ============================================
 
 const MAL_CLIENT_ID = 'b60e162b23102d8a77a9569380e5d57b';
 const MAL_API_URL = 'https://api.myanimelist.net/v2';
-
-// ===== СОСТОЯНИЕ =====
-const state = {
-  anons: [],
-  isLoading: false
-};
 
 // ===== DOM =====
 const gridEl = document.getElementById('mal-anons-grid');
@@ -18,12 +12,29 @@ const searchBtn = document.getElementById('mal-anons-search-btn');
 const refreshBtn = document.getElementById('mal-refresh-btn');
 const loaderEl = document.getElementById('mal-anons-loader');
 
-// ===== ЗАГРУЗКА АНОНСОВ С MAL =====
+let allAnons = [];
+let isLoading = false;
+
+// ✅ ИСПРАВЛЕНИЕ: русское название
+function getRussianTitle(anime) {
+  if (anime.alternative_titles?.ru) {
+    return anime.alternative_titles.ru;
+  }
+  
+  if (anime.alternative_titles?.synonyms) {
+    const ruSynonym = anime.alternative_titles.synonyms.find(s => /[а-яё]/i.test(s));
+    if (ruSynonym) return ruSynonym;
+  }
+  
+  return anime.title || 'Без названия';
+}
+
+// ✅ ИСПРАВЛЕНИЕ: правильная загрузка
 async function fetchMALAnons() {
   try {
     const url = `${MAL_API_URL}/anime?q=&limit=50&status=not_yet_aired&fields=id,title,main_picture,alternative_titles,start_date,synopsis,mean,num_episodes,media_type,status`;
 
-    console.log('📡 Запрос анонсов с MAL:', url);
+    console.log('📡 Запрос анонсов MAL:', url);
 
     const response = await fetch(url, {
       headers: {
@@ -34,11 +45,14 @@ async function fetchMALAnons() {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const data = await response.json();
-    console.log(`✅ Получено ${data.data?.length || 0} анонсов с MAL`);
-
-    return data.data || [];
+    
+    // ✅ ИСПРАВЛЕНИЕ: разворачиваем node
+    const animes = (data.data || []).map(item => item.node || item);
+    
+    console.log(`✅ Загружено ${animes.length} анонсов`);
+    return animes;
   } catch (err) {
-    console.error('❌ Ошибка загрузки анонсов:', err);
+    console.error('❌ Ошибка:', err);
     return [];
   }
 }
@@ -59,9 +73,7 @@ function renderAnons(animes) {
 
   let html = '';
 
-  animes.forEach((item, index) => {
-    const anime = item.node || item; // структура может отличаться
-
+  animes.forEach((anime, index) => {
     let poster = 'https://via.placeholder.com/200x280?text=No+Image';
     if (anime.main_picture?.medium) {
       poster = anime.main_picture.medium;
@@ -69,9 +81,11 @@ function renderAnons(animes) {
       poster = anime.main_picture.large;
     }
 
-    const title = anime.title || 'Без названия';
-    let dateStr = 'Дата неизвестна';
+    // ✅ ИСПРАВЛЕНИЕ: русское название
+    const title = getRussianTitle(anime);
+    const titleOriginal = anime.title || '';
 
+    let dateStr = 'Дата неизвестна';
     if (anime.start_date) {
       const date = new Date(anime.start_date);
       dateStr = date.toLocaleDateString('ru-RU', {
@@ -81,13 +95,18 @@ function renderAnons(animes) {
       });
     }
 
+    const episodes = anime.num_episodes || '—';
+    const score = anime.mean ? anime.mean.toFixed(1) : '—';
+
     html += `
       <div class="anime-card" data-mal-id="${anime.id}" style="animation-delay:${index * 0.03}s;">
         <img src="${poster}" alt="${title}" loading="lazy" 
              onerror="this.src='https://via.placeholder.com/200x280?text=No+Image'" />
         <div class="info">
           <div class="title">${title}</div>
+          ${titleOriginal && titleOriginal !== title ? `<div class="title-en" style="font-size:0.7rem;color:#666;">${titleOriginal}</div>` : ''}
           <div class="year">📅 ${dateStr}</div>
+          <div class="episodes">📺 ${episodes} эп. · ⭐ ${score}</div>
         </div>
       </div>
     `;
@@ -95,7 +114,6 @@ function renderAnons(animes) {
 
   gridEl.innerHTML = html;
 
-  // Клик — ищем в Kodik по MAL ID
   gridEl.querySelectorAll('.anime-card').forEach(card => {
     card.addEventListener('click', async () => {
       const malId = card.dataset.malId;
@@ -124,20 +142,26 @@ function renderAnons(animes) {
 
 // ===== ЗАГРУЗКА =====
 async function loadAnons() {
-  if (state.isLoading) return;
-  state.isLoading = true;
+  if (isLoading) return;
+  isLoading = true;
 
   if (loaderEl) loaderEl.style.display = 'block';
   if (refreshBtn) refreshBtn.disabled = true;
 
   try {
     const freshAnons = await fetchMALAnons();
-    state.anons = freshAnons.map(item => item.node || item);
+    allAnons = freshAnons;
     renderAnons(freshAnons);
   } catch (err) {
     console.error('❌ Ошибка:', err);
+    gridEl.innerHTML = `
+      <div class="mal-anons-empty">
+        <span class="icon">😔</span>
+        <p>Не удалось загрузить анонсы</p>
+      </div>
+    `;
   } finally {
-    state.isLoading = false;
+    isLoading = false;
     if (loaderEl) loaderEl.style.display = 'none';
     if (refreshBtn) refreshBtn.disabled = false;
   }
@@ -147,15 +171,16 @@ async function loadAnons() {
 function filterAnons(query) {
   const q = query.toLowerCase().trim();
   if (!q) {
-    renderAnons(state.anons);
+    renderAnons(allAnons);
     return;
   }
 
-  const filtered = state.anons.filter(anime => {
+  const filtered = allAnons.filter(anime => {
     const t1 = (anime.title || '').toLowerCase();
     const t2 = (anime.alternative_titles?.en || '').toLowerCase();
-    const t3 = (anime.alternative_titles?.ja || '').toLowerCase();
-    return t1.includes(q) || t2.includes(q) || t3.includes(q);
+    const t3 = (anime.alternative_titles?.ru || '').toLowerCase();
+    const t4 = (anime.alternative_titles?.ja || '').toLowerCase();
+    return t1.includes(q) || t2.includes(q) || t3.includes(q) || t4.includes(q);
   });
 
   renderAnons(filtered);
@@ -175,10 +200,8 @@ if (refreshBtn) {
 
 // ===== СТАРТ =====
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🕒 Анонсы MAL загружены');
+  console.log('🕒 Страница анонсов MAL загружена');
   loadAnons();
-
-  // Автообновление каждые 30 минут
   setInterval(loadAnons, 1800000);
 });
 
