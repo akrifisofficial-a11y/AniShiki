@@ -1,0 +1,262 @@
+/* ============================================
+   👤 PROFILE PAGE STYLES
+   ============================================ */
+
+.profile-container {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* ===== ШАПКА ПРОФИЛЯ ===== */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 16px;
+  margin-bottom: 24px;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 0 30px rgba(108, 92, 231, 0.3);
+}
+
+.profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-info h2 {
+  color: #e0e0e0;
+  font-size: 1.4rem;
+  margin-bottom: 4px;
+}
+
+.profile-status {
+  color: #666;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.edit-name-btn {
+  background: rgba(108, 92, 231, 0.15);
+  border: 1px solid rgba(108, 92, 231, 0.2);
+  color: #a29bfe;
+  padding: 5px 14px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: 0.3s;
+  font-family: 'Inter', sans-serif;
+}
+.edit-name-btn:hover {
+  background: rgba(108, 92, 231, 0.25);
+}
+
+/* ===== ЗАГОЛОВКИ СЕКЦИЙ ===== */
+.section-title {
+  color: #888;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 24px 0 12px;
+}
+
+/* ===== СТАТИСТИКА ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.stat-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 12px;
+  padding: 16px 12px;
+  text-align: center;
+  transition: 0.3s;
+}
+.stat-card:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(108, 92, 231, 0.15);
+}
+
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #a29bfe;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+/* ===== ДОСТИЖЕНИЯ ===== */
+.achievements-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.achievement-badge {
+  background: rgba(108, 92, 231, 0.12);
+  border: 1px solid rgba(108, 92, 231, 0.2);
+  color: #a29bfe;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: 0.3s;
+}
+.achievement-badge:hover {
+  background: rgba(108, 92, 231, 0.2);
+  transform: translateY(-2px);
+}
+
+/* ===== НАСТРОЙКИ ===== */
+.settings-list {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  gap: 12px;
+}
+.setting-item:last-child {
+  border-bottom: none;
+}
+
+.setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.setting-title {
+  color: #e0e0e0;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.setting-desc {
+  color: #555;
+  font-size: 0.75rem;
+}
+
+.setting-btn {
+  background: rgba(108, 92, 231, 0.15);
+  border: 1px solid rgba(108, 92, 231, 0.2);
+  color: #a29bfe;
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: 0.3s;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+}
+.setting-btn:hover {
+  background: rgba(108, 92, 231, 0.25);
+}
+.setting-btn.danger {
+  background: rgba(255, 70, 70, 0.1);
+  border-color: rgba(255, 70, 70, 0.2);
+  color: #ff7a7a;
+}
+.setting-btn.danger:hover {
+  background: rgba(255, 70, 70, 0.2);
+}
+
+/* ===== ИСТОРИЯ / ИЗБРАННОЕ ===== */
+.history-list,
+.favorites-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 10px;
+}
+
+.mini-card {
+  cursor: pointer;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: 0.3s;
+}
+.mini-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(108, 92, 231, 0.2);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.mini-card img {
+  width: 100%;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  display: block;
+  background: #1a1a1a;
+}
+
+.mini-card .mini-title {
+  font-size: 0.7rem;
+  color: #aaa;
+  padding: 6px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.empty-text {
+  color: #444;
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 20px;
+  grid-column: 1 / -1;
+}
+
+/* ===== АДАПТИВ ===== */
+@media (max-width: 600px) {
+  .profile-header {
+    padding: 18px;
+    gap: 14px;
+  }
+  .avatar {
+    width: 64px;
+    height: 64px;
+    font-size: 1.5rem;
+  }
+  .profile-info h2 {
+    font-size: 1.15rem;
+  }
+  .stat-value {
+    font-size: 1.3rem;
+  }
+  }
