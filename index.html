@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Quarwatch – смотреть аниме онлайн</title>
   
   <!-- SEO -->
@@ -25,19 +25,19 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- ШАПКА -->
   <header>
     <div class="header-top">
       <div class="header-left">
         <a href="#" id="logo-link" class="logo-link">
           <div class="logo">🌙 Quarwatch</div>
         </a>
-        <div class="subtitle">смотреть онлайн</div>
       </div>
-      <div style="display:flex; align-items:center; gap:8px;">
-        <button id="install-btn" class="auth-btn" style="display:none;">📱 Установить</button>
+      <div class="header-right">
+        <button id="search-toggle" class="header-icon-btn" aria-label="Поиск">🔍</button>
         <div class="hamburger" id="hamburger">
           <span></span>
           <span></span>
@@ -46,31 +46,28 @@
       </div>
     </div>
 
+    <!-- Поиск (скрыт, открывается по кнопке) -->
+    <div class="search-bar hidden" id="search-bar">
+      <input type="text" id="search-input" placeholder="Поиск аниме..." />
+      <button id="search-btn">🔍</button>
+    </div>
+
     <!-- ГАМБУРГЕР-МЕНЮ -->
     <nav class="nav-menu" id="nav-menu">
       <ul>
         <li><a href="calendar.html">📅 Календарь</a></li>
-        <li><a href="404.html">🕒 Анонсы</a></li>
+        <li><a href="anilist.html">🕒 Анонсы (AniList)</a></li>
         <li><a href="developer.html">👨‍💻 Разработчик</a></li>
         <li><a href="#" id="menu-updates">🔄 Обновления</a></li>
         <li><a href="#" id="menu-important">❓ Важно</a></li>
       </ul>
     </nav>
-
-    <!-- КАТЕГОРИИ -->
-    <nav class="categories">
-      <button class="category-btn active" data-type="series">📺 Сериалы</button>
-      <button class="category-btn" data-type="movie">🎬 Фильмы</button>
-    </nav>
   </header>
 
+  <!-- ОСНОВНОЙ КОНТЕНТ -->
   <main>
     <!-- Каталог -->
     <section id="anime-list" class="active">
-      <div class="search-bar">
-        <input type="text" id="search-input" placeholder="Поиск..." />
-        <button id="search-btn">🔍</button>
-      </div>
       <div id="catalog" class="catalog-grid"></div>
       <button id="load-more-btn" class="back-btn" style="display:none; margin: 20px auto; width: fit-content;">📥 Загрузить ещё</button>
       <div id="loader" class="loader">Загрузка...</div>
@@ -97,6 +94,26 @@
     </section>
   </main>
 
+  <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+  <nav class="bottom-nav">
+    <button class="bottom-nav-item" data-type="home">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Главная</span>
+    </button>
+    <button class="bottom-nav-item active" data-type="series">
+      <span class="nav-icon">📺</span>
+      <span class="nav-label">Сериалы</span>
+    </button>
+    <button class="bottom-nav-item" data-type="movie">
+      <span class="nav-icon">🎬</span>
+      <span class="nav-label">Фильмы</span>
+    </button>
+    <button class="bottom-nav-item" data-type="profile">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">Профиль</span>
+    </button>
+  </nav>
+
   <!-- Модальное окно -->
   <div id="modal-overlay" class="modal-overlay">
     <div class="modal-content">
@@ -111,18 +128,6 @@
     <img id="modal-image" src="" alt="Увеличенное изображение" />
   </div>
 
-  <!-- Футер -->
-  <footer id="site-footer">
-    <p>
-      © <span id="current-year">2026</span> Quarwatch
-      <span>|</span>
-      Создатель: <span>quartess</span>
-    </p>
-    <p class="footer-sub">
-      🌙 Сделано с любовью к аниме
-    </p>
-  </footer>
-
-  <script src="js/script.js"></script>
+  <script src="script.js"></script>
 </body>
-</html>
+        </html>
