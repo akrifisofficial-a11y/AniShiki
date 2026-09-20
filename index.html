@@ -46,7 +46,7 @@
       </div>
     </div>
 
-    <!-- Поиск (скрыт, открывается по кнопке) -->
+    <!-- Поиск (скрыт) -->
     <div class="search-bar hidden" id="search-bar">
       <input type="text" id="search-input" placeholder="Поиск аниме..." />
       <button id="search-btn">🔍</button>
@@ -55,8 +55,10 @@
     <!-- ГАМБУРГЕР-МЕНЮ -->
     <nav class="nav-menu" id="nav-menu">
       <ul>
+        <li><a href="home.html">🏠 О проекте</a></li>
         <li><a href="calendar.html">📅 Календарь</a></li>
-        <li><a href="anilist.html">🕒 Анонсы (AniList)</a></li>
+        <li><a href="anilist.html">🕒 Анонсы</a></li>
+        <li><a href="profile.html">👤 Профиль</a></li>
         <li><a href="developer.html">👨‍💻 Разработчик</a></li>
         <li><a href="#" id="menu-updates">🔄 Обновления</a></li>
         <li><a href="#" id="menu-important">❓ Важно</a></li>
@@ -108,10 +110,10 @@
       <span class="nav-icon">🎬</span>
       <span class="nav-label">Фильмы</span>
     </button>
-    <button class="bottom-nav-item" data-type="profile">
+    <a href="profile.html" class="bottom-nav-item" style="text-decoration: none;">
       <span class="nav-icon">👤</span>
       <span class="nav-label">Профиль</span>
-    </button>
+    </a>
   </nav>
 
   <!-- Модальное окно -->
@@ -130,4 +132,4 @@
 
   <script src="js/script.js"></script>
 </body>
-        </html>
+    </html>
