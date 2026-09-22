@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🔐 Вход — Quarwatch</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/auth.css" />
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <div class="header-left">
+        <a href="index.html" class="logo-link">
+          <div class="logo">🌙 Quarwatch</div>
+        </a>
+        <div class="subtitle">вход</div>
+      </div>
+      <div class="header-right">
+        <a href="index.html" class="back-btn">← На главную</a>
+      </div>
+    </div>
+  </header>
+
+  <main style="padding-top: 100px; padding-bottom: 80px;">
+    <div class="auth-container">
+      <div class="auth-card">
+        <!-- Вкладки -->
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login">Вход</button>
+          <button class="auth-tab" data-tab="register">Регистрация</button>
+        </div>
+
+        <!-- ФОРМА ВХОДА -->
+        <form id="login-form" class="auth-form active">
+          <div class="form-group">
+            <label>Имя пользователя</label>
+            <input type="text" id="login-username" placeholder="Введите имя" required />
+          </div>
+          <div class="form-group">
+            <label>Пароль</label>
+            <input type="password" id="login-password" placeholder="Введите пароль" required />
+          </div>
+          <button type="submit" class="submit-btn">🔓 Войти</button>
+          <p class="auth-hint">Нет аккаунта? <a href="#" id="switch-to-register">Зарегистрируйся</a></p>
+        </form>
+
+        <!-- ФОРМА РЕГИСТРАЦИИ -->
+        <form id="register-form" class="auth-form">
+          <div class="form-group">
+            <label>Имя пользователя</label>
+            <input type="text" id="reg-username" placeholder="Введите имя" required />
+          </div>
+          <div class="form-group">
+            <label>Пароль</label>
+            <input type="password" id="reg-password" placeholder="Минимум 6 символов" required minlength="6" />
+          </div>
+          <div class="form-group">
+            <label>Email (необязательно)</label>
+            <input type="email" id="reg-email" placeholder="your@email.com" />
+          </div>
+          <button type="submit" class="submit-btn">📝 Зарегистрироваться</button>
+          <p class="auth-hint">Уже есть аккаунт? <a href="#" id="switch-to-login">Войди</a></p>
+        </form>
+
+        <div id="auth-message" class="auth-message"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/auth.js"></script>
+</body>
+</html>
