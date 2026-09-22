@@ -1134,3 +1134,41 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+// ============================================
+// 🔍 ПОИСК И ГАМБУРГЕР (для нового интерфейса)
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Гамбургер
+  const hamburger = document.getElementById('hamburger');
+  const navMenu = document.getElementById('nav-menu');
+
+  if (hamburger && navMenu) {
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('active');
+      navMenu.classList.toggle('open');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!hamburger.contains(e.target) && !navMenu.contains(e.target)) {
+        hamburger.classList.remove('active');
+        navMenu.classList.remove('open');
+      }
+    });
+  }
+
+  // Поиск
+  const searchToggle = document.getElementById('search-toggle');
+  const searchBar = document.getElementById('search-bar');
+
+  if (searchToggle && searchBar) {
+    searchToggle.addEventListener('click', () => {
+      searchBar.classList.toggle('hidden');
+      if (!searchBar.classList.contains('hidden')) {
+        document.getElementById('search-input')?.focus();
+      }
+    });
+  }
+
+  console.log('✅ Интерфейс готов');
+});
