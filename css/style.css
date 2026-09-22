@@ -11,7 +11,7 @@ body {
   color: #e0e0e0;
   min-height: 100vh;
   overflow-x: hidden;
-  padding-bottom: 70px; /* Отступ под нижнюю навигацию */
+  padding-bottom: 70px;
 }
 
 /* ===== СКРОЛЛБАР ===== */
@@ -78,7 +78,7 @@ header {
   gap: 8px;
 }
 
-/* Кнопки в шапке */
+/* Кнопка поиска в шапке */
 .header-icon-btn {
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.05);
@@ -581,18 +581,6 @@ section.active {
   line-height: 1.7;
   font-size: 0.9rem;
 }
-.modal-content .info-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
-}
-.modal-content .info-item span:first-child {
-  color: #666;
-}
-.modal-content .info-item span:last-child {
-  color: #ccc;
-}
 
 /* ===== УВЕЛИЧЕННОЕ ИЗОБРАЖЕНИЕ ===== */
 .modal-image-overlay {
@@ -634,123 +622,10 @@ section.active {
   color: #fff;
 }
 
-/* ===== СТРАНИЦА ОБНОВЛЕНИЙ ===== */
-#updates-section {
-  padding: 20px 0;
-}
-.updates-content {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px 0;
-}
-.update-item {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.04);
-  border-radius: 12px;
-  padding: 20px 24px;
-  margin-bottom: 16px;
-  transition: 0.3s;
-}
-.update-item:hover {
-  background: rgba(255,255,255,0.03);
-  border-color: rgba(108, 92, 231, 0.1);
-}
-.update-item .update-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-.update-item .update-version {
-  font-weight: 700;
-  color: #a29bfe;
-  font-size: 0.9rem;
-  background: rgba(108, 92, 231, 0.1);
-  padding: 2px 12px;
-  border-radius: 12px;
-}
-.update-item .update-date {
-  color: #555;
-  font-size: 0.8rem;
-}
-.update-item .update-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #e0e0e0;
-  margin-bottom: 8px;
-}
-.update-item .update-changes {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.update-item .update-changes li {
-  color: #888;
-  font-size: 0.9rem;
-  padding: 4px 0;
-  padding-left: 20px;
-  position: relative;
-}
-.update-item .update-changes li::before {
-  content: "•";
-  position: absolute;
-  left: 0;
-  color: #6c5ce7;
-}
-#updates-back-btn {
-  margin-bottom: 20px;
-}
-.no-updates {
-  text-align: center;
-  color: #555;
-  padding: 40px 0;
-}
-
-/* ===== СВЯЗАННЫЕ АНИМЕ ===== */
-.related-card {
-  cursor: pointer;
-  transition: 0.3s;
-  border-radius: 8px;
-  overflow: hidden;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.04);
-  width: 120px;
-  flex-shrink: 0;
-}
-.related-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(108, 92, 231, 0.2);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-}
-.related-card img {
-  width: 100%;
-  aspect-ratio: 2/3;
-  object-fit: cover;
-  display: block;
-}
-.related-card .related-info {
-  padding: 8px 10px;
-}
-.related-card .related-title {
-  font-size: 0.75rem;
-  color: #e0e0e0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.related-card .related-meta {
-  font-size: 0.65rem;
-  color: #666;
-  margin-top: 2px;
-}
-
 /* ===== АДАПТИВ ===== */
 @media (max-width: 700px) {
   main {
     padding-top: 75px;
-    padding-bottom: 20px;
   }
   .logo {
     font-size: 1rem;
@@ -783,4 +658,4 @@ section.active {
   .bottom-nav-item .nav-label {
     font-size: 0.6rem;
   }
-        }
+  }
