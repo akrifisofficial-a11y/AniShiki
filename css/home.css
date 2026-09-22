@@ -354,3 +354,235 @@
     font-size: 1rem;
   }
 }
+/* ===== СТАТИСТИКА САЙТА ===== */
+.site-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.site-stat {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 14px;
+  padding: 18px 12px;
+  text-align: center;
+  transition: 0.3s;
+}
+
+.site-stat:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(108, 92, 231, 0.15);
+  transform: translateY(-3px);
+}
+
+.site-stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #a29bfe;
+  margin-bottom: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.site-stat-label {
+  color: #666;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ===== ГОРИЗОНТАЛЬНАЯ ПРОКРУТКА ===== */
+.horizontal-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 0 12px;
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+}
+
+.horizontal-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.horizontal-scroll::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.02);
+  border-radius: 4px;
+}
+
+.horizontal-scroll::-webkit-scrollbar-thumb {
+  background: rgba(108, 92, 231, 0.3);
+  border-radius: 4px;
+}
+
+/* Мини-карточка */
+.mini-card {
+  cursor: pointer;
+  flex: 0 0 140px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: 0.3s;
+}
+
+.mini-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(108, 92, 231, 0.25);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.mini-card img {
+  width: 100%;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  display: block;
+  background: #1a1a1a;
+}
+
+.mini-card .mini-info {
+  padding: 8px 10px;
+}
+
+.mini-card .mini-title {
+  font-size: 0.75rem;
+  color: #e0e0e0;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mini-card .mini-meta {
+  font-size: 0.65rem;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* Лоадер */
+.loader-small {
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(108, 92, 231, 0.1);
+  border-top-color: #6c5ce7;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 20px auto;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Заголовок секции */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #e0e0e0;
+  margin: 0;
+}
+
+.section-link {
+  color: #a29bfe;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.section-link:hover {
+  color: #6c5ce7;
+}
+
+.home-section {
+  margin-bottom: 30px;
+}
+
+/* Поиск */
+.search-block {
+  margin-bottom: 30px;
+}
+
+.main-search-input {
+  width: 100%;
+  padding: 14px 20px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+  color: #e0e0e0;
+  font-size: 0.95rem;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: 0.3s;
+}
+
+.main-search-input:focus {
+  border-color: rgba(108, 92, 231, 0.3);
+  background: rgba(255,255,255,0.05);
+}
+
+.main-search-input::placeholder {
+  color: #555;
+}
+
+/* Приветствие */
+.welcome-block {
+  margin-bottom: 20px;
+}
+
+.welcome-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #e0e0e0;
+  margin-bottom: 4px;
+}
+
+.welcome-subtitle {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Футер */
+.home-footer {
+  text-align: center;
+  padding: 30px 20px;
+  margin-top: 40px;
+  border-top: 1px solid rgba(255,255,255,0.03);
+  color: #444;
+  font-size: 0.78rem;
+}
+
+.home-footer span {
+  color: #a29bfe;
+}
+
+.home-footer .footer-sub {
+  margin-top: 6px;
+  font-size: 0.7rem;
+  color: #333;
+}
+
+/* Адаптив */
+@media (max-width: 600px) {
+  .welcome-title {
+    font-size: 1.3rem;
+  }
+  .section-title {
+    font-size: 1rem;
+  }
+  .mini-card {
+    flex: 0 0 120px;
+  }
+  .site-stat-value {
+    font-size: 1.2rem;
+  }
+}
