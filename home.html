@@ -2,209 +2,144 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🏠 О проекте — Quarwatch</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>🏠 Quarwatch — Главная</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/home.css" />
 </head>
 <body>
+  <!-- ШАПКА -->
   <header>
     <div class="header-top">
       <div class="header-left">
-        <a href="index.html" class="logo-link">
+        <a href="home.html" class="logo-link">
           <div class="logo">🌙 Quarwatch</div>
         </a>
-        <div class="subtitle">о проекте</div>
       </div>
       <div class="header-right">
-        <a href="index.html" class="back-btn">← На главную</a>
+        <button id="search-toggle" class="header-icon-btn" aria-label="Поиск">🔍</button>
+        <div class="hamburger" id="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
       </div>
     </div>
+
+    <!-- Поиск (скрыт) -->
+    <div class="search-bar hidden" id="search-bar">
+      <input type="text" id="home-search-input" placeholder="Поиск аниме..." />
+      <button id="home-search-btn">🔍</button>
+    </div>
+
+    <!-- ГАМБУРГЕР-МЕНЮ -->
+    <nav class="nav-menu" id="nav-menu">
+      <ul>
+        <li><a href="home.html">🏠 Главная</a></li>
+        <li><a href="index.html">📚 Каталог</a></li>
+        <li><a href="calendar.html">📅 Календарь</a></li>
+        <li><a href="anilist.html">🕒 Анонсы</a></li>
+        <li><a href="profile.html">👤 Профиль</a></li>
+        <li><a href="auth.html">🔐 Войти</a></li>
+        <li><a href="developer.html">👨‍💻 Разработчик</a></li>
+        <li><a href="#" id="menu-updates">🔄 Обновления</a></li>
+        <li><a href="#" id="menu-important">❓ Важно</a></li>
+      </ul>
+    </nav>
   </header>
 
   <main style="padding-top:100px; padding-bottom:80px;">
     <div class="home-container">
 
-      <!-- ГЕРОЙ-БЛОК -->
-      <div class="hero-section">
-        <div class="hero-logo">🌙</div>
-        <h1 class="hero-title">Quarwatch</h1>
-        <p class="hero-subtitle">Смотреть аниме онлайн — бесплатно и удобно</p>
-        <div class="hero-stats">
-          <div class="hero-stat">
-            <span class="hero-stat-value" id="hero-total">—</span>
-            <span class="hero-stat-label">Аниме в базе</span>
-          </div>
-          <div class="hero-stat">
-            <span class="hero-stat-value">3.0</span>
-            <span class="hero-stat-label">Версия</span>
-          </div>
-          <div class="hero-stat">
-            <span class="hero-stat-value">24/7</span>
-            <span class="hero-stat-label">Доступ</span>
-          </div>
-        </div>
+      <!-- ПРИВЕТСТВИЕ -->
+      <div class="welcome-block">
+        <h1 class="welcome-title">Добро пожаловать! 👋</h1>
+        <p class="welcome-subtitle">Смотри аниме онлайн бесплатно</p>
       </div>
 
-      <!-- О САЙТЕ -->
-      <section class="info-block">
-        <h2 class="block-title">📖 О проекте</h2>
-        <div class="info-card">
-          <p>
-            <strong>Quarwatch</strong> — это современный онлайн-кинотеатр для просмотра аниме.
-            Мы собрали удобный каталог с сериалами и фильмами, быстрый поиск, календарь релизов и анонсы.
-          </p>
-          <p style="margin-top:12px;">
-            Сайт работает на базе <strong>Kodik API</strong> — крупнейшего агрегатора аниме-контента.
-            Все видео воспроизводятся через защищённый плеер без регистрации и рекламы.
-          </p>
-        </div>
-      </section>
+      <!-- ПОИСК -->
+      <div class="search-block">
+        <input type="text" id="main-search" placeholder="🔍 Поиск аниме..." class="main-search-input" />
+      </div>
 
-      <!-- ВОЗМОЖНОСТИ -->
-      <section class="info-block">
-        <h2 class="block-title">✨ Что умеет сайт</h2>
-        <div class="features-grid">
-          <div class="feature-card">
-            <div class="feature-icon">📺</div>
-            <div class="feature-title">Каталог аниме</div>
-            <div class="feature-desc">Тысячи сериалов и фильмов</div>
-          </div>
-          <div class="feature-card">
-            <div class="feature-icon">🔍</div>
-            <div class="feature-title">Умный поиск</div>
-            <div class="feature-desc">Быстро найдёт нужное</div>
-          </div>
-          <div class="feature-card">
-            <div class="feature-icon">📅</div>
-            <div class="feature-title">Календарь</div>
-            <div class="feature-desc">Расписание релизов</div>
-          </div>
-          <div class="feature-card">
-            <div class="feature-icon">🕒</div>
-            <div class="feature-title">Анонсы</div>
-            <div class="feature-desc">Скоро выйдет</div>
-          </div>
-          <div class="feature-card">
-            <div class="feature-icon">⭐</div>
-            <div class="feature-title">Избранное</div>
-            <div class="feature-desc">Сохраняй лучшее</div>
-          </div>
-          <div class="feature-card">
-            <div class="feature-icon">👤</div>
-            <div class="feature-title">Профиль</div>
-            <div class="feature-desc">Статистика просмотров</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- КОМАНДА -->
-      <section class="info-block">
-        <h2 class="block-title">👥 Команда</h2>
-        <div class="team-grid">
-          <div class="team-card">
-            <div class="team-avatar" style="background: linear-gradient(135deg, #6c5ce7, #a29bfe);">Q</div>
-            <div class="team-name">quartess</div>
-            <div class="team-role">Создатель и разработчик</div>
-            <div class="team-desc">Идея, дизайн, frontend</div>
-          </div>
-          <div class="team-card">
-            <div class="team-avatar" style="background: linear-gradient(135deg, #00b894, #00cec9);">K</div>
-            <div class="team-name">Kodik API</div>
-            <div class="team-role">Источник контента</div>
-            <div class="team-desc">База данных аниме</div>
-          </div>
-          <div class="team-card">
-            <div class="team-avatar" style="background: linear-gradient(135deg, #fd79a8, #e84393);">A</div>
-            <div class="team-name">AniList</div>
-            <div class="team-role">Анонсы и метаданные</div>
-            <div class="team-desc">Информация о будущих релизах</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ТЕХНОЛОГИИ -->
-      <section class="info-block">
-        <h2 class="block-title">⚙️ Технологии</h2>
-        <div class="tech-list">
-          <span class="tech-badge">HTML5</span>
-          <span class="tech-badge">CSS3</span>
-          <span class="tech-badge">JavaScript</span>
-          <span class="tech-badge">Kodik API</span>
-          <span class="tech-badge">AniList GraphQL</span>
-          <span class="tech-badge">PWA</span>
-          <span class="tech-badge">LocalStorage</span>
-        </div>
-      </section>
-
-      <!-- ПОЛЕЗНЫЕ ССЫЛКИ -->
-      <section class="info-block">
-        <h2 class="block-title">🔗 Полезные ссылки</h2>
-        <div class="links-grid">
-          <a href="index.html" class="link-card">
-            <span class="link-icon">🏠</span>
-            <div>
-              <div class="link-title">Главная</div>
-              <div class="link-desc">Каталог аниме</div>
-            </div>
-          </a>
-          <a href="calendar.html" class="link-card">
-            <span class="link-icon">📅</span>
-            <div>
-              <div class="link-title">Календарь</div>
-              <div class="link-desc">Расписание релизов</div>
-            </div>
-          </a>
-          <a href="profile.html" class="link-card">
-            <span class="link-icon">👤</span>
-            <div>
-              <div class="link-title">Профиль</div>
-              <div class="link-desc">Моя статистика</div>
-            </div>
-          </a>
-          <a href="developer.html" class="link-card">
-            <span class="link-icon">👨‍💻</span>
-            <div>
-              <div class="link-title">Разработчику</div>
-              <div class="link-desc">Панель управления</div>
-            </div>
-          </a>
-        </div>
-      </section>
-
-      <!-- СТАТИСТИКА САЙТА -->
-      <section class="info-block">
-        <h2 class="block-title">📊 Статистика сайта</h2>
+      <!-- 📊 СТАТИСТИКА САЙТА -->
+      <section class="home-section">
+        <h2 class="section-title">📊 Статистика сайта</h2>
         <div class="site-stats">
           <div class="site-stat">
-            <div class="site-stat-value" id="stat-anime">—</div>
-            <div class="site-stat-label">Аниме</div>
+            <div class="site-stat-value" id="stat-total-anime">—</div>
+            <div class="site-stat-label">Аниме в базе</div>
           </div>
           <div class="site-stat">
-            <div class="site-stat-value">2</div>
-            <div class="site-stat-label">Категории</div>
+            <div class="site-stat-value" id="stat-total-series">—</div>
+            <div class="site-stat-label">Сериалов</div>
           </div>
           <div class="site-stat">
-            <div class="site-stat-value" id="stat-uptime">—</div>
-            <div class="site-stat-label">Время работы</div>
+            <div class="site-stat-value" id="stat-total-movies">—</div>
+            <div class="site-stat-label">Фильмов</div>
           </div>
           <div class="site-stat">
-            <div class="site-stat-value" id="stat-version">3.0</div>
-            <div class="site-stat-label">Версия</div>
+            <div class="site-stat-value" id="stat-today-updates">—</div>
+            <div class="site-stat-label">Обновлено сегодня</div>
           </div>
         </div>
       </section>
 
-      <!-- ОБРАТНАЯ СВЯЗЬ -->
-      <section class="info-block">
-        <h2 class="block-title">💬 Обратная связь</h2>
-        <div class="info-card" style="text-align:center;">
-          <p style="margin-bottom:16px;">
-            Нашли баг или есть идея? Напишите нам!
-          </p>
-          <a href="#" class="contact-btn" id="contact-btn">📧 Связаться</a>
+      <!-- 🆕 ОБНОВЛЕНИЕ САЙТА (за день) -->
+      <section class="home-section">
+        <div class="section-header">
+          <h2 class="section-title">🆕 Обновление за сегодня</h2>
+          <a href="index.html" class="section-link">Все →</a>
+        </div>
+        <div class="horizontal-scroll" id="today-updates">
+          <div class="loader-small"></div>
+        </div>
+      </section>
+
+      <!-- 📅 БЛИЖАЙШИЕ РЕЛИЗЫ -->
+      <section class="home-section">
+        <div class="section-header">
+          <h2 class="section-title">📅 Ближайшие релизы</h2>
+          <a href="calendar.html" class="section-link">Все →</a>
+        </div>
+        <div class="horizontal-scroll" id="upcoming-releases">
+          <div class="loader-small"></div>
+        </div>
+      </section>
+
+      <!-- 🔥 ПОПУЛЯРНОЕ -->
+      <section class="home-section">
+        <div class="section-header">
+          <h2 class="section-title">🔥 Популярное</h2>
+          <a href="index.html" class="section-link">Все →</a>
+        </div>
+        <div class="horizontal-scroll" id="popular-list">
+          <div class="loader-small"></div>
+        </div>
+      </section>
+
+      <!-- ⚡ БЫСТРЫЙ ДОСТУП -->
+      <section class="home-section">
+        <h2 class="section-title">⚡ Быстрый доступ</h2>
+        <div class="quick-links">
+          <a href="index.html" class="quick-link">
+            <span class="quick-icon">📚</span>
+            <span>Каталог</span>
+          </a>
+          <a href="calendar.html" class="quick-link">
+            <span class="quick-icon">📅</span>
+            <span>Календарь</span>
+          </a>
+          <a href="anilist.html" class="quick-link">
+            <span class="quick-icon">🕒</span>
+            <span>Анонсы</span>
+          </a>
+          <a href="profile.html" class="quick-link">
+            <span class="quick-icon">👤</span>
+            <span>Профиль</span>
+          </a>
         </div>
       </section>
 
@@ -217,6 +152,35 @@
     </div>
   </main>
 
+  <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+  <nav class="bottom-nav">
+    <a href="home.html" class="bottom-nav-item active" style="text-decoration:none;">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Главная</span>
+    </a>
+    <a href="index.html" class="bottom-nav-item" style="text-decoration:none;">
+      <span class="nav-icon">📚</span>
+      <span class="nav-label">Каталог</span>
+    </a>
+    <a href="calendar.html" class="bottom-nav-item" style="text-decoration:none;">
+      <span class="nav-icon">📅</span>
+      <span class="nav-label">Календарь</span>
+    </a>
+    <a href="profile.html" class="bottom-nav-item" style="text-decoration:none;">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">Профиль</span>
+    </a>
+  </nav>
+
+  <!-- Модальное окно (для "Обновления" и "Важно") -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div class="modal-content">
+      <button id="modal-close" class="modal-close">✕</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="js/home.js"></script>
   <script src="js/home.js"></script>
 </body>
-</html>
+              </html>
