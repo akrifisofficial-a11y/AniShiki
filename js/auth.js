@@ -2,8 +2,8 @@
 // 🔐 AUTH.JS — Вход и регистрация
 // ============================================
 
-const GITHUB_TOKEN = 'ghp_ВАШ_ТОКЕН';
-const GITHUB_REPO = 'ВАШ_USERNAME/quarwatch-api';
+const GITHUB_TOKEN = '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';
+const GITHUB_REPO = 'akrifisofficial-a11y/quarwatch-api';
 const GITHUB_API = 'https://api.github.com';
 
 // ===== DOM =====
