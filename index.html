@@ -5,24 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Quarwatch – смотреть аниме онлайн</title>
   
-  <!-- SEO -->
   <meta name="robots" content="index, follow" />
-  <meta name="description" content="Quarwatch – смотри аниме онлайн бесплатно. Большой каталог аниме сериалов и фильмов." />
-  <meta name="keywords" content="аниме, смотреть аниме, аниме онлайн, Quarwatch" />
-  <link rel="canonical" href="https://quarwatch.c6t.ru/" />
-  
-  <!-- Open Graph -->
-  <meta property="og:title" content="Quarwatch – смотреть аниме онлайн" />
-  <meta property="og:description" content="Смотри аниме онлайн бесплатно. Большой каталог аниме сериалов и фильмов." />
-  <meta property="og:url" content="https://quarwatch.c6t.ru/" />
-  <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="Quarwatch" />
-  
-  <!-- PWA -->
-  <link rel="manifest" href="/manifest.json" />
+  <meta name="description" content="Quarwatch – смотри аниме онлайн бесплатно." />
   <meta name="theme-color" content="#6c5ce7" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
@@ -32,7 +17,7 @@
   <header>
     <div class="header-top">
       <div class="header-left">
-        <a href="home.html" id="logo-link" class="logo-link">
+        <a href="home.html" class="logo-link">
           <div class="logo">🌙 Quarwatch</div>
         </a>
       </div>
@@ -62,25 +47,15 @@
         <li><a href="developer.html">👨‍💻 Разработчик</a></li>
       </ul>
     </nav>
-
-    <!-- КАТЕГОРИИ -->
-    <nav class="categories">
-      <a href="home.html" class="category-btn">🏠 Главная</a>
-      <button class="category-btn active" data-type="series">📺 Сериалы</button>
-      <button class="category-btn" data-type="movie">🎬 Фильмы</button>
-    </nav>
   </header>
 
-  <!-- ОСНОВНОЙ КОНТЕНТ -->
   <main>
-    <!-- Каталог -->
     <section id="anime-list" class="active">
       <div id="catalog" class="catalog-grid"></div>
       <button id="load-more-btn" class="back-btn" style="display:none; margin: 20px auto; width: fit-content;">📥 Загрузить ещё</button>
       <div id="loader" class="loader">Загрузка...</div>
     </section>
 
-    <!-- Плеер -->
     <section id="player-section">
       <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
         <button id="back-btn" class="back-btn">← Назад</button>
@@ -113,7 +88,6 @@
     </a>
   </nav>
 
-  <!-- Модальное окно -->
   <div id="modal-overlay" class="modal-overlay">
     <div class="modal-content">
       <button id="modal-close" class="modal-close">✕</button>
@@ -121,10 +95,9 @@
     </div>
   </div>
 
-  <!-- Увеличенное изображение -->
   <div id="modal-image-overlay" class="modal-image-overlay">
     <button class="close-btn" id="modal-image-close">✕</button>
-    <img id="modal-image" src="" alt="Увеличенное изображение" />
+    <img id="modal-image" src="" alt="" />
   </div>
 
   <script src="js/script.js"></script>
