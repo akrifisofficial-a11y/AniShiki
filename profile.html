@@ -13,13 +13,13 @@
   <header>
     <div class="header-top">
       <div class="header-left">
-        <a href="index.html" class="logo-link">
+        <a href="home.html" class="logo-link">
           <div class="logo">🌙 Quarwatch</div>
         </a>
         <div class="subtitle">профиль</div>
       </div>
       <div class="header-right">
-        <a href="index.html" class="back-btn">← На главную</a>
+        <a href="home.html" class="back-btn">← На главную</a>
       </div>
     </div>
   </header>
@@ -27,101 +27,135 @@
   <main style="padding-top:100px; padding-bottom:80px;">
     <div class="profile-container">
 
-      <!-- ШАПКА ПРОФИЛЯ -->
-      <div class="profile-header">
-        <div class="avatar" id="profile-avatar">👤</div>
-        <div class="profile-info">
-          <h2 id="profile-name">Гость</h2>
-          <p class="profile-status">Добро пожаловать в Quarwatch</p>
-          <button class="edit-name-btn" id="edit-name-btn">✏️ Изменить имя</button>
-        </div>
-      </div>
-
-      <!-- СТАТИСТИКА -->
-      <h3 class="section-title">📊 Статистика</h3>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-value" id="stat-watched">0</div>
-          <div class="stat-label">Просмотрено</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="stat-favorites">0</div>
-          <div class="stat-label">В избранном</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="stat-time">0ч</div>
-          <div class="stat-label">Время</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="stat-achievements">0</div>
-          <div class="stat-label">Достижений</div>
-        </div>
-      </div>
-
-      <!-- ДОСТИЖЕНИЯ -->
-      <h3 class="section-title">🏆 Достижения</h3>
-      <div class="achievements-list" id="achievements-list">
-        <p class="empty-text">Пока нет достижений</p>
-      </div>
-
-      <!-- НАСТРОЙКИ -->
-      <h3 class="section-title">⚙️ Настройки</h3>
-      <div class="settings-list">
-        <div class="setting-item">
-          <div class="setting-info">
-            <span class="setting-title">📤 Экспорт данных</span>
-            <span class="setting-desc">Сохранить в JSON</span>
+      <!-- БЛОК АВТОРИЗАЦИИ -->
+      <div id="auth-required" class="auth-required">
+        <div class="auth-required-content">
+          <span class="auth-icon">🔐</span>
+          <h2>Войдите в аккаунт</h2>
+          <p>Чтобы получить доступ к профилю, статистике и достижениям</p>
+          <div class="auth-buttons">
+            <a href="auth.html" class="auth-btn">🔓 Войти</a>
+            <a href="auth.html#register" class="auth-btn secondary">📝 Регистрация</a>
           </div>
-          <button class="setting-btn" id="export-btn">Экспорт</button>
-        </div>
-
-        <div class="setting-item">
-          <div class="setting-info">
-            <span class="setting-title">📥 Импорт данных</span>
-            <span class="setting-desc">Загрузить из JSON</span>
-          </div>
-          <button class="setting-btn" id="import-btn">Импорт</button>
-        </div>
-
-        <div class="setting-item">
-          <div class="setting-info">
-            <span class="setting-title">🌙 Тёмная тема</span>
-            <span class="setting-desc">Оформление</span>
-          </div>
-          <button class="setting-btn" id="theme-btn">Переключить</button>
-        </div>
-
-        <div class="setting-item">
-          <div class="setting-info">
-            <span class="setting-title">🗑️ Очистить данные</span>
-            <span class="setting-desc">Удалить всё</span>
-          </div>
-          <button class="setting-btn danger" id="clear-btn">Очистить</button>
         </div>
       </div>
 
-      <!-- ИСТОРИЯ -->
-      <h3 class="section-title">🕐 Недавно просмотренные</h3>
-      <div class="history-list" id="history-list">
-        <p class="empty-text">История пуста</p>
-      </div>
+      <!-- ПРОФИЛЬ -->
+      <div id="profile-content" style="display:none;">
 
-      <!-- ИЗБРАННОЕ -->
-      <h3 class="section-title">⭐ Избранное</h3>
-      <div class="favorites-list" id="favorites-list">
-        <p class="empty-text">Избранное пусто</p>
+        <!-- ШАПКА -->
+        <div class="profile-header">
+          <div class="avatar-wrap">
+            <div class="avatar" id="profile-avatar">👤</div>
+            <button class="avatar-edit" id="avatar-edit-btn" title="Изменить аватар">📷</button>
+          </div>
+          <div class="profile-info">
+            <h2 id="profile-name">Гость</h2>
+            <p class="profile-status" id="profile-email">email@example.com</p>
+            <button class="edit-name-btn" id="edit-name-btn">✏️ Изменить имя</button>
+          </div>
+        </div>
+
+        <!-- СТАТИСТИКА -->
+        <h3 class="section-title">📊 Статистика</h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-watched">0</div>
+            <div class="stat-label">Просмотрено</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-favorites">0</div>
+            <div class="stat-label">В избранном</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-time">0ч</div>
+            <div class="stat-label">Время</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-achievements">0</div>
+            <div class="stat-label">Достижений</div>
+          </div>
+        </div>
+
+        <!-- ДОСТИЖЕНИЯ -->
+        <h3 class="section-title">🏆 Достижения</h3>
+        <div class="achievements-list" id="achievements-list">
+          <p class="empty-text">Пока нет достижений</p>
+        </div>
+
+        <!-- НАСТРОЙКИ -->
+        <h3 class="section-title">⚙️ Настройки</h3>
+        <div class="settings-list">
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title">📤 Экспорт данных</span>
+              <span class="setting-desc">Сохранить в JSON</span>
+            </div>
+            <button class="setting-btn" id="export-btn">Экспорт</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title">📥 Импорт данных</span>
+              <span class="setting-desc">Загрузить из JSON</span>
+            </div>
+            <button class="setting-btn" id="import-btn">Импорт</button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title">🚪 Выйти</span>
+              <span class="setting-desc">Завершить сессию</span>
+            </div>
+            <button class="setting-btn danger" id="logout-btn">Выйти</button>
+          </div>
+        </div>
+
+        <!-- ИСТОРИЯ -->
+        <h3 class="section-title">🕐 Недавно просмотренные</h3>
+        <div class="history-list" id="history-list">
+          <p class="empty-text">История пуста</p>
+        </div>
+
+        <!-- ИЗБРАННОЕ -->
+        <h3 class="section-title">⭐ Избранное</h3>
+        <div class="favorites-list" id="favorites-list">
+          <p class="empty-text">Избранное пусто</p>
+        </div>
+
       </div>
     </div>
   </main>
 
-  <!-- Модальное окно -->
-  <div id="modal-overlay" class="modal-overlay">
+  <!-- МОДАЛЬНОЕ ОКНО АВАТАРА -->
+  <div id="avatar-modal" class="modal-overlay">
     <div class="modal-content">
-      <button id="modal-close" class="modal-close">✕</button>
-      <div id="modal-body"></div>
+      <button class="modal-close" id="avatar-modal-close">✕</button>
+      <h2>Выберите аватар</h2>
+      <div class="avatar-grid" id="avatar-grid">
+        <button class="avatar-option" data-avatar="👤">👤</button>
+        <button class="avatar-option" data-avatar="🐱">🐱</button>
+        <button class="avatar-option" data-avatar="🐶">🐶</button>
+        <button class="avatar-option" data-avatar="🐼">🐼</button>
+        <button class="avatar-option" data-avatar="🦊">🦊</button>
+        <button class="avatar-option" data-avatar="🐉">🐉</button>
+        <button class="avatar-option" data-avatar="🌙">🌙</button>
+        <button class="avatar-option" data-avatar="⭐">⭐</button>
+        <button class="avatar-option" data-avatar="🎮">🎮</button>
+        <button class="avatar-option" data-avatar="🎬">🎬</button>
+        <button class="avatar-option" data-avatar="🌸">🌸</button>
+        <button class="avatar-option" data-avatar="🔥">🔥</button>
+        <button class="avatar-option" data-avatar="💎">💎</button>
+        <button class="avatar-option" data-avatar="🎧">🎧</button>
+        <button class="avatar-option" data-avatar="🍕">🍕</button>
+        <button class="avatar-option" data-avatar="⚡">⚡</button>
+      </div>
+      <p style="text-align:center;color:#666;font-size:0.75rem;margin-top:12px;">
+        Или загрузите свою картинку (URL)
+      </p>
+      <input type="url" id="avatar-url" placeholder="https://example.com/avatar.jpg" class="form-input" style="margin-top:8px;" />
+      <button class="submit-btn" id="avatar-url-btn" style="margin-top:12px;">Применить URL</button>
     </div>
   </div>
 
   <script src="js/profile.js"></script>
 </body>
-</html>
+    </html>
