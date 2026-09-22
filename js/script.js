@@ -1083,3 +1083,85 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+// ============================================
+// 🔧 ИНТЕРФЕЙС (в самом конце script.js)
+// ============================================
+
+(function initInterface() {
+  console.log('🔧 initInterface запущен');
+
+  // ГАМБУРГЕР
+  const hamburger = document.getElementById('hamburger');
+  const navMenu = document.getElementById('nav-menu');
+
+  console.log('hamburger найден:', !!hamburger);
+  console.log('navMenu найден:', !!navMenu);
+
+  if (hamburger && navMenu) {
+    hamburger.onclick = function(e) {
+      e.stopPropagation();
+      console.log('☰ Клик по гамбургеру');
+      hamburger.classList.toggle('active');
+      navMenu.classList.toggle('open');
+      console.log('navMenu.open:', navMenu.classList.contains('open'));
+    };
+  }
+
+  // ПОИСК
+  const searchToggle = document.getElementById('search-toggle');
+  const searchBar = document.getElementById('search-bar');
+  const searchInput = document.getElementById('search-input');
+  const searchBtn = document.getElementById('search-btn');
+
+  console.log('searchToggle найден:', !!searchToggle);
+  console.log('searchBar найден:', !!searchBar);
+
+  if (searchToggle && searchBar) {
+    searchToggle.onclick = function(e) {
+      e.stopPropagation();
+      console.log('🔍 Клик по поиску');
+      searchBar.classList.toggle('hidden');
+      console.log('searchBar.hidden:', searchBar.classList.contains('hidden'));
+      
+      if (!searchBar.classList.contains('hidden')) {
+        searchInput?.focus();
+      }
+    };
+  }
+
+  if (searchBtn && searchInput) {
+    searchBtn.onclick = function() {
+      const query = searchInput.value.trim();
+      console.log('🔍 Поиск:', query);
+      if (query && typeof fetchAnimeList === 'function') {
+        allLoadedIds.clear();
+        nextPageUrl = null;
+        fetchAnimeList(query);
+      }
+    };
+
+    searchInput.onkeydown = function(e) {
+      if (e.key === 'Enter') searchBtn.click();
+    };
+  }
+
+  // НИЖНЯЯ НАВИГАЦИЯ
+  const navItems = document.querySelectorAll('.bottom-nav-item[data-type]');
+  console.log('Кнопок внизу:', navItems.length);
+
+  navItems.forEach(item => {
+    item.onclick = function() {
+      const type = this.dataset.type;
+      console.log('📱 Клик по:', type);
+
+      navItems.forEach(i => i.classList.remove('active'));
+      this.classList.add('active');
+
+      if (typeof setCategory === 'function') {
+        setCategory(type);
+      }
+    };
+  });
+
+  console.log('✅ Интерфейс инициализирован');
+})();
