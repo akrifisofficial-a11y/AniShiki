@@ -1064,79 +1064,6 @@ if (window.location.hash) {
     fetchAnimeList();
                                              }
 // ============================================
-// 🔄 НИЖНЯЯ НАВИГАЦИЯ
-// ============================================
-
-document.addEventListener('DOMContentLoaded', () => {
-  const bottomNavItems = document.querySelectorAll('.bottom-nav-item');
-  
-  bottomNavItems.forEach(item => {
-    item.addEventListener('click', () => {
-      const type = item.dataset.type;
-      
-      // Убираем активный класс у всех
-      bottomNavItems.forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
-      
-      // Обработка нажатия
-      switch (type) {
-        case 'home':
-          // На главную
-          if (window.location.hash) {
-            window.location.hash = '';
-          } else {
-            showSection(listSection);
-          }
-          break;
-          
-        case 'series':
-          setCategory('series');
-          break;
-          
-        case 'movie':
-          setCategory('movie');
-          break;
-          
-        case 'profile':
-          openModal(`
-            <h2>👤 Профиль</h2>
-            <div class="info-item">
-              <span>Название</span>
-              <span>Quarwatch</span>
-            </div>
-            <div class="info-item">
-              <span>Версия</span>
-              <span>3.0</span>
-            </div>
-            <div class="info-item">
-              <span>Создатель</span>
-              <span>quartess</span>
-            </div>
-            <p style="margin-top:15px; text-align:center; color:#7a8aaa; font-size:0.8rem;">
-              🌙 Спасибо, что смотришь с нами!
-            </p>
-          `);
-          break;
-      }
-    });
-  });
-
-  // ===== ПОИСК: показать/скрыть =====
-  const searchToggle = document.getElementById('search-toggle');
-  const searchBar = document.getElementById('search-bar');
-  
-  if (searchToggle && searchBar) {
-    searchToggle.addEventListener('click', () => {
-      searchBar.classList.toggle('hidden');
-      if (!searchBar.classList.contains('hidden')) {
-        document.getElementById('search-input')?.focus();
-      }
-    });
-  }
-});
-// ============================================
-// 🔍 ПОИСК И ГАМБУРГЕР (для нового интерфейса)
-// ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
   // Гамбургер
@@ -1156,19 +1083,3 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
-  // Поиск
-  const searchToggle = document.getElementById('search-toggle');
-  const searchBar = document.getElementById('search-bar');
-
-  if (searchToggle && searchBar) {
-    searchToggle.addEventListener('click', () => {
-      searchBar.classList.toggle('hidden');
-      if (!searchBar.classList.contains('hidden')) {
-        document.getElementById('search-input')?.focus();
-      }
-    });
-  }
-
-  console.log('✅ Интерфейс готов');
-});
