@@ -32,7 +32,7 @@
   <header>
     <div class="header-top">
       <div class="header-left">
-        <a href="#" id="logo-link" class="logo-link">
+        <a href="home.html" id="logo-link" class="logo-link">
           <div class="logo">🌙 Quarwatch</div>
         </a>
       </div>
@@ -55,14 +55,19 @@
     <!-- ГАМБУРГЕР-МЕНЮ -->
     <nav class="nav-menu" id="nav-menu">
       <ul>
-        <li><a href="home.html">🏠 О проекте</a></li>
         <li><a href="calendar.html">📅 Календарь</a></li>
         <li><a href="anilist.html">🕒 Анонсы</a></li>
         <li><a href="profile.html">👤 Профиль</a></li>
+        <li><a href="auth.html">🔐 Войти</a></li>
         <li><a href="developer.html">👨‍💻 Разработчик</a></li>
-        <li><a href="#" id="menu-updates">🔄 Обновления</a></li>
-        <li><a href="#" id="menu-important">❓ Важно</a></li>
       </ul>
+    </nav>
+
+    <!-- КАТЕГОРИИ -->
+    <nav class="categories">
+      <a href="home.html" class="category-btn">🏠 Главная</a>
+      <button class="category-btn active" data-type="series">📺 Сериалы</button>
+      <button class="category-btn" data-type="movie">🎬 Фильмы</button>
     </nav>
   </header>
 
@@ -86,22 +91,14 @@
         <iframe id="player-iframe" src="" allowfullscreen allow="autoplay; encrypted-media; fullscreen"></iframe>
       </div>
     </section>
-
-    <!-- Страница обновлений -->
-    <section id="updates-section">
-      <button id="updates-back-btn" class="back-btn">← Назад</button>
-      <div id="updates-content" class="updates-content">
-        <div class="loader">Загрузка обновлений...</div>
-      </div>
-    </section>
   </main>
 
   <!-- НИЖНЯЯ НАВИГАЦИЯ -->
   <nav class="bottom-nav">
-    <button class="bottom-nav-item" data-type="home">
+    <a href="home.html" class="bottom-nav-item" style="text-decoration:none;">
       <span class="nav-icon">🏠</span>
       <span class="nav-label">Главная</span>
-    </button>
+    </a>
     <button class="bottom-nav-item active" data-type="series">
       <span class="nav-icon">📺</span>
       <span class="nav-label">Сериалы</span>
@@ -110,7 +107,7 @@
       <span class="nav-icon">🎬</span>
       <span class="nav-label">Фильмы</span>
     </button>
-    <a href="profile.html" class="bottom-nav-item" style="text-decoration: none;">
+    <a href="profile.html" class="bottom-nav-item" style="text-decoration:none;">
       <span class="nav-icon">👤</span>
       <span class="nav-label">Профиль</span>
     </a>
@@ -132,4 +129,4 @@
 
   <script src="js/script.js"></script>
 </body>
-    </html>
+</html>
