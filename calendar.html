@@ -6,10 +6,7 @@
   <title>📅 Календарь релизов — Quarwatch</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
-  <!-- Основные стили сайта -->
   <link rel="stylesheet" href="css/style.css" />
-  <!-- Стили только для календаря -->
   <link rel="stylesheet" href="css/calendar.css" />
 </head>
 <body>
@@ -31,7 +28,14 @@
     <section class="active">
       <div class="calendar-header">
         <h2>📅 Календарь релизов</h2>
-        <p class="calendar-subtitle">Что выходит на этой неделе</p>
+        <p class="calendar-subtitle">Что вышло за последние дни</p>
+      </div>
+
+      <!-- Легенда -->
+      <div class="calendar-legend">
+        <span class="legend-item"><span class="translation-badge legend-voice">🎙️ Озвучка</span> — голосовой перевод</span>
+        <span class="legend-item"><span class="translation-badge legend-subs">📝 Субтитры</span> — текстовый перевод</span>
+        <span class="legend-item"><span class="time-badge">🕐 14:30</span> — время выхода</span>
       </div>
 
       <!-- Кнопки дней -->
@@ -49,7 +53,6 @@
     <p class="footer-sub">🌙 Сделано с любовью к аниме</p>
   </footer>
 
-  <!-- Только скрипт календаря -->
   <script src="js/calendar.js"></script>
 </body>
 </html>
