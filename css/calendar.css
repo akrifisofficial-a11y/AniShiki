@@ -4,7 +4,7 @@
 
 .calendar-header {
   text-align: center;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 .calendar-header h2 {
@@ -20,6 +20,27 @@
   color: #666;
   font-size: 0.9rem;
   letter-spacing: 1px;
+}
+
+/* ===== ЛЕГЕНДА ===== */
+.calendar-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* ===== НАВИГАЦИЯ ПО ДНЯМ ===== */
@@ -123,14 +144,8 @@
 }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .release-card .poster {
@@ -172,40 +187,54 @@
   flex-wrap: wrap;
   font-size: 0.8rem;
   color: #666;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
-.release-card .meta span {
+/* ===== ОЗВУЧКА ===== */
+.translation-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-}
-
-.release-card .episode-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(108, 92, 231, 0.12);
+  background: rgba(108, 92, 231, 0.15);
   border: 1px solid rgba(108, 92, 231, 0.2);
   color: #a29bfe;
   padding: 3px 12px;
   border-radius: 20px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
-  width: fit-content;
+  white-space: nowrap;
 }
 
-.release-card .time-badge {
+/* Для субтитров — синий цвет */
+.translation-badge.subs {
+  background: rgba(100, 181, 246, 0.15);
+  border-color: rgba(100, 181, 246, 0.2);
+  color: #64b5f6;
+}
+
+/* ===== ВРЕМЯ ===== */
+.time-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: rgba(255, 200, 50, 0.08);
-  border: 1px solid rgba(255, 200, 50, 0.15);
+  background: rgba(255, 200, 50, 0.1);
+  border: 1px solid rgba(255, 200, 50, 0.2);
   color: #ffd700;
   padding: 3px 12px;
   border-radius: 20px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
+}
+
+/* Легенда */
+.legend-voice {
+  font-size: 0.7rem;
+}
+.legend-subs {
+  background: rgba(100, 181, 246, 0.15) !important;
+  border-color: rgba(100, 181, 246, 0.2) !important;
+  color: #64b5f6 !important;
+  font-size: 0.7rem;
 }
 
 /* Пустое состояние */
@@ -234,28 +263,18 @@
 
 /* ===== АДАПТИВ ===== */
 @media (max-width: 600px) {
-  .calendar-header h2 {
-    font-size: 1.4rem;
+  .calendar-header h2 { font-size: 1.4rem; }
+  .calendar-legend {
+    font-size: 0.65rem;
+    gap: 8px;
   }
-
-  .day-btn {
-    min-width: 55px;
-    padding: 8px 10px;
-  }
-
-  .day-btn .day-number {
-    font-size: 0.95rem;
-  }
-
-  .release-card .poster {
-    flex: 0 0 65px;
-  }
-
-  .release-card .title {
-    font-size: 0.9rem;
-  }
-
-  .release-card .meta {
-    font-size: 0.7rem;
+  .day-btn { min-width: 55px; padding: 8px 10px; }
+  .day-btn .day-number { font-size: 0.95rem; }
+  .release-card .poster { flex: 0 0 65px; }
+  .release-card .title { font-size: 0.9rem; }
+  .release-card .meta { font-size: 0.7rem; }
+  .translation-badge, .time-badge {
+    font-size: 0.65rem;
+    padding: 2px 10px;
   }
 }
